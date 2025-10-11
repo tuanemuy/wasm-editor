@@ -1,0 +1,4 @@
+ページ名	パス	ステータス
+ホーム（メモ一覧）	/	pending
+メモ詳細・編集	/memos/:id	pending
+設定	/settings	pending
