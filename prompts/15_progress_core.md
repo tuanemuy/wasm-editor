@@ -5,7 +5,7 @@
 - `spec/requirements.md` に要件を定義した
 - `spec/domains/index.md` にドメインを定義した
 - `spec/domains/${domain}.md` にユースケースを定義した
-- `spec/database.md` にデータベース設計を記載した
+- `docs/implementation_example.md` にコアアーキテクチャの実装例を記載した
 - `spec/usecases.tsv` にユースケースをリスト化した
 
 ## タスク

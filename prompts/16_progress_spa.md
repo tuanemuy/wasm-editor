@@ -1,11 +1,10 @@
-# フロントエンドの進捗を更新する
+# SPAの進捗を更新する
 
 ## 背景
 
 - `spec/requirements.md` に要件を定義した
 - `spec/pages.md` にページ構成とその詳細を記載した
 - `spec/pages.list.tsv` に実装すべきページをリスト化した
-- `docs/frontend.md` にフロントエンドの実装例を記載した
 
 ## タスク
 

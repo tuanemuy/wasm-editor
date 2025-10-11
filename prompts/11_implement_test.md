@@ -6,7 +6,7 @@
 - `spec/domains/index.md` にドメインを定義した
 - `spec/domains/${domain}.md` にドメインモデルの詳細を記載した
 - `spec/testcases/${domain}/${usecase}.tsv` にユースケースごとのテストケースを定義した
-- `docs/backend.md` にバックエンドの実装例を記載した
+- `docs/implementation_example.md` にコアアーキテクチャの実装例を記載した
 - `docs/test.md` にテストの実装例を記載した
 - `spec/usecases.tsv` にユースケースをリスト化した
 

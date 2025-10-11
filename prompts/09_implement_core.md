@@ -1,4 +1,4 @@
-# バックエンドの実装を行う
+# コアアーキテクチャの実装を行う
 
 ## 背景
 
@@ -6,7 +6,7 @@
 - `spec/domains/index.md` にドメインを定義した
 - `spec/domains/${domain}.md` にドメインモデルの詳細を記載した
 - `spec/database.md` にデータベース設計を記載した
-- `docs/backend.md` にバックエンドの実装例を記載した
+- `docs/implementation_example.md` にコアアーキテクチャの実装例を記載した
 - `src/core/domain/${domain}/` 以下にドメインモデルを実装した
 - `spec/usecases.tsv` にユースケースをリスト化した
 
