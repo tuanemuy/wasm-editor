@@ -5,13 +5,13 @@ import {
   type AssetId,
   assetIdSchema,
   type FileName,
-  type FilePath,
   fileNameSchema,
-  filePathSchema,
   generateAssetId,
   MAX_FILE_SIZE,
   type NoteId,
   noteIdSchema,
+  type Path,
+  pathSchema,
   SUPPORTED_IMAGE_TYPES,
 } from "./valueObject";
 
@@ -21,7 +21,7 @@ import {
 export type Asset = Readonly<{
   id: AssetId;
   noteId: NoteId;
-  filePath: FilePath;
+  path: Path;
   fileName: FileName;
   fileSize: number;
   mimeType: string;
@@ -33,7 +33,7 @@ export type Asset = Readonly<{
  */
 export type CreateAssetParams = {
   noteId: NoteId;
-  filePath: FilePath;
+  path: Path;
   fileName: FileName;
   fileSize: number;
   mimeType: string;
@@ -45,7 +45,7 @@ export type CreateAssetParams = {
 export type RawAssetData = {
   id: string;
   noteId: string;
-  filePath: string;
+  path: string;
   fileName: string;
   fileSize: number;
   mimeType: string;
@@ -81,7 +81,7 @@ export function createAsset(
   return validate(
     z.object({
       noteId: noteIdSchema,
-      filePath: filePathSchema,
+      path: pathSchema,
       fileName: fileNameSchema,
       fileSize: z.number().int().positive(),
       mimeType: z.string(),
@@ -91,7 +91,7 @@ export function createAsset(
     return {
       id: generateAssetId(),
       noteId: validated.noteId,
-      filePath: validated.filePath,
+      path: validated.path,
       fileName: validated.fileName,
       fileSize: validated.fileSize,
       mimeType: validated.mimeType,
@@ -110,7 +110,7 @@ export function reconstructAsset(
     z.object({
       id: assetIdSchema,
       noteId: noteIdSchema,
-      filePath: filePathSchema,
+      path: pathSchema,
       fileName: fileNameSchema,
       fileSize: z.number().int().positive(),
       mimeType: z.string(),

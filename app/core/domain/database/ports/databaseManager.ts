@@ -36,18 +36,4 @@ export interface DatabaseManager {
    * Check if the database is open
    */
   isOpen(): boolean;
-
-  /**
-   * Export the database file to a different location (backup)
-   */
-  exportToFile(
-    destinationPath: DatabasePath,
-  ): Promise<Result<void, ExternalServiceError>>;
-
-  /**
-   * Import a database file from a different location
-   */
-  importFromFile(
-    sourcePath: DatabasePath,
-  ): Promise<Result<DatabaseConnection, ExternalServiceError>>;
 }

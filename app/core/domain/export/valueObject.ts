@@ -3,7 +3,7 @@ import * as z from "zod";
 /**
  * Export format
  */
-export const exportFormatSchema = z.enum(["markdown", "pdf"]);
+export const exportFormatSchema = z.enum(["markdown"]);
 export type ExportFormat = z.infer<typeof exportFormatSchema>;
 
 /**

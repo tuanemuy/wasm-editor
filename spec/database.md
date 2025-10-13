@@ -155,7 +155,7 @@ const assets = sqliteTable("assets", {
   noteId: text("note_id")
     .notNull()
     .references(() => notes.id, { onDelete: "cascade" }),
-  filePath: text("file_path").notNull(),
+  path: text("path").notNull(),
   fileName: text("file_name").notNull(),
   fileSize: integer("file_size").notNull(),
   mimeType: text("mime_type").notNull(),
@@ -172,7 +172,7 @@ const noteIdIndex = index("assets_note_id_idx").on(assets.noteId);
 |---------|-----|---------|------------|------|
 | id | TEXT | NO | - | アセットID（UUID v7） |
 | note_id | TEXT | NO | - | ノートID |
-| file_path | TEXT | NO | - | ファイルパス（相対パス） |
+| path | TEXT | NO | - | ストレージパス（相対パス） |
 | file_name | TEXT | NO | - | ファイル名 |
 | file_size | INTEGER | NO | - | ファイルサイズ（バイト） |
 | mime_type | TEXT | NO | - | MIMEタイプ |
@@ -296,7 +296,7 @@ const databaseMetadata = sqliteTable("database_metadata", {
 │─────────────────│  │─────────────────│
 │ PK  name        │  │ PK  id          │
 └─────────────────┘  │ FK  note_id     │
-                     │     file_path   │
+                     │     path        │
                      │     file_name   │
 ┌─────────────────┐  │     file_size   │
 │    settings     │  │     mime_type   │
@@ -424,11 +424,6 @@ pnpm drizzle-kit generate:sqlite
 # マイグレーションの実行
 pnpm drizzle-kit migrate
 ```
-
-### 8. バックアップ
-
-- `Database` ドメインの `exportDatabase` を使用してDBファイルをバックアップ
-- ユーザーは任意の場所にバックアップファイルを保存可能
 
 ---
 

@@ -5,22 +5,21 @@
 ```typescript
 // app/core/domain/post/entity.ts
 
-import * as z from "zod";
 import { validate } from "@/lib/validation";
-import type { ValidationError } from "@/core/error/domain";
-import type { AggregateOperationResult } from "@/core/types";
+import { BusinessRuleError } from "@/core/domain/error";
+import { UserErrorCode } from "./errorCode";
+import type { UserId } from "@/core/domain/user/valueObject";
 import {
   type PostId,
   type PostContent,
   type PostStatus,
   generatePostId,
-  postIdSchema,
-  postContentSchema,
-  postStatusSchema
+  createPostContent,
 } from "./valueObject";
 
 export type PostBase = Readonly<{
   id: PostId;
+  userId: UserId;
   content: PostContent;
   createdAt: Date;
   updatedAt: Date;
@@ -33,53 +32,29 @@ export type PublishedPost = PostBase & {
 };
 export type Post = DraftPost | PublishedPost;
 
-export function reconstructPost(data: {
-  id: string;
-  content: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): Result<Post, ValidationError> {
-  return validate(z.object({
-    id: postIdSchema,
-    content: postContentSchema,
-    status: postStatusSchema,
-    createdAt: z.date(),
-    updatedAt: z.date(),
-  }), data);
-}
-
 export type CreatePostParams = {
-  content: PostContent;
-  status: PostStatus;
+  userId: UserId;
+  content: string;
 };
 
-export function createPost(params: CreatePostParams): Result<Post, ValidationError> {
-  return validate(z.object({
-    content: postContentSchema,
-    status: postStatusSchema,
-  }), params)
-    .map((validated) => {
-      const now = new Date(); 
-      return {
-        id: generatePostId(),
-        content: validated.content,
-        status: validated.status,
-        createdAt: now,
-        updatedAt: now,
-      } satisfies Post;
-    });
+export function createPost(params: CreatePostParams): DraftPost {
+  const now = new Date();
+  return {
+    id: generatePostId(),
+    userId: params.userId,
+    content: createPostContent(params.content),
+    status: "draft",
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
-export function updatePostContent(post: Post, newContent: string): Result<Post, ValidationError> {
-  return validate(postContentSchema, newContent)
-    .map((validated) => {
-      return {
-        ...post,
-        content: validated,
-        updatedAt: new Date(),
-      } satisfies Post;
-    });
+export function updatePostContent(post: Post, newContent: string): Post {
+  return {
+    ...post,
+    content: createPostContent(newContent),
+    updatedAt: new Date(),
+  };
 }
 
 // Other methods or entities...
@@ -90,21 +65,42 @@ export function updatePostContent(post: Post, newContent: string): Result<Post, 
 ```typescript
 // app/core/domain/post/valueObject.ts
 
-import * as z from "zod";
 import { v7 as uuidv7 } from "uuid";
+import { UserErrorCode } form "./errorCode";
 
-export const postIdSchema = z.uuid().brand<"PostId">();
-export type PostId = z.infer<typeof postIdSchema>;
+const POST_CONTENT_MAX_LENGTH = 5000;
+
+export type PostId = string & { readonly brand: "PostId" };
+
+export function createPostId(id: string): PostId {
+  // Add validation if necessary
+  return id as PostId;
+}
 
 export function generatePostId(): PostId {
   return uuidv7() as PostId;
 }
 
-export const postContentSchema = z.string().min(1).max(500);
-export type PostContent = z.infer<typeof postContentSchema>;
+export type PostContent = string & { readonly brand: "PostContent" };
 
-export const postStatusSchema = z.enum(["draft", "published"]);
-export type PostStatus = z.infer<typeof postStatusSchema>;
+export function createPostContent(content: string): PostContent {
+  if (content.length === 0) {
+    throw new BusinessRuleError(UserErrorCode.PostContentEmpty, "Post content cannot be empty");
+  }
+  if (content.length > POST_CONTENT_MAX_LENGTH) {
+    throw new BusinessRuleError(UserErrorCode.PostContentTooLong, "Post content exceeds maximum length");
+  }
+  return content as PostContent;
+}
+
+export type PostStatus = "draft" | "published";
+
+export function createPostStatus(status: string): PostStatus {
+  if (status !== "draft" && status !== "published") {
+    throw new BusinessRuleError(UserErrorCode.InvalidPostStatus, "Invalid post status");
+  }
+  return status as PostStatus;
+}
 
 // Other methods or value objects...
 
@@ -115,15 +111,14 @@ export type PostStatus = z.infer<typeof postStatusSchema>;
 ```typescript
 // app/core/domain/post/ports/postRepository.ts
 
-import type { Result } from "neverthrow";
-import type { Pagination } from "@/lib/pagination";
+import type { Pagination, PaginationResult } from "@/lib/pagination";
 import type { RepositoryError } from "@/core/error/adapter";
-import type { Post } from "@/domain/post/entity";
-import type { UserId } from "@/domain/user/valueObject";
+import type { Post } from "@/core/domain/post/entity";
+import type { UserId } from "@/core/domain/user/valueObject";
 
 export interface PostRepository {
-  create(post: Post): Promise<Result<Post, RepositoryError>>;
-  findByUserId(userId: UserId, pagination: Pagination): Promise<Result<{ items: Post[], count: number }, RepositoryError>>;
+  save(post: Post): Promise<void>;
+  findByUserId(userId: UserId, pagination: Pagination): Promise<PaginationResult<Post>>;
   // Other repository methods...
 }
 ```
@@ -131,10 +126,8 @@ export interface PostRepository {
 ```typescript
 // app/core/domain/file/ports/storageManager.ts
 
-import type { ExternalServiceError } from "@/core/error/adapter";
-
 export interface StorageManager {
-  uploadFile(/* Arguments */): Promise<Result<File, ExternalServiceError>>;
+  uploadFile(/* Arguments */): Promise</* ReturnType */>;
   // Other storage management methods...
 }
 ```
@@ -144,39 +137,54 @@ export interface StorageManager {
 ```typescript
 // app/core/adapters/drizzleSqlite/postRepository.ts
 
-import { type Result, ok, err } from "neverthrow";
-import type { Pagination } from "@/lib/pagination";
-import type { RepositoryError } from "@/core/error/adapter";
-import { type Post, reconstructPost } from "@/domain/post/entity";
-import type { UserId } from "@/domain/user/valueObject";
-import type { PostRepository } from "@/domain/post/ports/postRepository";
+import type { InferSelectModel } from "drizzle-orm";
+import type { Pagination, PaginationResult } from "@/lib/pagination";
+import { SystemError, SystemErrorCode } from "@/core/application/error";
+import { BusinessRuleError } from "@/core/domain/error";
+import type { UserId } from "@/core/domain/user/valueObject";
+import type { Post } from "@/core/domain/post/entity";
+import type { PostId, PostContent, PostStatus } from "@/core/domain/post/valueObject";
+import type { PostRepository } from "@/core/domain/post/ports/postRepository";
+import { posts } from "@/core/adapters/drizzleSqlite/schema";
 import type { Executor } from "./database";
+
+type PostDataModel = InferSelectModel<typeof posts>;
 
 export class DrizzleSqlitePostRepository implements PostRepository {
   constructor(
     private readonly executor: Executor) {}
 
-  async create(post: Post): Promise<Result<Post, RepositoryError>> {
+  into(data: PostDataModel): Post {
+    return {
+      id: data.id as PostId,
+      userId: data.userId as UserId,
+      content: data.content as PostContent,
+      status: data.status as PostStatus,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    };
+  }
+
+  async save(post: Post): Promise<void> {
     try {
-      const result = await this.executor
+      await this.executor
         .insert(posts)
         .values(post)
-        .returning();
-
-      const created = result[0];
-      if (!created) {
-        return err(new RepositoryError("Failed to create post"));
-      }
-
-      return reconstructPost(post).mapErr((error) => {
-        return new RepositoryError("Invalid post data", error);
-      });
+        .onConflictDoUpdate({
+          target: posts.id,
+          set: {
+            userId: post.userId,
+            content: post.content,
+            status: post.status,
+          },
+        });
     } catch (error) {
-      return err(new RepositoryError("Failed to create post", error));
+      // Handle errors, possibly mapping database errors to specific errors or codes
+      throw new SystemError(SystemErrorCode.DatabaseError, "Failed to save post", error);
     }
   }
 
-  async listByUserId(userId: UserId, pagination: Pagination): Promise<Result<{ items: Post[], count: number }, RepositoryError>> {
+  async findByUserId(userId: UserId, pagination: Pagination): Promise<PaginationResult<Post>> {
     const limit = pagination.limit;
     const offset = (pagination.page - 1) * pagination.limit;
 
@@ -194,14 +202,13 @@ export class DrizzleSqlitePostRepository implements PostRepository {
           .where(eq(posts.userId, userId)),
       ]);
 
-      return ok({
-        items: items
-          .map((item) => reconstructPost(item).unwrapOr(null))
-          .filter((item) => item !== null),
+      return {
+        items: items.map((item) => this.into(item)),
         count: Number(countResult[0].count),
-      });
+      };
     } catch (error) {
-      return err(new RepositoryError("Failed to list posts", error));
+      // Handle errors, possibly mapping database errors to specific errors or codes
+      throw new SystemError(SystemErrorCode.DatabaseError, "Failed to find posts", error);
     }
   }
 }
@@ -235,42 +242,42 @@ export const posts = sqliteTable(
 ```typescript
 // app/core/application/post/createPost.ts
 
-import { Result } from "neverthrow";
-import { createPost } from "@/domain/post/entity";
-import type { PostContent, PostStatus } from "@/domain/post/valueObject";
-import type { PostRepository } from "@/domain/post/ports/postRepository";
+import { type DraftPost, createPost } from "@/core/domain/post/entity";
+import type { PostContent, PostStatus } from "@/core/domain/post/valueObject";
+import type { PostRepository } from "@/dore/domain/post/ports/postRepository";
 import type { Context } from "../context";
+import type { Repositories } from "../unitOfWork";
+import {
+  UnauthenticatedError,
+  UnauthenticatedErrorCode,
+  ForbiddenError,
+  ForbiddenErrorCode
+} from "../error";
 
 export type CreatePostInput = {
   content: PostContent;
-  status: PostStatus;
 };
 
 export async function createPost(
   context: Context,
   input: CreatePostInput
-): Promise<Result<Post, RepositoryError>> {
-  return createPost(input)
-    .andThen((post) => {
-      return context.postRepository.create(post)
-    })
-    /** Or use transaction if needed
-    .map((post) => {
-      return context.db.transaction(async (tx) => {
-        const result = await context.withTransaction(tx).postRepository.create(post);
-        if (postResult.isErr()) {
-          throw postResult.error;
-        }
+): Promise<DraftPost> {
+  const userId = context.authProvider.getUserId();
 
-        // Other operations...
+  if (!userId) {
+    throw new UnauthenticatedError(UnauthenticatedErrorCode.AuthenticationRequired, "Authentication required");
+  }
 
-        return result.value; // Or another aggregated result
-      });
-    })
-    */
-    .mapErr((error) => {
-      return new ApplicationError("Failed to create post", error);
-    });
+  const post = createPost({
+    userId,
+    content: input.content,
+  });
+
+  await context.unitOfWork.run(async (repositories) => {
+    await repositories.postRepository.save(post);
+  });
+
+  return post;
 }
 ```
 
@@ -286,23 +293,16 @@ export const envSchema = z.object({
   DATABASE_URL: z.string(),
   // Other environment variables...
 });
-
 export type Env = z.infer<typeof envSchema>;
 
-const env = envSchema.safeParse(process.env);
-if (!env.success) {
-  throw new Error(/* Zod errors */);
-}
+const env = envSchema.parse(process.env);
 
 const db = getDatabase(env.data.DATABASE_URL);
 
 export const context = {
-  db,
-  postRepository: new DrizzleSqlitePostRepository(db),
+  unitOfWorkProvider: DrizzleSqliteUnitOfWorkProvider(db),
+  authProvider: new BetterAuthAuthProvider(/* Config */),
   storageManager: new S3StorageManager(/* S3 client */),
-  withTransaction: (tx: Transaction) => ({
-    postRepository: new DrizzleSqlitePostRepository(tx),
-  }),
   // Other adapters...
 };
 ```

@@ -53,10 +53,11 @@ export function createNote(
     params,
   ).map((validated) => {
     const now = new Date();
+    const tags = extractTagsFromContent(validated.content);
     return {
       id: generateNoteId(),
       content: validated.content,
-      tags: [],
+      tags,
       createdAt: now,
       updatedAt: now,
     } satisfies Note;

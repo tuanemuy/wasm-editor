@@ -10,7 +10,6 @@ Databaseドメインは、データベース接続とDBファイルの管理を�
 - DBファイルの作成、オープン、クローズ
 - DBファイルパスの管理
 - データベース接続状態の管理
-- DBファイルのインポート/エクスポート
 - データベース接続の提供（他のドメインへの依存性注入）
 
 ## エンティティ
@@ -53,8 +52,8 @@ type DatabasePath = z.infer<typeof databasePathSchema>;
 ```
 
 **形式**:
-- ローカルファイルシステムのパス
-- File System Access API を使用してアクセス
+- ストレージパス
+- File System Access API などを使用してアクセス
 
 ---
 
@@ -80,13 +79,6 @@ interface DatabaseManager {
 
   isOpen(): boolean;
 
-  exportToFile(
-    destinationPath: DatabasePath
-  ): Promise<Result<void, ExternalServiceError>>;
-
-  importFromFile(
-    sourcePath: DatabasePath
-  ): Promise<Result<DatabaseConnection, ExternalServiceError>>;
 }
 ```
 
@@ -96,29 +88,29 @@ interface DatabaseManager {
 - `close`: データベース接続を閉じる
 - `getConnection`: 現在の接続を取得
 - `isOpen`: 接続が開いているかどうかを確認
-- `exportToFile`: DBファイルをエクスポート（バックアップ）
-- `importFromFile`: DBファイルをインポート
 
 ---
 
-### FileSystemManager
+### DatabaseStorageManager
 
-ファイルシステムへのアクセスを担当するインターフェース（Asset、Exportドメインと共有）。
+Database用のストレージ管理を担当するインターフェース。
 
 ```typescript
-interface FileSystemManager {
-  openFileWithDialog(): Promise<Result<File, ExternalServiceError>>;
+interface DatabaseStorageManager {
+  openWithDialog(): Promise<Result<File, ExternalServiceError>>;
 
-  saveFileWithDialog(
+  saveWithDialog(
     file: File,
     suggestedName: string
-  ): Promise<Result<FilePath, ExternalServiceError>>;
+  ): Promise<Result<DatabasePath, ExternalServiceError>>;
 }
 ```
 
 **メソッド**:
-- `openFileWithDialog`: ユーザーにファイルを選択させて開く（File System Access API の `showOpenFilePicker()` を使用）
-- `saveFileWithDialog`: ユーザーにファイル保存先を選択させて保存（File System Access API の `showSaveFilePicker()` を使用）
+- `openWithDialog`: ユーザーにダイアログで選択させて開く
+- `saveWithDialog`: ユーザーにダイアログで保存先を選択させて保存
+
+**実装例**: File System Access API、Cloud Storage API、IndexedDB など
 
 ---
 
@@ -140,7 +132,7 @@ async function createDatabase(
 ```
 
 **処理フロー**:
-1. dbPath が指定されていない場合、ユーザーにファイル保存先を選択させる
+1. dbPath が指定されていない場合、DatabaseStorageManager を使ってユーザーに保存先を選択させる
 2. DatabaseManager で新規DBファイルを作成
 3. データベース接続を返す
 
@@ -166,7 +158,7 @@ async function openDatabase(
 ```
 
 **処理フロー**:
-1. dbPath が指定されていない場合、ユーザーにファイルを選択させる
+1. dbPath が指定されていない場合、DatabaseStorageManager を使ってユーザーにファイルを選択させる
 2. DatabaseManager で既存のDBファイルを開く
 3. データベース接続を返す
 
@@ -232,7 +224,7 @@ async function changeDatabasePath(
 
 **処理フロー**:
 1. 現在の接続を閉じる
-2. newDbPath が指定されていない場合、ユーザーにファイルを選択させる
+2. newDbPath が指定されていない場合、DatabaseStorageManager を使ってユーザーにファイルを選択させる
 3. 新しいDBファイルを開く
 4. 新しいデータベース接続を返す
 
@@ -242,66 +234,13 @@ async function changeDatabasePath(
 
 ---
 
-### exportDatabase
-
-DBファイルをエクスポート（バックアップ）します。
-
-```typescript
-type ExportDatabaseInput = {
-  destinationPath?: DatabasePath;
-};
-
-async function exportDatabase(
-  context: Context,
-  input: ExportDatabaseInput
-): Promise<Result<void, ApplicationError>>
-```
-
-**処理フロー**:
-1. destinationPath が指定されていない場合、ユーザーにファイル保存先を選択させる
-2. DatabaseManager でDBファイルをエクスポート
-3. void を返す
-
-**エラー**:
-- ExternalServiceError: エクスポート失敗
-- ApplicationError: ユーザーがファイル選択をキャンセル
-
----
-
-### importDatabase
-
-DBファイルをインポートします。
-
-```typescript
-type ImportDatabaseInput = {
-  sourcePath?: DatabasePath;
-};
-
-async function importDatabase(
-  context: Context,
-  input: ImportDatabaseInput
-): Promise<Result<DatabaseConnection, ApplicationError>>
-```
-
-**処理フロー**:
-1. sourcePath が指定されていない場合、ユーザーにファイルを選択させる
-2. 現在の接続を閉じる
-3. DatabaseManager でDBファイルをインポート
-4. 新しいデータベース接続を返す
-
-**エラー**:
-- ExternalServiceError: インポート失敗、接続のクローズ失敗
-- ApplicationError: ユーザーがファイル選択をキャンセル
-
----
-
 ## 実装のポイント
 
 ### @tursodatabase/database-wasm の使用
 
 - ブラウザ内でSQLiteデータベースを動作させるためのWASMライブラリ
-- DBファイルはローカルファイルシステムに保存される
-- File System Access API を使用してファイルの読み書きを行う
+- DBファイルはストレージに保存される
+- File System Access API などを使用してファイルの読み書きを行う
 
 **初期化例**:
 ```typescript
@@ -327,16 +266,6 @@ const db = await createClient({
 - データベース接続は、アプリケーション全体で1つのみ
 - Context オブジェクトに接続を保持
 - 接続が開かれていない場合、各ユースケースでエラーを返す
-
-### DBファイルのバックアップ
-
-- `exportDatabase` を使用してDBファイルをバックアップ
-- ユーザーは任意の場所にバックアップファイルを保存可能
-
-### DBファイルの復元
-
-- `importDatabase` を使用してDBファイルを復元
-- 既存の接続を閉じてから新しいDBファイルをインポート
 
 ---
 

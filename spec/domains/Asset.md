@@ -23,7 +23,7 @@ Assetドメインは、画像などのファイル資産の管理を担当しま
 type Asset = Readonly<{
   id: AssetId;
   noteId: NoteId;
-  filePath: FilePath;
+  path: Path;
   fileName: FileName;
   fileSize: number;
   mimeType: string;
@@ -34,7 +34,7 @@ type Asset = Readonly<{
 **プロパティ**:
 - `id`: アセットの一意識別子（UUID v7）
 - `noteId`: アセットが紐づくノートのID
-- `filePath`: ローカルファイルシステムのパス（相対パス）
+- `path`: ストレージパス（相対パス）
 - `fileName`: ファイル名
 - `fileSize`: ファイルサイズ（バイト）
 - `mimeType`: MIMEタイプ（例: "image/png", "image/jpeg"）
@@ -78,18 +78,18 @@ type NoteId = z.infer<typeof noteIdSchema>;
 
 ---
 
-### FilePath
+### Path
 
-ローカルファイルシステムのパス。
+ストレージパス。
 
 ```typescript
-const filePathSchema = z.string().min(1);
-type FilePath = z.infer<typeof filePathSchema>;
+const pathSchema = z.string().min(1);
+type Path = z.infer<typeof pathSchema>;
 ```
 
 **形式**:
 - 相対パス（例: `assets/images/abc123.png`）
-- ファイルシステムのルートディレクトリからの相対パス
+- ストレージのルートディレクトリからの相対パス
 
 ---
 
@@ -133,35 +133,36 @@ interface AssetRepository {
 
 ---
 
-### FileSystemManager
+### AssetStorageManager
 
-ローカルファイルシステムへのアクセスを担当するインターフェース。
-File System Access API を使用して実装します。
+Asset用のストレージ管理を担当するインターフェース。
 
 ```typescript
-interface FileSystemManager {
-  saveFile(
+interface AssetStorageManager {
+  save(
     file: File,
-    destinationPath: FilePath
-  ): Promise<Result<FilePath, ExternalServiceError>>;
+    destinationPath: Path
+  ): Promise<Result<Path, ExternalServiceError>>;
 
-  readFile(
-    filePath: FilePath
+  read(
+    path: Path
   ): Promise<Result<File, ExternalServiceError>>;
 
-  deleteFile(
-    filePath: FilePath
+  delete(
+    path: Path
   ): Promise<Result<void, ExternalServiceError>>;
 
-  getFileUrl(filePath: FilePath): Promise<Result<string, ExternalServiceError>>;
+  getUrl(path: Path): Promise<Result<string, ExternalServiceError>>;
 }
 ```
 
 **メソッド**:
-- `saveFile`: ファイルをローカルファイルシステムに保存
-- `readFile`: ファイルを読み込み
-- `deleteFile`: ファイルを削除
-- `getFileUrl`: ファイルのURL（Blob URL）を取得（表示用）
+- `save`: データを保存
+- `read`: データを読み込み
+- `delete`: データを削除
+- `getUrl`: データのURLを取得（表示用）
+
+**実装例**: File System Access API、Cloud Storage API、IndexedDB など
 
 ---
 
@@ -187,7 +188,7 @@ async function uploadImage(
 1. ファイルサイズを検証（10MB以下）
 2. ファイルタイプを検証（image/png, image/jpeg, image/gif など）
 3. ファイル名を生成（UUID + 拡張子）
-4. ファイルをローカルファイルシステムに保存（FileSystemManager を使用）
+4. AssetStorageManager を使ってデータを保存
 5. アセットエンティティを作成
 6. アセットをリポジトリに保存
 7. 保存されたアセットを返す
@@ -265,7 +266,7 @@ async function deleteAsset(
 **処理フロー**:
 1. リポジトリからアセットを取得
 2. アセットが存在しない場合はエラーを返す
-3. ファイルシステムからファイルを削除（FileSystemManager を使用）
+3. AssetStorageManager を使ってデータを削除
 4. リポジトリからアセットを削除
 5. void を返す
 
@@ -294,7 +295,7 @@ async function getImageUrl(
 **処理フロー**:
 1. リポジトリからアセットを取得
 2. アセットが存在しない場合はエラーを返す
-3. FileSystemManager でファイルのURL（Blob URL）を取得
+3. AssetStorageManager を使ってデータのURLを取得
 4. URLを返す
 
 **エラー**:
@@ -314,7 +315,7 @@ const assets = sqliteTable("assets", {
   noteId: text("note_id")
     .notNull()
     .references(() => notes.id, { onDelete: "cascade" }),
-  filePath: text("file_path").notNull(),
+  path: text("path").notNull(),
   fileName: text("file_name").notNull(),
   fileSize: integer("file_size").notNull(),
   mimeType: text("mime_type").notNull(),
@@ -331,16 +332,16 @@ const noteIdIndex = index("assets_note_id_idx").on(assets.noteId);
 
 ## 実装のポイント
 
-### File System Access API の使用
+### ストレージアクセス
 
 - ブラウザで動作するため、Node.js の `fs` モジュールは使用できません
-- File System Access API を使用してローカルファイルシステムにアクセス
+- File System Access API などを使用してストレージにアクセス
 - ユーザーにディレクトリの選択を促し、そのディレクトリ内にファイルを保存
 
-### ファイルパスの管理
+### パスの管理
 
 - DBには相対パス（`assets/images/abc123.png`）を保存
-- 実際のファイルシステムのルートディレクトリは、Databaseドメインで管理
+- 実際のストレージのルートディレクトリは、Databaseドメインで管理
 - ファイルの保存先は、DBファイルと同じディレクトリまたはサブディレクトリ
 
 ### ファイルサイズの制限
@@ -350,14 +351,14 @@ const noteIdIndex = index("assets_note_id_idx").on(assets.noteId);
 
 ### 画像の表示
 
-- 画像を表示する際は、Blob URL を生成して使用
+- 画像を表示する際は、アクセス可能なURLまたは Blob URL を生成して使用
 - Blob URL は `URL.createObjectURL()` で生成
 - 使用後は `URL.revokeObjectURL()` で解放
 
 ### 孤立したアセットの削除
 
 - ノートが削除された場合、関連するアセットも自動的に削除される（`onDelete: "cascade"`）
-- ファイルシステムからも削除する必要があるため、ノート削除時にアセットのファイルも削除
+- ストレージからも削除する必要があるため、ノート削除時にアセットのファイルも削除
 
 ### サポートする画像形式
 

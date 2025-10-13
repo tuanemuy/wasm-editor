@@ -2,13 +2,12 @@
 
 ## 概要
 
-Exportドメインは、ノートのエクスポート（Markdown、PDF）を担当します。
-ノートの内容を指定された形式に変換し、ローカルファイルシステムに保存します。
+Exportドメインは、ノートのMarkdownファイルへのエクスポートを担当します。
+ノートの内容をMarkdown形式に変換し、ローカルファイルシステムに保存します。
 
 ## 責務
 
 - ノートをMarkdownファイルに変換してエクスポート
-- ノートをPDFファイルに変換してエクスポート（Markdownのレンダリング、画像の埋め込み）
 - エクスポートファイル名の生成（タイトルまたは作成日時）
 - 複数ノートの一括エクスポート
 
@@ -20,17 +19,6 @@ NoteドメインとAssetドメインのエンティティを使用します。
 ---
 
 ## 値オブジェクト
-
-### ExportFormat
-
-エクスポート形式を表す値オブジェクト。
-
-```typescript
-const exportFormatSchema = z.enum(["markdown", "pdf"]);
-type ExportFormat = z.infer<typeof exportFormatSchema>;
-```
-
----
 
 ### ExportFileName
 
@@ -74,56 +62,29 @@ interface MarkdownExporter {
 
 ---
 
-### PdfExporter
+### ExportStorageManager
 
-PDFファイルの生成を担当するインターフェース。
-
-```typescript
-interface PdfExporter {
-  export(
-    note: Note,
-    assets: Asset[]
-  ): Promise<Result<Blob, ExternalServiceError>>;
-
-  exportMultiple(
-    notes: Note[],
-    assetsByNoteId: Map<NoteId, Asset[]>
-  ): Promise<Result<Blob[], ExternalServiceError>>;
-}
-```
-
-**メソッド**:
-- `export`: 単一ノートをPDFファイル（Blob）に変換
-- `exportMultiple`: 複数ノートをPDFファイル（Blob）の配列に変換
-
-**実装方針**:
-- MarkdownをレンダリングしてHTML化
-- HTMLをPDFに変換（jsPDF、pdfmake、html2pdf.js など）
-- 画像を埋め込み
-
----
-
-### FileSystemManager
-
-ファイルの保存を担当するインターフェース（Assetドメインと共有）。
+Export用のストレージ管理を担当するインターフェース。
 
 ```typescript
-interface FileSystemManager {
-  saveFile(
+interface ExportStorageManager {
+  save(
     file: File,
-    destinationPath: FilePath
-  ): Promise<Result<FilePath, ExternalServiceError>>;
+    destinationPath: Path
+  ): Promise<Result<Path, ExternalServiceError>>;
 
-  saveFileWithDialog(
+  saveWithDialog(
     file: File,
     suggestedName: string
-  ): Promise<Result<FilePath, ExternalServiceError>>;
+  ): Promise<Result<Path, ExternalServiceError>>;
 }
 ```
 
 **メソッド**:
-- `saveFile`: ファイルを指定パスに保存
-- `saveFileWithDialog`: ユーザーにファイル保存先を選択させて保存（File System Access API の `showSaveFilePicker()` を使用）
+- `save`: データを指定パスに保存
+- `saveWithDialog`: ユーザーにダイアログで保存先を選択させて保存
+
+**実装例**: File System Access API、Cloud Storage API、IndexedDB など
 
 ---
 
@@ -150,40 +111,8 @@ async function exportNoteAsMarkdown(
 3. リポジトリからノートに紐づくアセットを取得
 4. MarkdownExporter でノートをMarkdown文字列に変換
 5. エクスポートファイル名を生成
-6. ユーザーにファイル保存先を選択させる（FileSystemManager.saveFileWithDialog）
-7. Markdown文字列をファイルとして保存
-8. void を返す
-
-**エラー**:
-- RepositoryError: DB取得失敗
-- ExternalServiceError: エクスポート失敗、ファイル保存失敗
-- ApplicationError: ノートが存在しない
-
----
-
-### exportNoteAsPDF
-
-単一ノートをPDFファイルとしてエクスポートします。
-
-```typescript
-type ExportNoteAsPDFInput = {
-  noteId: NoteId;
-};
-
-async function exportNoteAsPDF(
-  context: Context,
-  input: ExportNoteAsPDFInput
-): Promise<Result<void, ApplicationError>>
-```
-
-**処理フロー**:
-1. リポジトリからノートを取得
-2. ノートが存在しない場合はエラーを返す
-3. リポジトリからノートに紐づくアセットを取得
-4. PdfExporter でノートをPDFファイル（Blob）に変換
-5. エクスポートファイル名を生成
-6. ユーザーにファイル保存先を選択させる（FileSystemManager.saveFileWithDialog）
-7. PDFファイルを保存
+6. ExportStorageManager を使ってユーザーに保存先を選択させる
+7. Markdown文字列を保存
 8. void を返す
 
 **エラー**:
@@ -213,39 +142,8 @@ async function exportNotesAsMarkdown(
 2. リポジトリから各ノートに紐づくアセットを取得
 3. MarkdownExporter で各ノートをMarkdown文字列に変換
 4. 各ノートのエクスポートファイル名を生成
-5. ユーザーにディレクトリを選択させる（File System Access API の `showDirectoryPicker()` を使用）
-6. 各Markdown文字列をファイルとして保存
-7. void を返す
-
-**エラー**:
-- RepositoryError: DB取得失敗
-- ExternalServiceError: エクスポート失敗、ファイル保存失敗
-- ApplicationError: ノートが存在しない
-
----
-
-### exportNotesAsPDF
-
-複数ノートを一括でPDFファイルとしてエクスポートします。
-
-```typescript
-type ExportNotesAsPDFInput = {
-  noteIds: NoteId[];
-};
-
-async function exportNotesAsPDF(
-  context: Context,
-  input: ExportNotesAsPDFInput
-): Promise<Result<void, ApplicationError>>
-```
-
-**処理フロー**:
-1. リポジトリから各ノートを取得
-2. リポジトリから各ノートに紐づくアセットを取得
-3. PdfExporter で各ノートをPDFファイル（Blob）に変換
-4. 各ノートのエクスポートファイル名を生成
-5. ユーザーにディレクトリを選択させる（File System Access API の `showDirectoryPicker()` を使用）
-6. 各PDFファイルを保存
+5. ExportStorageManager を使ってユーザーにディレクトリを選択させる
+6. 各Markdown文字列を保存
 7. void を返す
 
 **エラー**:
@@ -262,24 +160,6 @@ async function exportNotesAsPDF(
 - ノートの内容をそのままMarkdownファイルとして保存
 - 画像はMarkdownの画像記法（`![alt](path)`）で参照
   - 画像のパスはエクスポート先に応じて調整（相対パスまたは絶対パス）
-
-### PDFエクスポート
-
-以下のライブラリを使用してPDFを生成：
-- **jsPDF**: シンプルなPDF生成（テキストベース）
-- **pdfmake**: レイアウト機能が豊富
-- **html2pdf.js**: HTMLをPDFに変換（Markdownをレンダリングしてから変換）
-
-**推奨**: html2pdf.js を使用
-- MarkdownをレンダリングしてHTML化（marked.js や unified を使用）
-- CSSでスタイリング
-- html2pdf.js でPDF化
-
-**PDFの内容**:
-- タイトル（ノートの最初の見出し）
-- 作成日時・更新日時
-- ノート本文（フォーマット済み）
-- 画像（埋め込み）
 
 ### エクスポートファイル名の生成
 

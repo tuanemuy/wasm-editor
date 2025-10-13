@@ -40,17 +40,15 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 ### ユースケース一覧
 
 #### メモ管理
-- `getMemos`: メモ一覧を取得（ページネーション付き）
-- `sortMemos`: メモをソートする（作成日/更新日、昇順/降順）
-- `createMemo`: 新規メモを作成（空のメモをDBに保存）
+- `getNotes`: メモ一覧を取得（ページネーション付き）
+- `createNote`: 新規メモを作成（空のメモをDBに保存）
 
 #### タグ管理
 - `getTags`: タグ一覧を取得
-- `filterMemosByTags`: タグでメモをフィルタリング（複数タグのAND検索）
 
 #### 検索
-- `searchMemos`: メモを全文検索
-- `searchMemosByTags`: タグで検索
+- `searchNotes`: メモを全文検索
+- `searchNotesByTags`: タグで検索
 - `combinedSearch`: 全文検索とタグ検索を組み合わせ
 
 #### データベース管理
@@ -58,8 +56,7 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 - `createDatabase`: 新規DBファイルを作成
 
 #### エクスポート（一括）
-- `exportMemosAsMarkdown`: 選択したメモを一括でMarkdownエクスポート
-- `exportMemosAsPDF`: 選択したメモを一括でPDFエクスポート
+- `exportNotesAsMarkdown`: 選択したメモを一括でMarkdownエクスポート
 
 ### コンポーネント一覧
 
@@ -121,9 +118,9 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 ### ユースケース一覧
 
 #### メモ管理
-- `getMemo`: メモを取得（ID指定）
-- `updateMemo`: メモを更新（自動保存）
-- `deleteMemo`: メモを削除
+- `getNote`: メモを取得（ID指定）
+- `updateNote`: メモを更新（自動保存）
+- `deleteNote`: メモを削除
 
 #### リビジョン管理
 - `getRevisions`: メモのリビジョン一覧を取得
@@ -131,12 +128,11 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 - `restoreRevision`: リビジョンからメモを復元
 
 #### エクスポート
-- `exportMemoAsMarkdown`: メモをMarkdownとしてエクスポート
-- `exportMemoAsPDF`: メモをPDFとしてエクスポート
+- `exportNoteAsMarkdown`: メモをMarkdownとしてエクスポート
 
 #### 画像管理
 - `uploadImage`: 画像をアップロード
-- `saveImageToFileSystem`: 画像をローカルファイルシステムに保存
+- `getImageUrl`: 画像のURLを取得（表示用）
 
 ### コンポーネント一覧
 
@@ -190,8 +186,6 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 #### データベース管理
 - `getDatabasePath`: DBファイルパスを取得
 - `changeDatabasePath`: DBファイルパスを変更
-- `exportDatabase`: DBファイルをエクスポート
-- `importDatabase`: DBファイルをインポート
 
 #### アプリケーション設定
 - `getSettings`: アプリケーション設定を取得
@@ -223,8 +217,6 @@ UXを重視し、ページ遷移を最小限に抑え、モーダル/ダイア�
 - `DatabaseSettings`: データベース設定セクション
   - `CurrentDatabaseInfo`: 現在のDB情報表示
   - `ChangeDatabaseButton`: DBファイル変更ボタン
-  - `ExportDatabaseButton`: DBエクスポートボタン
-  - `ImportDatabaseButton`: DBインポートボタン
 - `GeneralSettings`: 一般設定セクション
   - `SortOrderSelect`: デフォルトソート順選択
   - `AutoSaveIntervalInput`: 自動保存間隔入力

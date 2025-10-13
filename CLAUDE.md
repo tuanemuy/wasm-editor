@@ -21,7 +21,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Runtime**: Browser
 - **Frontend**: React Router v7 Framework mode, Tailwind CSS, shadcn/ui and Tiptap
 - **Database**: @tursodatabase/database-wasm with Drizzle ORM
-- **Validation**: Zod 4 schemas
 - **Error Handling**: neverthrow for Result types
 
 ## Core Architecture
@@ -37,9 +36,9 @@ Hexagonal architecture with domain-driven design principles:
 - **Application Layer** (`app/core/application/`): Contains use cases and application services
     - `app/core/application/context.ts`: Context type for dependency injection
     - `app/core/application/${domain}/${usecase}.ts`: Application services that orchestrate domain logic. Each service is a function that takes a context object.
-    - `app/core/error/domain.ts`: Error types for domain layer
-    - `app/core/error/adapter.ts`: Error types for adapter layer
-    - `app/core/error/application.ts`: Error types for application layer
+    - `app/core/domain/error.ts`: Error types for business logic
+    - `app/core/domain/${domain}/errorCode.ts`: Error codes for each domain
+    - `app/core/applicaion/error.ts`: Error types for application layer
 
 ### Example Implementation
 
@@ -73,9 +72,29 @@ React Router v7 application code using:
 
 ## Error Handling
 
-- All backend functions return `Result<T, E>` or `Promise<Result<T, E>>` types using `neverthrow`
-- Each modules has its own error types. Error types should extend a base `AnyError` class (`app/lib/error.ts`)
-- Error types are defined in:
-    - `app/core/error/domain.ts`: Domain layer errors
-    - `app/core/error/adapter.ts`: Adapter layer errors
-    - `app/core/error/application.ts`: Application layer errors
+### Domain Layer
+
+- `app/core/domain/error.ts`: Defines `BusinessRuleError`.
+- `app/core/domain/${domain}/errorCode.ts`: Error codes are defined within each respective domain.
+- Avoids using `try-catch`; throws a `BusinessRuleError` exception when a violation can be determined by the logic.
+
+### Application Layer
+
+- `app/core/application/error.ts`: Defines the following errors:
+    - `NotFoundError`
+    - `ConflictError`
+    - `UnauthorizedError`
+    - `ForbiddenError`
+    - `ValidationError`
+    - `SystemError`
+- Defines error codes for each as needed (e.g., a `NETWORK_ERROR` code for `SystemError`).
+- Avoids using `try-catch`; throws these exceptions when a failure can be determined by the application logic.
+
+### Infrastructure Layer
+
+- Throws errors that are defined in the Domain and Application layers.
+- Catches exceptions from external systems as necessary and transforms them into the errors defined above.
+
+### Presentation Layer
+
+- Catches all exceptions and transforms them into appropriate responses, such as HTTP errors.

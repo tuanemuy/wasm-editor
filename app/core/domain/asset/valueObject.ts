@@ -18,10 +18,10 @@ export const noteIdSchema = z.string().uuid().brand<"NoteId">();
 export type NoteId = z.infer<typeof noteIdSchema>;
 
 /**
- * File path (relative path from file system root)
+ * Storage path (relative path from storage root)
  */
-export const filePathSchema = z.string().min(1);
-export type FilePath = z.infer<typeof filePathSchema>;
+export const pathSchema = z.string().min(1);
+export type Path = z.infer<typeof pathSchema>;
 
 /**
  * File name
