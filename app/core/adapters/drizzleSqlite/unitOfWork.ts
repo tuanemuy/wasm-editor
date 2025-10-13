@@ -1,6 +1,6 @@
 import type {
-  UnitOfWorkProvider,
   Repositories,
+  UnitOfWorkProvider,
 } from "@/core/application/unitOfWork";
 import type { Database, Transaction } from "./client";
 

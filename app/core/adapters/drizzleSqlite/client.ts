@@ -14,6 +14,6 @@ export type Transaction = BetterSQLiteTransaction<
 >;
 export type Executor = Database | Transaction;
 
-export function createDatabase(path: string): Database {
+export function getDatabase(path: string): Database {
   return drizzle(new TursoDatabase(path), { schema });
 }
