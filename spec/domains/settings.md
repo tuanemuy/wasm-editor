@@ -2,437 +2,279 @@
 
 ## 概要
 
-**ドメイン名**: Settings
+**ドメイン名:** Settings (設定)
 
-アプリケーション全体の設定を管理するドメイン。
-ユーザーの好みやアプリケーションの動作を制御するための各種設定を提供する。
+Settingsドメインは、アプリケーション全体の設定を管理する汎用ドメインです。
+ユーザーの好みに応じた動作をサポートし、設定の永続化とインポート/エクスポートを提供します。
 
 ## エンティティ
 
-### Settings
+### Settings (設定)
 
-アプリケーション設定を表すエンティティ。
+アプリケーション全体の設定を表現するエンティティ。
 
-**属性**:
-- `general: GeneralSettings` - 一般設定
-- `editor: EditorSettings` - エディター設定
-- `revision: RevisionSettings` - リビジョン設定
-- `image: ImageSettings` - 画像設定
-- `updatedAt: Timestamp` - 最終更新日時
+**属性:**
+- `defaultOrder: SortOrder` - デフォルトのソート順（昇順/降順）
+- `defaultOrderBy: OrderBy` - デフォルトのソート対象（作成日時/更新日時）
+- `autoSaveInterval: AutoSaveInterval` - 自動保存間隔
 
-**不変条件**:
-- すべての設定項目は有効な値を持たなければならない
+**ビジネスルール:**
+1. 自動保存間隔は500ms以上10000ms以下である
+2. ソート順とソート対象は定義された値のみを取る
 
-**ビジネスルール**:
-- 設定は常に1つのインスタンスのみ存在する（シングルトン）
-- 設定変更は即座に反映される
+**エンティティ操作:**
+- `createDefaultSettings(): Settings` - デフォルト設定を作成
+- `updateSettings(settings: Settings, updates: Partial<Pick<Settings, 'defaultOrder' | 'defaultOrderBy' | 'autoSaveInterval'>>): Settings` - 設定を更新
+- `reset(): Settings` - 設定をリセット
+
+```typescript
+export type Settings = {
+  defaultOrder: SortOrder;
+  defaultOrderBy: OrderBy;
+  autoSaveInterval: AutoSaveInterval;
+};
+```
 
 ## 値オブジェクト
 
-### GeneralSettings
+**注記:** `SortOrder` と `OrderBy` は Note ドメインで定義されており、Settings ドメインではそれらを参照します。
 
-一般設定を表す値オブジェクト。
+### SortOrder (ソート順)
 
-**属性**:
-- `defaultSortOrder: SortOrder` - デフォルトのメモソート順
-- `autoSaveInterval: number` - 自動保存間隔（ミリ秒、デフォルト: 2000 = 2秒）
-- `itemsPerPage: number` - 1ページあたりの表示件数（デフォルト: 20）
+> Note ドメインで定義: `app/core/domain/note/valueObject.ts`
 
-**バリデーション**:
-- autoSaveIntervalは1000以上10000以下（1〜10秒）
-- itemsPerPageは10以上100以下
+メモ一覧のデフォルトソート順（昇順/降順）を表す値オブジェクト。
 
-### EditorSettings
-
-エディター設定を表す値オブジェクト。
-
-**属性**:
-- `fontSize: FontSize` - フォントサイズ
-- `theme: Theme` - テーマ（ライト/ダーク）
-- `fontFamily: FontFamily` - フォントファミリー
-- `lineHeight: number` - 行高（デフォルト: 1.6）
-- `showLineNumbers: boolean` - 行番号表示（デフォルト: false）
-
-**バリデーション**:
-- lineHeightは1.0以上3.0以下
-
-### RevisionSettings
-
-リビジョン設定を表す値オブジェクト。
-
-**属性**:
-- `autoRevisionInterval: number` - 自動リビジョン保存間隔（分、デフォルト: 10）
-- `maxRevisionsPerNote: number` - メモあたりの最大リビジョン数（デフォルト: 50）
-- `enableAutoRevision: boolean` - 自動リビジョン保存を有効化（デフォルト: true）
-
-**バリデーション**:
-- autoRevisionIntervalは1以上60以下（1分〜1時間）
-- maxRevisionsPerNoteは10以上100以下
-
-### ImageSettings
-
-画像設定を表す値オブジェクト。
-
-**属性**:
-- `maxImageSize: number` - 最大画像サイズ（バイト、デフォルト: 10MB）
-- `imageQuality: number` - 画像品質（0.0〜1.0、デフォルト: 0.85）
-- `autoOptimize: boolean` - 自動最適化を有効化（デフォルト: true）
-
-**バリデーション**:
-- maxImageSizeは1MB以上50MB以下
-- imageQualityは0.0以上1.0以下
-
-### SortOrder
-
-メモのソート順。
-
-**型**: `enum`
-- `CREATED_ASC` - 作成日昇順
-- `CREATED_DESC` - 作成日降順
-- `UPDATED_ASC` - 更新日昇順
-- `UPDATED_DESC` - 更新日降順
-
-### FontSize
-
-フォントサイズ。
-
-**型**: `enum`
-- `SMALL` - 小（14px）
-- `MEDIUM` - 中（16px）
-- `LARGE` - 大（18px）
-- `EXTRA_LARGE` - 特大（20px）
-
-### Theme
-
-テーマ。
-
-**型**: `enum`
-- `LIGHT` - ライトテーマ
-- `DARK` - ダークテーマ
-- `AUTO` - システム設定に従う
-
-### FontFamily
-
-フォントファミリー。
-
-**型**: `enum`
-- `SYSTEM` - システムフォント
-- `SERIF` - セリフ体
-- `SANS_SERIF` - サンセリフ体
-- `MONOSPACE` - 等幅フォント
-
-### Timestamp
-
-日時を表す値オブジェクト。
-
-**型**: `Date`
-
-## ポート
-
-### SettingsRepository
-
-設定の永続化を担当するリポジトリインターフェース。
-
-**メソッド**:
+**取りうる値:**
+- `asc` - 昇順 (古い順)
+- `desc` - 降順 (新しい順、デフォルト)
 
 ```typescript
-interface SettingsRepository {
-  // 設定を取得
-  // @throws {SystemError}
-  get(): Promise<Settings>
+// Note ドメインから import
+import type { SortOrder } from "@/core/domain/note/valueObject";
+```
 
-  // 設定を保存
-  // @throws {SystemError}
-  save(settings: Settings): Promise<Settings>
+### OrderBy (ソート対象)
 
-  // 設定をリセット（デフォルト値に戻す）
-  // @throws {SystemError}
-  reset(): Promise<Settings>
+> Note ドメインで定義: `app/core/domain/note/valueObject.ts`
 
-  // 特定の設定カテゴリのみを更新
-  // @throws {SystemError}
-  updateGeneral(general: GeneralSettings): Promise<Settings>
-  // @throws {SystemError}
-  updateEditor(editor: EditorSettings): Promise<Settings>
-  // @throws {SystemError}
-  updateRevision(revision: RevisionSettings): Promise<Settings>
-  // @throws {SystemError}
-  updateImage(image: ImageSettings): Promise<Settings>
+メモ一覧のデフォルトソート対象を表す値オブジェクト。
+
+**取りうる値:**
+- `created_at` - 作成日時 (デフォルト)
+- `updated_at` - 更新日時
+
+```typescript
+// Note ドメインから import
+import type { OrderBy } from "@/core/domain/note/valueObject";
+```
+
+### AutoSaveInterval (自動保存間隔)
+
+エディターの自動保存間隔を表す値オブジェクト (ミリ秒)。
+
+**バリデーションルール:**
+1. 最小値: 500ミリ秒
+2. 最大値: 10000ミリ秒 (10秒)
+3. デフォルト値: 2000ミリ秒 (2秒)
+
+```typescript
+export type AutoSaveInterval = number & { readonly brand: "AutoSaveInterval" };
+
+export function createAutoSaveInterval(interval: number): AutoSaveInterval;
+export function getDefaultAutoSaveInterval(): AutoSaveInterval; // 2000
+```
+
+## エラーコード
+
+Settingsドメインで発生するエラーコードを定義します。
+
+```typescript
+export const SettingsErrorCode = {
+  // ソート順関連
+  InvalidSortOrder: "SETTINGS_INVALID_SORT_ORDER",
+  InvalidOrderBy: "SETTINGS_INVALID_ORDER_BY",
+
+  // 自動保存間隔関連
+  AutoSaveIntervalTooShort: "SETTINGS_AUTO_SAVE_INTERVAL_TOO_SHORT",
+  AutoSaveIntervalTooLong: "SETTINGS_AUTO_SAVE_INTERVAL_TOO_LONG",
+} as const;
+```
+
+## ポート (インターフェース)
+
+### SettingsRepository (設定リポジトリ)
+
+設定の永続化を担当するポート。
+
+**責務:**
+- 設定の保存と取得
+- システム全体で単一の設定インスタンスを保証
+
+**実装上の制約:**
+- システム全体で1つの設定インスタンスのみが永続化される
+- この制約はリポジトリの実装層（ローカルストレージ）で保証される
+
+```typescript
+export interface SettingsRepository {
+  /**
+   * 設定を取得
+   * システム全体で単一の設定を取得する
+   * 設定が存在しない場合はデフォルト設定を返す
+   */
+  get(): Promise<Settings>;
+
+  /**
+   * 設定を保存
+   * システム全体で単一の設定を更新する
+   */
+  save(settings: Settings): Promise<void>;
+
+  /**
+   * 設定が存在するかチェック
+   */
+  exists(): Promise<boolean>;
 }
 ```
 
 ## ユースケース
 
-### getSettings
+Settingsドメインで提供されるユースケース一覧。
 
-現在の設定を取得する。
+### 1. getSettings (設定取得)
 
-**入力**:
+現在の設定を取得します。
+
+**入力:**
 - なし
 
-**出力**:
-- `Promise<Settings>`
+**出力:**
+- `Settings` - 現在の設定
 
-**処理フロー**:
-1. SettingsRepository.getで設定を取得
-2. 設定が存在しない場合はデフォルト設定を作成
-3. 設定を返す
+**ビジネスルール:**
+- 設定が存在しない場合はデフォルト設定を返す
+- 設定は常に取得可能
 
-**例外**:
-- `SystemError`: DB取得エラーを投げる
+**エラー:**
+- `SystemError` - 取得に失敗
 
-### updateSettings
+**実装パス:** `app/core/application/settings/getSettings.ts`
 
-設定を更新する。
+---
 
-**入力**:
-- `settings: Partial<Settings>` - 更新する設定項目
+### 2. updateSettings (設定更新)
 
-**出力**:
-- `Promise<Settings>`
+設定を更新します。
 
-**処理フロー**:
-1. 入力をバリデート
-2. SettingsRepository.getで現在の設定を取得
-3. 指定された項目を更新
-4. SettingsRepository.saveで保存
-5. updatedAtを現在時刻に更新
-6. 更新した設定を返す
+**入力:**
+- `defaultOrder?: SortOrder` - デフォルトのソート順（昇順/降順） (オプション)
+- `defaultOrderBy?: OrderBy` - デフォルトのソート対象（作成日時/更新日時） (オプション)
+- `autoSaveInterval?: AutoSaveInterval` - 自動保存間隔 (オプション)
 
-**例外**:
-- `ValidationError`: バリデーションエラーを投げる
-- `SystemError`: DB保存エラーを投げる
+**出力:**
+- `Settings` - 更新された設定
 
-### updateGeneralSettings
+**ビジネスルール:**
+- 指定されたフィールドのみを更新 (部分更新)
+- 指定されていないフィールドは現在の値を保持
 
-一般設定のみを更新する。
+**エラー:**
+- `BusinessRuleError(InvalidSortOrder)` - 無効なソート順
+- `BusinessRuleError(InvalidOrderBy)` - 無効なソート対象
+- `BusinessRuleError(AutoSaveIntervalTooShort)` - 自動保存間隔が短すぎる
+- `BusinessRuleError(AutoSaveIntervalTooLong)` - 自動保存間隔が長すぎる
+- `SystemError` - 保存に失敗
 
-**入力**:
-- `general: Partial<GeneralSettings>` - 更新する一般設定項目
+**実装パス:** `app/core/application/settings/updateSettings.ts`
 
-**出力**:
-- `Promise<Settings>`
+---
 
-**処理フロー**:
-1. 入力をバリデート
-2. SettingsRepository.getで現在の設定を取得
-3. 一般設定を更新
-4. SettingsRepository.updateGeneralで保存
-5. 更新した設定を返す
+### 3. resetSettings (設定リセット)
 
-**例外**:
-- `ValidationError`: バリデーションエラーを投げる
-- `SystemError`: DB保存エラーを投げる
+設定をデフォルト値にリセットします。
 
-### updateEditorSettings
-
-エディター設定のみを更新する。
-
-**入力**:
-- `editor: Partial<EditorSettings>` - 更新するエディター設定項目
-
-**出力**:
-- `Promise<Settings>`
-
-**処理フロー**:
-1. 入力をバリデート
-2. SettingsRepository.getで現在の設定を取得
-3. エディター設定を更新
-4. SettingsRepository.updateEditorで保存
-5. 更新した設定を返す
-
-**例外**:
-- `ValidationError`: バリデーションエラーを投げる
-- `SystemError`: DB保存エラーを投げる
-
-### updateRevisionSettings
-
-リビジョン設定のみを更新する。
-
-**入力**:
-- `revision: Partial<RevisionSettings>` - 更新するリビジョン設定項目
-
-**出力**:
-- `Promise<Settings>`
-
-**処理フロー**:
-1. 入力をバリデート
-2. SettingsRepository.getで現在の設定を取得
-3. リビジョン設定を更新
-4. SettingsRepository.updateRevisionで保存
-5. 更新した設定を返す
-
-**例外**:
-- `ValidationError`: バリデーションエラーを投げる
-- `SystemError`: DB保存エラーを投げる
-
-### updateImageSettings
-
-画像設定のみを更新する。
-
-**入力**:
-- `image: Partial<ImageSettings>` - 更新する画像設定項目
-
-**出力**:
-- `Promise<Settings>`
-
-**処理フロー**:
-1. 入力をバリデート
-2. SettingsRepository.getで現在の設定を取得
-3. 画像設定を更新
-4. SettingsRepository.updateImageで保存
-5. 更新した設定を返す
-
-**例外**:
-- `ValidationError`: バリデーションエラーを投げる
-- `SystemError`: DB保存エラーを投げる
-
-### resetSettings
-
-設定をデフォルト値にリセットする。
-
-**入力**:
+**入力:**
 - なし
 
-**出力**:
-- `Promise<Settings>`
+**出力:**
+- `Settings` - リセットされた設定
 
-**処理フロー**:
-1. SettingsRepository.resetで設定をリセット
-2. デフォルト設定を返す
+**ビジネスルール:**
+- すべての設定をデフォルト値に戻す
 
-**例外**:
-- `SystemError`: DB保存エラーを投げる
+**エラー:**
+- `SystemError` - 保存に失敗
 
-### exportSettings
+**実装パス:** `app/core/application/settings/resetSettings.ts`
 
-設定をJSONファイルとしてエクスポートする。
+## データモデル
 
-**入力**:
-- なし
+### ローカルストレージ実装
 
-**出力**:
-- `Promise<string>` - JSON文字列
+設定は localStorage に JSON 形式で保存されます。
 
-**処理フロー**:
-1. SettingsRepository.getで現在の設定を取得
-2. 設定をJSON文字列にシリアライズ
-3. JSON文字列を返す
+**ストレージキー:** `app_settings`
 
-**例外**:
-- `SystemError`: シリアライズエラーを投げる
+**データ形式:**
+```typescript
+{
+  defaultOrder: string;          // "asc" | "desc"
+  defaultOrderBy: string;        // "created_at" | "updated_at"
+  autoSaveInterval: number;      // ミリ秒 (500-10000)
+}
+```
 
-### importSettings
+**実装の制約:**
+- 固定キー（`app_settings`）を使用することで、システム全体で単一の設定を保証
+- アダプタ層でJSON形式との相互変換を実装
 
-JSONファイルから設定をインポートする。
+## デフォルト値
 
-**入力**:
-- `json: string` - JSON文字列
+```typescript
+// app/core/domain/settings/entity.ts
+export const DEFAULT_SETTINGS: Settings = {
+  defaultOrder: "desc",
+  defaultOrderBy: "created_at",
+  autoSaveInterval: 2000,
+};
 
-**出力**:
-- `Promise<Settings>`
+/**
+ * デフォルト設定を作成
+ * 注: これは単一インスタンスではなく、デフォルト値を持つ新しいインスタンス
+ */
+export function createDefaultSettings(): Settings {
+  return { ...DEFAULT_SETTINGS };
+}
+```
 
-**処理フロー**:
-1. JSON文字列をパース
-2. 設定をバリデート
-3. SettingsRepository.saveで保存
-4. インポートした設定を返す
+## テスト要件
 
-**例外**:
-- `ValidationError`: バリデーションエラー、パースエラーを投げる
-- `SystemError`: DB保存エラーを投げる
+各ユースケースに対して、以下のテストケースを作成します：
 
-## 他ドメインとの関係
+1. **正常系テスト**
+   - 正しい入力で期待される出力が得られること
+   - デフォルト設定が正しく作成されること
 
-### Note ドメイン
+2. **異常系テスト**
+   - バリデーションエラーが適切に発生すること
+   - 不正なJSON形式でインポートエラーが発生すること
 
-- デフォルトソート順の設定を参照
-- 自動保存間隔の設定を参照
-- 1ページあたりの表示件数の設定を参照
+3. **境界値テスト**
+   - 自動保存間隔の最小値/最大値が正しく処理されること
 
-### Revision ドメイン
+4. **統合テスト**
+   - 設定の更新が正しく保存されること
+   - リセットが正しく動作すること
 
-- 自動リビジョン保存間隔の設定を参照
-- 最大リビジョン数の設定を参照
-- 自動リビジョン保存の有効/無効の設定を参照
+テストケースの詳細は `spec/testcases/settings/` に格納されます。
 
-### Image ドメイン
+## UI表示例
 
-- 最大画像サイズの設定を参照
-- 画像品質の設定を参照
-- 自動最適化の有効/無効の設定を参照
+### 設定ページ
 
-### すべてのドメイン
-
-- エディター設定（フォント、テーマ等）は全体に影響
-
-## ビジネスルールの補足
-
-### デフォルト設定
-
-初回起動時または設定リセット時に適用されるデフォルト設定：
-
-**一般設定**:
-- デフォルトソート順: 更新日降順（UPDATED_DESC）
-- 自動保存間隔: 2秒（2000ms）
-- 1ページあたりの表示件数: 20件
-
-**エディター設定**:
-- フォントサイズ: 中（MEDIUM = 16px）
-- テーマ: システム設定に従う（AUTO）
-- フォントファミリー: システムフォント（SYSTEM）
-- 行高: 1.6
-- 行番号表示: 無効
-
-**リビジョン設定**:
-- 自動リビジョン保存間隔: 10分
-- 最大リビジョン数: 50件
-- 自動リビジョン保存: 有効
-
-**画像設定**:
-- 最大画像サイズ: 10MB
-- 画像品質: 0.85（85%）
-- 自動最適化: 有効
-
-### 設定の保存場所
-
-- データベース内の `settings` テーブルに保存
-- 常に1レコードのみ存在（シングルトン）
-- キャッシュして頻繁なDB アクセスを避ける
-
-### 設定変更の反映
-
-- 設定変更は即座に反映される
-- 一部の設定（テーマ等）はページリロードなしで適用
-- エディター設定はリアルタイムで反映
-
-### バリデーション
-
-- すべての設定値は範囲内でなければならない
-- 不正な値が入力された場合はValidationErrorを返す
-- インポート時は特に厳密にバリデート
-
-### エクスポート/インポート
-
-- 設定をJSON形式でエクスポート可能
-- エクスポートしたファイルから設定を復元可能
-- 設定の共有やバックアップに使用
-
-### パフォーマンス考慮
-
-- 設定はアプリケーション起動時に一度読み込み
-- メモリ上にキャッシュ
-- 変更時のみDBに保存
-- Reactコンテキストで全体に提供
-
-### テーマの適用
-
-- `AUTO` の場合はシステムの設定を検知（`prefers-color-scheme`）
-- `LIGHT` または `DARK` の場合は指定されたテーマを適用
-- テーマ変更は即座にCSSクラスを切り替え
-
-### アクセシビリティ
-
-- フォントサイズは視認性を考慮
-- テーマは適切なコントラスト比を確保
-- 行高は読みやすさを優先
+```
+設定
+├── デフォルトソート順: [降順 ▼]
+├── デフォルトソート対象: [作成日時 ▼]
+└── 自動保存間隔: [2000] ミリ秒
+```

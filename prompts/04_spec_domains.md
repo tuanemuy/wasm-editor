@@ -4,6 +4,7 @@
 
 - `spec/requirements.md` に要件を定義した
 - `spec/pages.md` にページ構成とその詳細を記載した
+- `docs/implementation_example.md` にコアアーキテクチャの実装例を記載した
 
 ## タスク
 

@@ -2,400 +2,600 @@
 
 ## 概要
 
-**ドメイン名**: Note
+**ドメイン名:** Note (メモ)
 
-メモの作成、編集、削除、閲覧、検索を管理する本アプリケーションの中核ドメイン。
-メモは Markdown 形式で記述され、タグを含むことができる。
+Noteドメインは、メモの作成、編集、削除、閲覧、検索を担当するコアドメインです。
+アプリケーションの中心的な機能を提供し、ユーザーのメモ管理を支援します。
 
 ## エンティティ
 
-### Note
+### Note (メモ)
 
-メモを表すエンティティ。
+メモエンティティは、ユーザーが作成・管理するメモの情報を表現します。
+Noteは集約ルートであり、タグとの関連を所有します。
 
-**属性**:
-- `id: NoteId` - メモの一意識別子
-- `body: NoteBody` - メモの本文（Markdown形式）
-- `createdAt: Timestamp` - 作成日時
-- `updatedAt: Timestamp` - 更新日時
-- `tags: Tag[]` - 紐付けられたタグのリスト
+**属性:**
+- `id: NoteId` - メモの一意識別子 (UUID v7)
+- `content: NoteContent` - メモの本文 (Markdown形式)
+- `tagIds: TagId[]` - 関連付けられたタグのIDリスト
+- `createdAt: Date` - 作成日時
+- `updatedAt: Date` - 更新日時
 
-**不変条件**:
-- IDは一意でなければならない
-- 本文は空でも良い（作成直後は空）
-- createdAtは変更不可
-- updatedAtは更新のたびに更新される
-- tagsは本文から自動解析される
+**ビジネスルール:**
+1. メモの本文は空であってはならない (最低1文字必要)
+2. メモの本文の最大長は100,000文字とする
+3. 作成日時は変更不可
+4. 更新日時は自動更新される
+5. tagIdsは重複を許さない（Set的な振る舞い）
 
-**ビジネスルール**:
-- メモの更新時は自動的にupdatedAtが更新される
-- メモの削除は論理削除ではなく物理削除
+**エンティティ操作:**
+- `createNote(params: CreateNoteParams): Note` - 新規メモを作成
+- `updateContent(note: Note, content: string): Note` - メモ本文を更新
+- `updateTagIds(note: Note, tagIds: TagId[]): Note` - タグIDリストを更新
+
+```typescript
+export type Note = {
+  id: NoteId;
+  content: NoteContent;
+  tagIds: TagId[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CreateNoteParams = {
+  content: string;
+  tagIds?: TagId[];
+};
+```
 
 ## 値オブジェクト
 
-### NoteId
+### NoteId (メモID)
 
-メモの一意識別子。
+メモを一意に識別するID。UUID v7形式を使用。
 
-**型**: `string` (UUID v4)
-
-**バリデーション**:
-- UUID v4 形式であること
-
-### NoteBody
-
-メモの本文。
-
-**型**: `string` (Markdown)
-
-**バリデーション**:
-- なし（空文字列も許可）
-
-**ビジネスロジック**:
-- Markdownからタグを抽出する機能を持つ
-
-### Timestamp
-
-日時を表す値オブジェクト。
-
-**型**: `Date`
-
-### SortOrder
-
-メモのソート順を表す。
-
-**型**: `enum`
-- `CREATED_ASC` - 作成日昇順
-- `CREATED_DESC` - 作成日降順
-- `UPDATED_ASC` - 更新日昇順
-- `UPDATED_DESC` - 更新日降順
-
-### SearchQuery
-
-検索クエリを表す。
-
-**型**: `string`
-
-**バリデーション**:
-- 最大長: 500文字
-
-### PaginationParams
-
-ページネーションパラメータ。
-
-**属性**:
-- `offset: number` - オフセット（デフォルト: 0）
-- `limit: number` - 取得件数（デフォルト: 20）
-
-**バリデーション**:
-- offsetは0以上
-- limitは1以上100以下
-
-## ポート
-
-### NoteRepository
-
-メモの永続化を担当するリポジトリインターフェース。
-
-**メソッド**:
+**生成ルール:**
+- UUID v7を使用 (時系列でソート可能)
+- 自動生成されるため、ユーザーが指定することはない
 
 ```typescript
-interface NoteRepository {
-  // メモの作成
-  // @throws {SystemError} DB保存エラー
-  create(note: Note): Promise<Note>
+export type NoteId = string & { readonly brand: "NoteId" };
 
-  // メモの更新
-  // @throws {SystemError} DB保存エラー
-  update(note: Note): Promise<Note>
+export function createNoteId(id: string): NoteId;
+export function generateNoteId(): NoteId;
+```
 
-  // メモの削除
-  // @throws {SystemError} DB削除エラー
-  delete(id: NoteId): Promise<void>
+### NoteContent (メモ本文)
 
-  // IDでメモを取得
-  // @throws {SystemError} DB取得エラー
-  findById(id: NoteId): Promise<Note | null>
+メモの本文を表す値オブジェクト。Markdown形式。
 
-  // メモ一覧を取得（ページネーション付き）
-  // @throws {SystemError} DB取得エラー
+**バリデーションルール:**
+1. 空文字列は許可しない (最低1文字必要)
+2. 最大長は100,000文字
+3. 文字列型であること
+
+```typescript
+export type NoteContent = string & { readonly brand: "NoteContent" };
+
+export function createNoteContent(content: string): NoteContent;
+```
+
+### SortOrder (ソート順)
+
+メモ一覧のソート順（昇順/降順）を表す値オブジェクト。
+
+**取りうる値:**
+- `asc` - 昇順 (古い順)
+- `desc` - 降順 (新しい順)
+
+```typescript
+export type SortOrder = "asc" | "desc";
+
+export function createSortOrder(order: string): SortOrder;
+export function getDefaultSortOrder(): SortOrder; // "desc"
+```
+
+### OrderBy (ソート対象)
+
+メモ一覧のソート対象フィールドを表す値オブジェクト。
+
+**取りうる値:**
+- `created_at` - 作成日時
+- `updated_at` - 更新日時
+
+```typescript
+export type OrderBy = "created_at" | "updated_at";
+
+export function createOrderBy(field: string): OrderBy;
+export function getDefaultOrderBy(): OrderBy; // "created_at"
+```
+
+## エラーコード
+
+Noteドメインで発生するエラーコードを定義します。
+
+```typescript
+export const NoteErrorCode = {
+  // 本文関連
+  ContentEmpty: "NOTE_CONTENT_EMPTY",
+  ContentTooLong: "NOTE_CONTENT_TOO_LONG",
+
+  // ソート関連
+  InvalidSortOrder: "NOTE_INVALID_SORT_ORDER",
+  InvalidOrderBy: "NOTE_INVALID_ORDER_BY",
+} as const;
+```
+
+## ポート (インターフェース)
+
+### NoteRepository (メモリポジトリ)
+
+メモの永続化を担当するポート。
+
+**責務:**
+- メモの保存、取得、削除
+- メモの一覧取得 (ページネーション、ソート付き)
+- 単一エンティティの CRUD と基本的な操作
+
+```typescript
+import type { Pagination, PaginationResult } from "@/lib/pagination";
+
+export interface NoteRepository {
+  /**
+   * メモを保存 (作成または更新)
+   */
+  save(note: Note): Promise<void>;
+
+  /**
+   * IDでメモを取得
+   * @throws NotFoundError メモが見つからない場合
+   */
+  findById(id: NoteId): Promise<Note>;
+
+  /**
+   * メモ一覧を取得 (ページネーション、ソート付き)
+   */
   findAll(params: {
-    sortOrder: SortOrder
-    pagination: PaginationParams
-  }): Promise<Note[]>
+    pagination: Pagination;
+    order: SortOrder;
+    orderBy: OrderBy;
+  }): Promise<PaginationResult<Note>>;
 
-  // メモの総数を取得
-  // @throws {SystemError} DB取得エラー
-  count(): Promise<number>
+  /**
+   * メモを削除
+   * @throws NotFoundError メモが見つからない場合
+   */
+  delete(id: NoteId): Promise<void>;
 
-  // 全文検索
-  // @throws {SystemError} DB検索エラー
-  search(query: SearchQuery, params: {
-    sortOrder: SortOrder
-    pagination: PaginationParams
-  }): Promise<Note[]>
-
-  // タグで検索（AND検索）
-  // @throws {SystemError} DB検索エラー
-  findByTags(tagNames: string[], params: {
-    sortOrder: SortOrder
-    pagination: PaginationParams
-  }): Promise<Note[]>
-
-  // 複合検索（全文検索 + タグ検索）
-  // @throws {SystemError} DB検索エラー
-  searchWithTags(query: SearchQuery, tagNames: string[], params: {
-    sortOrder: SortOrder
-    pagination: PaginationParams
-  }): Promise<Note[]>
+  /**
+   * メモが存在するかチェック
+   */
+  exists(id: NoteId): Promise<boolean>;
 }
 ```
 
-### ExportPort
+### NoteQueryService (メモクエリサービス)
 
-メモのエクスポート機能を提供するポート。
+複雑な検索クエリを担当するポート。読み取り専用の複雑なクエリを実装します。
 
-**メソッド**:
+**責務:**
+- 全文検索とタグ検索を組み合わせた複合検索
+- 効率的なページネーション付き検索
+- 複数エンティティを横断する複雑なクエリ
+- JOIN を使用した効率的なクエリの実装
 
 ```typescript
-interface ExportPort {
-  // 単一メモをMarkdownファイルとしてエクスポート
-  // @throws {SystemError} エクスポートエラー
-  exportAsMarkdown(note: Note, fileName: string): Promise<void>
+import type { Pagination, PaginationResult } from "@/lib/pagination";
 
-  // 複数メモを一括でMarkdownファイルとしてエクスポート
-  // @throws {SystemError} エクスポートエラー
-  exportMultipleAsMarkdown(notes: Note[], directoryName: string): Promise<void>
+export interface NoteQueryService {
+  /**
+   * 全文検索とタグ検索を組み合わせた複合検索
+   *
+   * @param query - 検索クエリ（空文字列の場合は全文検索なし）
+   * @param tagIds - タグIDのリスト（空配列の場合はタグ検索なし）
+   * @param pagination - ページネーション設定
+   * @param order - ソート順（昇順/降順）
+   * @param orderBy - ソート対象（作成日時/更新日時）
+   *
+   * @returns 検索結果とページネーション情報
+   *
+   * @description
+   * - query と tagIds の両方が指定された場合は AND 検索
+   * - query のみ指定された場合は全文検索
+   * - tagIds のみ指定された場合はタグ検索
+   * - 両方とも空の場合は全件取得（findAll相当）
+   * - タグ検索は noteTagRelations テーブルをJOINして実装
+   */
+  combinedSearch(params: {
+    query: string;
+    tagIds: TagId[];
+    pagination: Pagination;
+    order: SortOrder;
+    orderBy: OrderBy;
+  }): Promise<PaginationResult<Note>>;
+
+  /**
+   * タグに関連付けられたメモIDを取得
+   *
+   * @param tagId - タグID
+   * @returns メモIDのリスト
+   *
+   * @description
+   * noteTagRelations テーブルをJOINしてメモIDを取得
+   */
+  findNoteIdsByTagId(tagId: TagId): Promise<NoteId[]>;
+
+  /**
+   * 複数タグに関連付けられたメモIDを取得 (AND検索)
+   *
+   * @param tagIds - タグIDのリスト
+   * @returns すべてのタグを持つメモIDのリスト
+   *
+   * @description
+   * - すべてのタグを持つメモのみを返す (AND検索)
+   * - noteTagRelations テーブルをJOINして実装
+   */
+  findNoteIdsByTagIds(tagIds: TagId[]): Promise<NoteId[]>;
+}
+```
+
+### ExportPort (エクスポート)
+
+メモをMarkdownファイルとしてエクスポートするポート。
+
+**責務:**
+- メモを個別にエクスポート
+- 複数メモを一括エクスポート
+- ファイル名の生成
+
+```typescript
+export type ExportedFile = {
+  filename: string;
+  content: string;
+};
+
+export interface ExportPort {
+  /**
+   * メモをMarkdownファイルとしてエクスポート
+   */
+  exportAsMarkdown(note: Note): Promise<ExportedFile>;
+
+  /**
+   * 複数メモを一括エクスポート (ZIPファイル)
+   */
+  exportMultipleAsMarkdown(notes: Note[]): Promise<Blob>;
 }
 ```
 
 ## ユースケース
 
-### createNote
+Noteドメインで提供されるユースケース一覧。
 
-新規メモを作成する。
+### 1. createNote (メモ作成)
 
-**入力**:
-- `body: string` - 初期本文（オプション、デフォルト: ""）
+新規メモを作成します。
 
-**出力**:
-- `Promise<Note>`
+**入力:**
+- `content: string` - メモ本文 (Markdown)
 
-**処理フロー**:
-1. 新しいNoteエンティティを生成
-   - IDを自動生成
-   - createdAt, updatedAtに現在時刻を設定
-   - bodyを設定（空でも良い）
-2. 本文からタグを抽出（TagドメインのextractTagsを呼び出し）
-3. NoteRepositoryに保存
-4. 保存したメモを返す
+**出力:**
+- `Note` - 作成されたメモ
 
-**例外**:
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB保存エラー
+**ビジネスルール:**
+- 空のメモは作成できない (最低1文字必要)
+- 本文の最大長は100,000文字
 
-### getNote
+**エラー:**
+- `BusinessRuleError(ContentEmpty)` - 本文が空
+- `BusinessRuleError(ContentTooLong)` - 本文が長すぎる
+- `SystemError` - 保存に失敗
 
-IDでメモを取得する。
+**実装パス:** `app/core/application/note/createNote.ts`
 
-**入力**:
-- `id: NoteId`
+---
 
-**出力**:
-- `Promise<Note>`
+### 2. updateNote (メモ更新)
 
-**処理フロー**:
-1. NoteRepository.findByIdでメモを取得
-2. メモが存在しない場合はNotFoundErrorを投げる
-3. メモを返す
+既存メモを更新します。
 
-**例外**:
-- `NotFoundError`: メモが見つからない
-- `SystemError`: DB取得エラー
+**入力:**
+- `id: NoteId` - メモID
+- `content: string` - 新しいメモ本文
 
-### getNotes
+**出力:**
+- `Note` - 更新されたメモ
 
-メモ一覧を取得する（ページネーション付き）。
+**ビジネスルール:**
+- 空のメモには更新できない
+- 本文の最大長は100,000文字
+- 更新日時は自動更新される
 
-**入力**:
-- `sortOrder: SortOrder` - ソート順
-- `pagination: PaginationParams` - ページネーションパラメータ
+**エラー:**
+- `NotFoundError` - メモが見つからない
+- `BusinessRuleError(ContentEmpty)` - 本文が空
+- `BusinessRuleError(ContentTooLong)` - 本文が長すぎる
+- `SystemError` - 保存に失敗
 
-**出力**:
-- `Promise<{ notes: Note[], total: number }>`
+**実装パス:** `app/core/application/note/updateNote.ts`
 
-**処理フロー**:
-1. paginationをバリデート
-2. NoteRepository.findAllでメモ一覧を取得
-3. NoteRepository.countで総数を取得
-4. メモ一覧と総数を返す
+---
 
-**例外**:
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB取得エラー
+### 3. deleteNote (メモ削除)
 
-### updateNote
+メモを削除します。
 
-既存メモを更新する。
+**入力:**
+- `id: NoteId` - メモID
 
-**入力**:
-- `id: NoteId`
-- `body: string` - 新しい本文
+**出力:**
+- `void`
 
-**出力**:
-- `Promise<Note>`
+**ビジネスルール:**
+- メモが存在しない場合はエラー
 
-**処理フロー**:
-1. NoteRepository.findByIdで既存メモを取得
-2. メモが存在しない場合はNotFoundErrorを投げる
-3. 本文を更新
-4. updatedAtを現在時刻に更新
-5. 本文からタグを再抽出
-6. NoteRepository.updateで保存
-7. 更新したメモを返す
+**エラー:**
+- `NotFoundError` - メモが見つからない
+- `SystemError` - 削除に失敗
 
-**例外**:
-- `NotFoundError`: メモが見つからない
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB保存エラー
+**実装パス:** `app/core/application/note/deleteNote.ts`
 
-### deleteNote
+---
 
-メモを削除する。
+### 4. getNote (メモ取得)
 
-**入力**:
-- `id: NoteId`
+IDでメモを取得します。
 
-**出力**:
-- `Promise<void>`
+**入力:**
+- `id: NoteId` - メモID
 
-**処理フロー**:
-1. NoteRepository.findByIdで既存メモを確認
-2. メモが存在しない場合はNotFoundErrorを投げる
-3. NoteRepository.deleteで削除
-4. 関連するリビジョンも削除（Revisionドメイン経由）
+**出力:**
+- `Note` - メモ
 
-**例外**:
-- `NotFoundError`: メモが見つからない
-- `SystemError`: DB削除エラー
+**エラー:**
+- `NotFoundError` - メモが見つからない
+- `SystemError` - 取得に失敗
 
-### searchNotes
+**実装パス:** `app/core/application/note/getNote.ts`
 
-メモを全文検索する。
+---
 
-**入力**:
-- `query: SearchQuery` - 検索クエリ
-- `sortOrder: SortOrder` - ソート順
-- `pagination: PaginationParams` - ページネーションパラメータ
+### 5. getNotes (メモ一覧取得)
 
-**出力**:
-- `Promise<Note[]>`
+メモ一覧を取得します (ページネーション、ソート付き)。
 
-**処理フロー**:
-1. クエリをバリデート
-2. NoteRepository.searchで検索
-3. 検索結果を返す
+**入力:**
+- `pagination: Pagination` - ページネーション設定
+- `order: SortOrder` - ソート順（昇順/降順）
+- `orderBy: OrderBy` - ソート対象（作成日時/更新日時）
 
-**例外**:
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB検索エラー
+**出力:**
+- `PaginationResult<Note>` - メモ一覧とページネーション情報
 
-### searchNotesByTags
+**ビジネスルール:**
+- デフォルトのソート順は `desc`（降順）
+- デフォルトのソート対象は `created_at`（作成日時）
+- ページサイズのデフォルトは20
 
-タグでメモを検索する（AND検索）。
+**エラー:**
+- `SystemError` - 取得に失敗
 
-**入力**:
+**実装パス:** `app/core/application/note/getNotes.ts`
+
+---
+
+### 6. combinedSearch (複合検索)
+
+全文検索とタグ検索を組み合わせた検索を実行します。
+
+**入力:**
+- `query: string` - 検索クエリ（空文字列の場合は全文検索なし）
+- `tagIds: TagId[]` - タグIDのリスト（空配列の場合はタグ検索なし）
+- `pagination: Pagination` - ページネーション設定
+- `order: SortOrder` - ソート順（昇順/降順）
+- `orderBy: OrderBy` - ソート対象（作成日時/更新日時）
+
+**出力:**
+- `PaginationResult<Note>` - 検索結果
+
+**ビジネスルール:**
+- query と tagIds の両方が指定された場合は AND 検索
+- query のみ指定された場合は全文検索のみ
+- tagIds のみ指定された場合はタグ検索のみ
+- 両方とも空の場合は全件取得（getNotes相当）
+- 検索対象（全文検索）: メモ本文
+- 部分一致検索、大文字小文字を区別しない
+- 複数タグ指定時は AND 検索（すべてのタグIDを持つメモのみ）
+
+**処理フロー:**
+1. NoteQueryService の `combinedSearch()` を呼び出し
+2. 内部で noteTagRelations テーブルをJOINしてタグ検索を実行
+3. query が指定されている場合は content カラムで全文検索
+4. ページネーションとソートを適用
+
+**エラー:**
+- `SystemError` - 検索に失敗
+
+**実装パス:** `app/core/application/note/combinedSearch.ts`
+
+---
+
+### 7. exportNoteAsMarkdown (Markdownエクスポート)
+
+メモをMarkdownファイルとしてエクスポートします。
+
+**入力:**
+- `id: NoteId` - メモID
+
+**出力:**
+- `ExportedFile` - エクスポートされたファイル情報
+
+**ビジネスルール:**
+- ファイル名は本文から自動抽出したタイトル、または作成日時を使用
+- ファイル拡張子は `.md`
+
+**エラー:**
+- `NotFoundError` - メモが見つからない
+- `SystemError` - エクスポートに失敗
+
+**実装パス:** `app/core/application/note/exportNoteAsMarkdown.ts`
+
+---
+
+### 8. exportNotesAsMarkdown (一括エクスポート)
+
+複数メモを一括でMarkdownファイルとしてエクスポートします (ZIPファイル)。
+
+**入力:**
+- `noteIds: NoteId[]` - メモIDのリスト
+
+**出力:**
+- `Blob` - ZIPファイル
+
+**ビジネスルール:**
+- 各メモを個別のMarkdownファイルとしてエクスポート
+- ZIPファイルにまとめて返す
+- 存在しないメモIDはスキップ
+
+**エラー:**
+- `SystemError` - エクスポートに失敗
+
+**実装パス:** `app/core/application/note/exportNotesAsMarkdown.ts`
+
+---
+
+### 9. searchNotesByTag (タグ検索)
+
+タグに関連付けられたメモを検索します。
+
+**入力:**
+- `tagName: string` - タグ名
+- `pagination: Pagination` - ページネーション設定
+- `order: SortOrder` - ソート順（昇順/降順）
+- `orderBy: OrderBy` - ソート対象（作成日時/更新日時）
+
+**出力:**
+- `PaginationResult<Note>` - 検索結果
+
+**ビジネスルール:**
+- タグが存在しない場合は空の結果を返す
+- 大文字小文字は区別する
+
+**処理フロー:**
+1. TagRepository の `findByName()` でタグを検索
+2. タグが存在しない場合は空の結果を返す
+3. `combinedSearch()` に空のクエリと検索したタグIDを渡して検索
+
+**エラー:**
+- `SystemError` - 検索に失敗
+
+**実装パス:** `app/core/application/note/searchNotesByTag.ts`
+
+---
+
+### 10. searchNotesByTags (複数タグ検索)
+
+複数タグに関連付けられたメモを検索します (AND検索)。
+
+**入力:**
 - `tagNames: string[]` - タグ名のリスト
-- `sortOrder: SortOrder` - ソート順
-- `pagination: PaginationParams` - ページネーションパラメータ
+- `pagination: Pagination` - ページネーション設定
+- `order: SortOrder` - ソート順（昇順/降順）
+- `orderBy: OrderBy` - ソート対象（作成日時/更新日時）
 
-**出力**:
-- `Promise<Note[]>`
+**出力:**
+- `PaginationResult<Note>` - 検索結果
 
-**処理フロー**:
-1. タグ名をバリデート
-2. NoteRepository.findByTagsで検索
-3. 検索結果を返す
+**ビジネスルール:**
+- すべてのタグを持つメモのみを返す (AND検索)
+- いずれかのタグが存在しない場合は空の結果を返す
+- 大文字小文字は区別する
 
-**例外**:
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB検索エラー
+**処理フロー:**
+1. 各タグ名に対して TagRepository の `findByName()` でタグを検索
+2. いずれかのタグが存在しない場合は空の結果を返す
+3. `combinedSearch()` に空のクエリと検索したタグIDのリストを渡して検索
 
-### combinedSearch
+**エラー:**
+- `SystemError` - 検索に失敗
 
-全文検索とタグ検索を組み合わせて検索する。
+**実装パス:** `app/core/application/note/searchNotesByTags.ts`
 
-**入力**:
-- `query: SearchQuery` - 検索クエリ
-- `tagNames: string[]` - タグ名のリスト
-- `sortOrder: SortOrder` - ソート順
-- `pagination: PaginationParams` - ページネーションパラメータ
+## データモデル
 
-**出力**:
-- `Promise<Note[]>`
+### DBテーブル定義
 
-**処理フロー**:
-1. クエリとタグ名をバリデート
-2. NoteRepository.searchWithTagsで検索
-3. 検索結果を返す
+```typescript
+// app/core/adapters/drizzleSqlite/schema.ts
 
-**例外**:
-- `ValidationError`: バリデーションエラー
-- `SystemError`: DB検索エラー
+export const notes = sqliteTable("notes", {
+  id: text("id").primaryKey(),
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`)
+    .$onUpdate(() => new Date()),
+});
 
-### exportNoteAsMarkdown
+// メモとタグの関連テーブル（実装詳細、Note集約の一部として管理）
+export const noteTagRelations = sqliteTable(
+  "note_tag_relations",
+  {
+    noteId: text("note_id")
+      .notNull()
+      .references(() => notes.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.noteId, table.tagId] }),
+  }),
+);
+```
 
-メモをMarkdownファイルとしてエクスポートする。
+**注記:**
+- `noteTagRelations` テーブルはNote集約の実装詳細
+- NoteRepositoryがこのテーブルを管理し、`tagIds` 配列として抽象化
+- ドメイン層からは中間テーブルの存在を隠蔽
 
-**入力**:
-- `id: NoteId`
-- `fileName: string` - ファイル名（オプション）
+### インデックス
 
-**出力**:
-- `Promise<void>`
+```typescript
+// 全文検索用
+export const notesContentIndex = index("notes_content_idx").on(notes.content);
 
-**処理フロー**:
-1. NoteRepository.findByIdでメモを取得
-2. メモが存在しない場合はNotFoundErrorを投げる
-3. ファイル名が指定されていない場合は、作成日時から生成
-4. ExportPort.exportAsMarkdownでエクスポート
+// ソート用
+export const notesCreatedAtIndex = index("notes_created_at_idx").on(notes.createdAt);
+export const notesUpdatedAtIndex = index("notes_updated_at_idx").on(notes.updatedAt);
 
-**例外**:
-- `NotFoundError`: メモが見つからない
-- `SystemError`: エクスポートエラー
+// タグ検索用（中間テーブル）
+export const noteTagRelationsNoteIdIndex = index("note_tag_relations_note_id_idx")
+  .on(noteTagRelations.noteId);
+export const noteTagRelationsTagIdIndex = index("note_tag_relations_tag_id_idx")
+  .on(noteTagRelations.tagId);
+```
 
-### exportNotesAsMarkdown
+## テスト要件
 
-複数メモを一括でMarkdownファイルとしてエクスポートする。
+各ユースケースに対して、以下のテストケースを作成します：
 
-**入力**:
-- `ids: NoteId[]` - メモIDのリスト
-- `directoryName: string` - ディレクトリ名（オプション）
+1. **正常系テスト**
+   - 正しい入力で期待される出力が得られること
 
-**出力**:
-- `Promise<void>`
+2. **異常系テスト**
+   - バリデーションエラーが適切に発生すること
+   - 存在しないリソースに対してNotFoundErrorが発生すること
 
-**処理フロー**:
-1. 各IDに対してNoteRepository.findByIdでメモを取得
-2. 存在するメモのみを対象とする
-3. ディレクトリ名が指定されていない場合は、現在時刻から生成
-4. ExportPort.exportMultipleAsMarkdownでエクスポート
+3. **境界値テスト**
+   - 最小長/最大長の入力が正しく処理されること
 
-**例外**:
-- `SystemError`: エクスポートエラー
+4. **統合テスト**
+   - 複数のユースケースを組み合わせた動作が正しいこと
 
-## 他ドメインとの関係
-
-### Tag ドメイン
-
-- Noteの本文からタグを自動抽出する際にTagドメインのextractTagsFromContentを使用
-- タグ検索時にTagドメインのTagNameを使用
-
-### Revision ドメイン
-
-- メモ更新時にリビジョンを作成（Revisionドメイン経由）
-- メモ削除時に関連リビジョンも削除
-
-### Image ドメイン
-
-- メモ本文に画像が含まれている場合、Imageドメインを通じて画像を参照
+テストケースの詳細は `spec/testcases/note/` に格納されます。
