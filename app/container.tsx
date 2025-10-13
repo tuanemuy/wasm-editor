@@ -1,8 +1,12 @@
 import { createContext, useContext } from "react";
-import { DrizzleSqliteUnitOfWorkProvider } from "@/core/adapters/drizzleSqlite/unitOfWork";
+import { BrowserExportPort } from "@/core/adapters/browser/exportPort";
+import { BrowserSettingsRepository } from "@/core/adapters/browser/settingsRepository";
+import { BrowserTagExtractorPort } from "@/core/adapters/browser/tagExtractorPort";
 import { getDatabase } from "@/core/adapters/drizzleSqlite/client";
+import { DrizzleSqliteNoteQueryService } from "@/core/adapters/drizzleSqlite/noteQueryService";
+import { DrizzleSqliteTagQueryService } from "@/core/adapters/drizzleSqlite/tagQueryService";
+import { DrizzleSqliteUnitOfWorkProvider } from "@/core/adapters/drizzleSqlite/unitOfWork";
 import type { Context } from "@/core/application/context";
-import type { UnitOfWorkProvider } from "@/core/application/unitOfWork";
 
 export type Container = Context;
 
@@ -19,11 +23,14 @@ function createContainer(): Context {
   }
 
   const db = getDatabase(databasePath);
-  const unitOfWorkProvider: UnitOfWorkProvider =
-    new DrizzleSqliteUnitOfWorkProvider(db);
 
   const container: Context = {
-    unitOfWorkProvider,
+    unitOfWorkProvider: new DrizzleSqliteUnitOfWorkProvider(db),
+    noteQueryService: new DrizzleSqliteNoteQueryService(db),
+    tagQueryService: new DrizzleSqliteTagQueryService(db),
+    exportPort: new BrowserExportPort(),
+    tagExtractorPort: new BrowserTagExtractorPort(),
+    settingsRepository: new BrowserSettingsRepository(),
   };
 
   return container;
