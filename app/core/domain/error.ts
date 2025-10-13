@@ -1,23 +1,21 @@
-import { AnyError } from "@/lib/error";
-// import { ${Domain}ErrorCode } from "@/core/domain/${domain}/errorCode";
-
-export const BusinessRuleErrorCode = {
-  // ...${Domain}ErrorCode,
-} as const;
-export type BusinessRuleErrorCode =
-  (typeof BusinessRuleErrorCode)[keyof typeof BusinessRuleErrorCode];
-
 /**
- * Business rule error
+ * Domain Layer - Business Rule Error
+ *
+ * Represents a violation of business rules in the domain layer.
+ * This error is thrown when domain logic determines that an operation cannot proceed.
  */
-export class BusinessRuleError extends AnyError {
-  override readonly name = "BusinessRuleError";
-
+export class BusinessRuleError extends Error {
   constructor(
-    public readonly code: BusinessRuleErrorCode,
+    public readonly code: string,
     message: string,
-    cause?: unknown,
+    public readonly details?: unknown,
   ) {
-    super(message, cause);
+    super(message);
+    this.name = "BusinessRuleError";
+
+    // Maintains proper stack trace for where error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, BusinessRuleError);
+    }
   }
 }

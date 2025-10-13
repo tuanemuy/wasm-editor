@@ -1,15 +1,9 @@
-import { createContext, useContext, useMemo } from "react";
-import { createDatabaseStorageAdapter } from "@/core/adapters/browser/databaseStorageAdapter";
-import { createExportAdapter } from "@/core/adapters/browser/exportAdapter";
-import { createFileSystemAccessAdapter } from "@/core/adapters/browser/fileSystemAccessAdapter";
-import { createImageProcessingAdapter } from "@/core/adapters/browser/imageProcessingAdapter";
-import { createImageStorageAdapter } from "@/core/adapters/browser/imageStorageAdapter";
-import { createDatabaseConnectionAdapter } from "@/core/adapters/drizzleSqlite/databaseConnectionAdapter";
+import { createContext, useContext } from "react";
 import { DrizzleSqliteUnitOfWorkProvider } from "@/core/adapters/drizzleSqlite/unitOfWork";
+import { getDatabase } from "@/core/adapters/drizzleSqlite/client";
 import type { Context } from "@/core/application/context";
 import type { UnitOfWorkProvider } from "@/core/application/unitOfWork";
 
-// DI container type (same as application Context)
 export type Container = Context;
 
 export const ContainerContext = createContext<Container>({} as Container);
@@ -18,39 +12,25 @@ export const useContainer = () => {
   return useContext(ContainerContext);
 };
 
+function createContainer(): Context {
+  const databasePath = process.env.VITE_APP_DATABASE_PATH;
+  if (!databasePath) {
+    throw new Error("VITE_APP_DATABASE_PATH is not defined");
+  }
+
+  const db = getDatabase(databasePath);
+  const unitOfWorkProvider: UnitOfWorkProvider =
+    new DrizzleSqliteUnitOfWorkProvider(db);
+
+  const container: Context = {
+    unitOfWorkProvider,
+  };
+
+  return container;
+}
+
 export function ContainerProvider({ children }: { children: React.ReactNode }) {
-  const container: Context = useMemo(() => {
-    // Create singleton instances of adapters
-    const databaseConnectionPort = createDatabaseConnectionAdapter();
-    const fileSystemAccessPort = createFileSystemAccessAdapter();
-    const databaseStoragePort = createDatabaseStorageAdapter();
-    const exportPort = createExportAdapter();
-    const imageStoragePort = createImageStorageAdapter();
-    const imageProcessingPort = createImageProcessingAdapter();
-
-    // Create a unit of work provider that dynamically uses the current database connection
-    const unitOfWorkProvider: UnitOfWorkProvider = {
-      async run<T>(fn: Parameters<UnitOfWorkProvider["run"]>[0]): Promise<T> {
-        // biome-ignore lint/suspicious/noExplicitAny: getDb is not part of the port interface
-        const db = (databaseConnectionPort as any).getDb();
-        if (!db) {
-          throw new Error("Database is not connected");
-        }
-        const provider = new DrizzleSqliteUnitOfWorkProvider(db);
-        return provider.run(fn) as Promise<T>;
-      },
-    };
-
-    return {
-      unitOfWorkProvider,
-      exportPort,
-      imageStoragePort,
-      imageProcessingPort,
-      databaseConnectionPort,
-      databaseStoragePort,
-      fileSystemAccessPort,
-    };
-  }, []);
+  const container = createContainer();
 
   return (
     <ContainerContext.Provider value={container}>
