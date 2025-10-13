@@ -1,7 +1,9 @@
-// import type { ${Entity}Repository } from "@/core/domain/${domain}/ports/${entity}Repository";
+import type { NoteRepository } from "@/core/domain/note/ports/noteRepository";
+import type { TagRepository } from "@/core/domain/tag/ports/tagRepository";
 
 export type Repositories = {
-  // ${entity}Repository: ${Entity}Repository;
+  noteRepository: NoteRepository;
+  tagRepository: TagRepository;
 };
 
 export interface UnitOfWorkProvider {
