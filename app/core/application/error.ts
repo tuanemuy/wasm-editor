@@ -110,6 +110,33 @@ export const SystemErrorCode = {
   InternalServerError: "INTERNAL_SERVER_ERROR",
   DatabaseError: "DATABASE_ERROR",
   NetworkError: "NETWORK_ERROR",
+  // File System Access API
+  FileSystemNotSupported: "FILE_SYSTEM_NOT_SUPPORTED",
+  FilePickerCancelled: "FILE_PICKER_CANCELLED",
+  FilePickerError: "FILE_PICKER_ERROR",
+  FileReadError: "FILE_READ_ERROR",
+  FileWriteError: "FILE_WRITE_ERROR",
+  PermissionError: "PERMISSION_ERROR",
+  FilePathError: "FILE_PATH_ERROR",
+  // Export
+  ExportError: "EXPORT_ERROR",
+  // Image
+  ImagePickerError: "IMAGE_PICKER_ERROR",
+  ImageSaveError: "IMAGE_SAVE_ERROR",
+  ImageLoadError: "IMAGE_LOAD_ERROR",
+  ImageDeleteError: "IMAGE_DELETE_ERROR",
+  ImageDirectoryInitError: "IMAGE_DIRECTORY_INIT_ERROR",
+  ImageDimensionsError: "IMAGE_DIMENSIONS_ERROR",
+  ImageResizeError: "IMAGE_RESIZE_ERROR",
+  ImageOptimizeError: "IMAGE_OPTIMIZE_ERROR",
+  // Database
+  DatabaseStorageError: "DATABASE_STORAGE_ERROR",
+  DatabaseConnectionError: "DATABASE_CONNECTION_ERROR",
+  DatabaseDisconnectionError: "DATABASE_DISCONNECTION_ERROR",
+  DatabaseNotConnected: "DATABASE_NOT_CONNECTED",
+  DatabaseInitializationError: "DATABASE_INITIALIZATION_ERROR",
+  DatabaseMigrationError: "DATABASE_MIGRATION_ERROR",
+  DatabaseSaveError: "DATABASE_SAVE_ERROR",
 } as const;
 export type SystemErrorCode =
   (typeof SystemErrorCode)[keyof typeof SystemErrorCode];

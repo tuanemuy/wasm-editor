@@ -1,8 +1,7 @@
 # Testing
 
 - Use `pnpm test` for tests
-- Use SQLite database for testing (DrizzleSqlite${entity}Repository is available)
-- Use `src/core/adapters/mock/${adapter}.ts` to create mock implementations of external services for testing
+- Create empty adapters in `src/core/adapters/empty/` and use `vi.spyOn` to mock external services in tests
 
 ## Application Service Tests
 
