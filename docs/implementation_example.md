@@ -281,25 +281,22 @@ export async function createPost(
 }
 ```
 
-## Context object example
+## DI Container example
 
 ```typescript
-// Context object for specific environment
-// ex: app/context.ts
+// DI Container for specific environment
+// ex: app/container.ts
 
 import { getDatabase } from "@/core/adapters/drizzleSqlite/client";
 
-export const envSchema = z.object({
-  DATABASE_URL: z.string(),
-  // Other environment variables...
-});
-export type Env = z.infer<typeof envSchema>;
+const databaseUrl = env.data.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set");
+}
 
-const env = envSchema.parse(process.env);
+const db = getDatabase(databaseUrl);
 
-const db = getDatabase(env.data.DATABASE_URL);
-
-export const context = {
+export const container = {
   unitOfWorkProvider: DrizzleSqliteUnitOfWorkProvider(db),
   authProvider: new BetterAuthAuthProvider(/* Config */),
   storageManager: new S3StorageManager(/* S3 client */),

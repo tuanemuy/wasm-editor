@@ -21,7 +21,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Runtime**: Browser
 - **Frontend**: React Router v7 Framework mode, Tailwind CSS, shadcn/ui and Tiptap
 - **Database**: @tursodatabase/database-wasm with Drizzle ORM
-- **Error Handling**: neverthrow for Result types
 
 ## Core Architecture
 
