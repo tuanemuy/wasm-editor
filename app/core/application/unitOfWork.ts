@@ -1,15 +1,7 @@
-import type { AssetRepository } from "@/core/domain/asset/ports/assetRepository";
-import type { NoteRepository } from "@/core/domain/note/ports/noteRepository";
-import type { TagRepository } from "@/core/domain/note/ports/tagRepository";
-import type { RevisionRepository } from "@/core/domain/revision/ports/revisionRepository";
-import type { SettingsRepository } from "@/core/domain/settings/ports/settingsRepository";
+// import type { ${Entitye}Repository } from "@/core/domain/asset/ports/${entity}Repository";
 
 export type Repositories = {
-  noteRepository: NoteRepository;
-  tagRepository: TagRepository;
-  revisionRepository: RevisionRepository;
-  assetRepository: AssetRepository;
-  settingsRepository: SettingsRepository;
+  // ${entity}Repository: ${Entity}Repository;
 };
 
 export interface UnitOfWorkProvider {
