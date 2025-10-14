@@ -42,18 +42,18 @@ describe("createNote", () => {
     expect(saveSpy).toHaveBeenCalledWith(note);
   });
 
-  it("空の本文でメモ作成時に例外が発生する", async () => {
-    await expect(
-      createNote(context, {
-        content: "",
-      }),
-    ).rejects.toThrow(BusinessRuleError);
+  it("空の本文でメモを作成できる", async () => {
+    const repositories = unitOfWorkProvider.getRepositories();
+    const saveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
 
-    await expect(
-      createNote(context, {
-        content: "",
-      }),
-    ).rejects.toThrow("Note content cannot be empty");
+    const note = await createNote(context, {
+      content: "",
+    });
+
+    expect(note.content).toBe("");
+    expect(saveSpy).toHaveBeenCalledWith(note);
   });
 
   it("100,000文字の本文でメモを作成できる", async () => {

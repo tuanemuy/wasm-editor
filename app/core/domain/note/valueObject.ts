@@ -39,19 +39,12 @@ export type NoteContent = string & { readonly brand: "NoteContent" };
  * Create NoteContent with validation
  *
  * Business Rules:
- * - Content must not be empty (minimum 1 character)
+ * - Content can be empty (allows creating new notes without content)
  * - Content must not exceed 100,000 characters
  *
  * @throws {BusinessRuleError} If validation fails
  */
 export function createNoteContent(content: string): NoteContent {
-  if (content.length === 0) {
-    throw new BusinessRuleError(
-      NoteErrorCode.ContentEmpty,
-      "Note content cannot be empty",
-    );
-  }
-
   if (content.length > NOTE_CONTENT_MAX_LENGTH) {
     throw new BusinessRuleError(
       NoteErrorCode.ContentTooLong,

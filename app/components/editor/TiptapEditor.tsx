@@ -17,7 +17,7 @@ import {
   StrikethroughIcon,
   Undo2Icon,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -32,6 +32,8 @@ export function TiptapEditor({
   onChange,
   placeholder = "Start writing...",
 }: TiptapEditorProps) {
+  const isInitialMount = useRef(true);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -50,8 +52,8 @@ export function TiptapEditor({
       }),
     ],
     content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getText());
+    onUpdate: ({ editor: updatedEditor }) => {
+      onChange(updatedEditor.getText());
     },
     editorProps: {
       attributes: {
@@ -59,12 +61,27 @@ export function TiptapEditor({
           "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none p-4 min-h-[calc(100vh-200px)]",
       },
     },
+    immediatelyRender: false,
   });
 
-  // Update editor content when prop changes
+  // Update editor content when prop changes (but avoid unnecessary updates)
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
-      editor.commands.setContent(content);
+    if (!editor || editor.isDestroyed) return;
+
+    // Skip update on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const currentContent = editor.getText();
+    if (content !== currentContent) {
+      const { from, to } = editor.state.selection;
+      editor.commands.setContent(content, { emitUpdate: false });
+      // Restore cursor position if possible
+      const newFrom = Math.min(from, content.length);
+      const newTo = Math.min(to, content.length);
+      editor.commands.setTextSelection({ from: newFrom, to: newTo });
     }
   }, [content, editor]);
 

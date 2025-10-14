@@ -72,6 +72,7 @@ export default function Home() {
   }, [context]);
 
   // Load notes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tagFilters is correctly spread into dependencies
   useEffect(() => {
     setLoading(true);
     const orderBy = sortOption.startsWith("created")
@@ -103,17 +104,20 @@ export default function Home() {
         }
         setHasMore(result.items.length === 20);
 
-        // Load tags for all notes
+        // Load tags for all notes in parallel
         const tagMap = new Map<string, TagWithUsage[]>();
-        for (const note of result.items) {
+        const tagPromises = result.items.map(async (note) => {
           const noteTags = await getTagsByNote(context, { noteId: note.id });
           const tagsWithUsage = noteTags.map((tag) => {
-            const usage = tags.find((t) => t.id === tag.id);
-            return usage
-              ? { ...tag, usageCount: usage.usageCount }
-              : { ...tag, usageCount: 1 };
+            // Use default usageCount of 1 to avoid dependency on tags state
+            return { ...tag, usageCount: 1 };
           });
-          tagMap.set(note.id, tagsWithUsage);
+          return [note.id, tagsWithUsage] as const;
+        });
+
+        const tagResults = await Promise.all(tagPromises);
+        for (const [noteId, noteTags] of tagResults) {
+          tagMap.set(noteId, noteTags);
         }
         setNoteTags(tagMap);
       } catch (error) {
@@ -125,12 +129,13 @@ export default function Home() {
     };
 
     loadNotes();
-  }, [context, page, searchQuery, sortOption, tagFilters, tags]);
+  }, [context, page, searchQuery, sortOption, ...tagFilters]);
 
   // Reset page when filters change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally triggering on filter changes
   useEffect(() => {
     setPage(1);
-  }, []);
+  }, [searchQuery, sortOption, ...tagFilters]);
 
   // Create new note
   const handleCreateNote = async () => {

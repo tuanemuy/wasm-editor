@@ -67,26 +67,24 @@ describe("updateNote", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("空の本文で更新時に例外が発生する", async () => {
+  it("空の本文でメモを更新できる", async () => {
     const originalNote = createNote({ content: "元のメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
+
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
       originalNote,
     );
+    const saveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
 
-    await expect(
-      updateNote(context, {
-        id: originalNote.id,
-        content: "",
-      }),
-    ).rejects.toThrow(BusinessRuleError);
+    const updatedNote = await updateNote(context, {
+      id: originalNote.id,
+      content: "",
+    });
 
-    await expect(
-      updateNote(context, {
-        id: originalNote.id,
-        content: "",
-      }),
-    ).rejects.toThrow("Note content cannot be empty");
+    expect(updatedNote.content).toBe("");
+    expect(saveSpy).toHaveBeenCalledWith(updatedNote);
   });
 
   it("100,000文字の本文でメモを更新できる", async () => {

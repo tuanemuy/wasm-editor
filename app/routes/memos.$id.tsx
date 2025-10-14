@@ -8,6 +8,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { ClientOnly } from "@/components/ClientOnly";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import {
   AlertDialog,
@@ -248,11 +249,19 @@ export default function MemoDetail() {
 
       {/* Editor */}
       <div className="flex-1 overflow-hidden">
-        <TiptapEditor
-          content={content}
-          onChange={handleContentChange}
-          placeholder="Start writing your note..."
-        />
+        <ClientOnly
+          fallback={
+            <div className="flex items-center justify-center h-full">
+              <Spinner className="h-8 w-8" />
+            </div>
+          }
+        >
+          <TiptapEditor
+            content={content}
+            onChange={handleContentChange}
+            placeholder="Start writing your note..."
+          />
+        </ClientOnly>
       </div>
 
       {/* Delete confirmation dialog */}
