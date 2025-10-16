@@ -2,11 +2,15 @@
  * Update Note Use Case
  *
  * Updates an existing note's content.
+ * Automatically extracts and syncs tags from the content.
  */
 
 import type { Note } from "@/core/domain/note/entity";
-import { updateContent } from "@/core/domain/note/entity";
+import { updateContent, updateTagIds } from "@/core/domain/note/entity";
 import type { NoteId } from "@/core/domain/note/valueObject";
+import { createTag } from "@/core/domain/tag/entity";
+import type { TagId } from "@/core/domain/tag/valueObject";
+import { createTagName } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
 
 export type UpdateNoteInput = {
@@ -23,7 +27,54 @@ export async function updateNote(
     const note = await repositories.noteRepository.findById(input.id);
 
     // Update content (validates content)
-    const updatedNote = updateContent(note, input.content);
+    let updatedNote = updateContent(note, input.content);
+
+    // Extract tags from content
+    // If extraction fails, continue with empty tags
+    let tagNames: string[] = [];
+    try {
+      tagNames = await context.tagExtractorPort.extractTags(
+        updatedNote.content,
+      );
+    } catch (error) {
+      // Log error but don't fail note save
+      console.warn("Failed to extract tags from note content:", error);
+    }
+
+    // Get or create tags
+    // Skip invalid tag names instead of failing the entire operation
+    const tags = (
+      await Promise.all(
+        tagNames.map(async (tagName) => {
+          try {
+            // Validate tag name
+            const validatedName = createTagName(tagName);
+
+            // Check if tag exists
+            const existingTag =
+              await repositories.tagRepository.findByName(validatedName);
+
+            if (existingTag) {
+              return existingTag;
+            }
+
+            // Create new tag
+            const newTag = createTag({ name: tagName });
+            await repositories.tagRepository.save(newTag);
+            return newTag;
+          } catch (error) {
+            // Skip invalid tag names
+            console.warn(`Failed to process tag "${tagName}":`, error);
+            return null;
+          }
+        }),
+      )
+    ).filter((tag) => tag !== null);
+
+    const tagIds: TagId[] = tags.map((tag) => tag.id);
+
+    // Update note's tagIds
+    updatedNote = updateTagIds(updatedNote, tagIds);
 
     // Save updated note
     await repositories.noteRepository.save(updatedNote);

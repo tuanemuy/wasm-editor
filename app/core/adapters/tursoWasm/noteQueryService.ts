@@ -72,7 +72,33 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
     const orderDirection = order === "asc" ? "ASC" : "DESC";
 
     try {
-      // Build WHERE conditions
+      // Step 1: If tags are specified, get filtered note IDs first
+      let filteredNoteIds: string[] | null = null;
+      if (tagIds.length > 0) {
+        const tagPlaceholders = tagIds.map(() => "?").join(",");
+        const tagFilterStmt = this.db.prepare(`
+          SELECT note_id
+          FROM note_tag_relations
+          WHERE tag_id IN (${tagPlaceholders})
+          GROUP BY note_id
+          HAVING COUNT(DISTINCT tag_id) = ?
+        `);
+        const tagFilterRows = (await tagFilterStmt.all([
+          ...tagIds,
+          tagIds.length,
+        ])) as NoteIdRow[];
+        filteredNoteIds = tagFilterRows.map((r) => r.note_id);
+
+        // If no notes match the tag filter, return empty result
+        if (filteredNoteIds.length === 0) {
+          return {
+            items: [],
+            count: 0,
+          };
+        }
+      }
+
+      // Step 2: Build WHERE conditions for main query
       const conditions: string[] = [];
       const whereParams: (string | number)[] = [];
 
@@ -82,19 +108,11 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
         whereParams.push(`%${query}%`);
       }
 
-      // Tag search condition (AND logic - all tags must match)
-      if (tagIds.length > 0) {
-        const tagPlaceholders = tagIds.map(() => "?").join(",");
-        conditions.push(`
-          notes.id IN (
-            SELECT note_id
-            FROM note_tag_relations
-            WHERE tag_id IN (${tagPlaceholders})
-            GROUP BY note_id
-            HAVING COUNT(DISTINCT tag_id) = ?
-          )
-        `);
-        whereParams.push(...tagIds, tagIds.length);
+      // Add note ID filter if tags were specified
+      if (filteredNoteIds !== null) {
+        const idPlaceholders = filteredNoteIds.map(() => "?").join(",");
+        conditions.push(`id IN (${idPlaceholders})`);
+        whereParams.push(...filteredNoteIds);
       }
 
       // Combine conditions with AND

@@ -3,6 +3,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { Context } from "@/core/application/context";
@@ -15,13 +16,28 @@ const AppContext = createContext<Context | null>(null);
 export function AppContextProvider({ children }: { children: ReactNode }) {
   const [context, setContext] = useState<Context | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const initializingRef = useRef(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple initializations (especially in React StrictMode)
+    if (initializingRef.current || initializedRef.current) {
+      return;
+    }
+
+    initializingRef.current = true;
+
     // Dynamic import to avoid SSR evaluation
     import("./di")
       .then((module) => module.createContext())
-      .then((ctx) => setContext(ctx))
-      .catch((err) => setError(err));
+      .then((ctx) => {
+        setContext(ctx);
+        initializedRef.current = true;
+      })
+      .catch((err) => {
+        setError(err);
+        initializingRef.current = false;
+      });
   }, []);
 
   if (error) {

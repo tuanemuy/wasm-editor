@@ -15,6 +15,7 @@ export type { Database };
 // Singleton instance
 let dbInstance: Database | null = null;
 let dbPath: string | null = null;
+let connectionPromise: Promise<Database> | null = null;
 
 /**
  * Get or create a database connection (singleton pattern)
@@ -28,20 +29,37 @@ export async function getDatabase(path: string): Promise<Database> {
     return dbInstance;
   }
 
+  // Wait for ongoing connection if in progress
+  if (connectionPromise && dbPath === path) {
+    return connectionPromise;
+  }
+
   // Close existing connection if path is different
   if (dbInstance && dbPath !== path) {
     dbInstance.close();
     dbInstance = null;
     dbPath = null;
+    connectionPromise = null;
   }
 
   // Create new connection
-  dbInstance = await connect(path, {
-    timeout: 5000, // busy timeout for handling high-concurrency write cases
-  });
   dbPath = path;
+  connectionPromise = connect(path, {
+    timeout: 5000, // busy timeout for handling high-concurrency write cases
+  })
+    .then((db) => {
+      dbInstance = db;
+      return db;
+    })
+    .catch((error) => {
+      // Reset state on error
+      dbInstance = null;
+      dbPath = null;
+      connectionPromise = null;
+      throw error;
+    });
 
-  return dbInstance;
+  return connectionPromise;
 }
 
 /**

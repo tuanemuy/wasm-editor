@@ -217,4 +217,91 @@ describe("updateNote", () => {
     expect(saveSpy).toHaveBeenCalledTimes(1);
     expect(saveSpy).toHaveBeenCalledWith(updatedNote);
   });
+
+  it("タグを含む本文でメモを更新するとタグが抽出される", async () => {
+    const originalNote = createNote({ content: "元のメモ" });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+      "test",
+      "sample",
+    ]);
+    vi.spyOn(repositories.tagRepository, "findByName").mockResolvedValue(null);
+    const tagSaveSpy = vi
+      .spyOn(repositories.tagRepository, "save")
+      .mockResolvedValue();
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const updatedNote = await updateNote(context, {
+      id: originalNote.id,
+      content: "#test #sample メモ",
+    });
+
+    expect(updatedNote.tagIds).toHaveLength(2);
+    expect(tagSaveSpy).toHaveBeenCalledTimes(2);
+    expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("タグ抽出がエラーでもメモは保存される", async () => {
+    const originalNote = createNote({ content: "元のメモ" });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    // tagExtractorPortがエラーをスローする
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockRejectedValue(
+      new Error("Tag extraction failed"),
+    );
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const updatedNote = await updateNote(context, {
+      id: originalNote.id,
+      content: "#test メモ",
+    });
+
+    // タグは空だが、メモは保存される
+    expect(updatedNote.content).toBe("#test メモ");
+    expect(updatedNote.tagIds).toHaveLength(0);
+    expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("一部のタグが無効でも有効なタグとメモは保存される", async () => {
+    const originalNote = createNote({ content: "元のメモ" });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    // tagExtractorPortは有効・無効両方のタグを返す
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+      "valid",
+      "invalid with spaces", // 無効な文字を含む
+    ]);
+    vi.spyOn(repositories.tagRepository, "findByName").mockResolvedValue(null);
+    const tagSaveSpy = vi
+      .spyOn(repositories.tagRepository, "save")
+      .mockResolvedValue();
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const updatedNote = await updateNote(context, {
+      id: originalNote.id,
+      content: "#valid #invalid メモ",
+    });
+
+    // validのみが保存される
+    expect(updatedNote.content).toBe("#valid #invalid メモ");
+    expect(updatedNote.tagIds).toHaveLength(1);
+    expect(tagSaveSpy).toHaveBeenCalledTimes(1);
+    expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+  });
 });

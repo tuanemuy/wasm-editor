@@ -24,28 +24,44 @@ export async function syncNoteTags(
     const note = await repositories.noteRepository.findById(input.noteId);
 
     // Extract tags from content
-    const tagNames = await context.tagExtractorPort.extractTags(note.content);
+    // If extraction fails, continue with empty tags
+    let tagNames: string[] = [];
+    try {
+      tagNames = await context.tagExtractorPort.extractTags(note.content);
+    } catch (error) {
+      // Log error but don't fail note save
+      console.warn("Failed to extract tags from note content:", error);
+    }
 
     // Get or create tags
-    const tags = await Promise.all(
-      tagNames.map(async (tagName) => {
-        // Validate tag name
-        const validatedName = createTagName(tagName);
+    // Skip invalid tag names instead of failing the entire operation
+    const tags = (
+      await Promise.all(
+        tagNames.map(async (tagName) => {
+          try {
+            // Validate tag name
+            const validatedName = createTagName(tagName);
 
-        // Check if tag exists
-        const existingTag =
-          await repositories.tagRepository.findByName(validatedName);
+            // Check if tag exists
+            const existingTag =
+              await repositories.tagRepository.findByName(validatedName);
 
-        if (existingTag) {
-          return existingTag;
-        }
+            if (existingTag) {
+              return existingTag;
+            }
 
-        // Create new tag
-        const newTag = createTag({ name: tagName });
-        await repositories.tagRepository.save(newTag);
-        return newTag;
-      }),
-    );
+            // Create new tag
+            const newTag = createTag({ name: tagName });
+            await repositories.tagRepository.save(newTag);
+            return newTag;
+          } catch (error) {
+            // Skip invalid tag names
+            console.warn(`Failed to process tag "${tagName}":`, error);
+            return null;
+          }
+        }),
+      )
+    ).filter((tag) => tag !== null);
 
     const tagIds = tags.map((tag) => tag.id);
 

@@ -1,30 +1,12 @@
-import { ArrowLeftIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import { getSettings } from "@/core/application/settings/getSettings";
-import { resetSettings } from "@/core/application/settings/resetSettings";
-import { updateSettings } from "@/core/application/settings/updateSettings";
-import type { Settings } from "@/core/domain/settings/entity";
-import { useAppContext } from "@/lib/context";
+import { SettingsHeader } from "@/components/layout/SettingsHeader";
+import { AutoSaveSettingsCard } from "@/components/settings/AutoSaveSettingsCard";
+import { SettingsActions } from "@/components/settings/SettingsActions";
+import { SortSettingsCard } from "@/components/settings/SortSettingsCard";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings } from "@/hooks/useSettings";
 import type { Route } from "./+types/settings";
 
 export function meta(_: Route.MetaArgs) {
@@ -35,86 +17,74 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export default function SettingsPage() {
-  const context = useAppContext();
-
-  // State
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
+  const {
+    settings,
+    loading,
+    saving,
+    resetting,
+    updateSettings,
+    resetSettings,
+  } = useSettings();
 
   // Form state
   const [defaultOrder, setDefaultOrder] = useState<string>("desc");
   const [defaultOrderBy, setDefaultOrderBy] = useState<string>("created");
   const [autoSaveInterval, setAutoSaveInterval] = useState<string>("2000");
 
-  // Load settings
+  // Sync form state with settings
   useEffect(() => {
-    getSettings(context)
-      .then((loadedSettings) => {
-        setSettings(loadedSettings);
-        setDefaultOrder(loadedSettings.defaultOrder);
-        setDefaultOrderBy(loadedSettings.defaultOrderBy);
-        setAutoSaveInterval(loadedSettings.autoSaveInterval.toString());
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to load settings:", error);
-        toast.error("Failed to load settings");
-      });
-  }, [context]);
+    if (settings) {
+      setDefaultOrder(settings.defaultOrder);
+      setDefaultOrderBy(settings.defaultOrderBy);
+      setAutoSaveInterval(settings.autoSaveInterval.toString());
+    }
+  }, [settings]);
 
   // Save settings
   const handleSave = async () => {
-    if (saving) return;
-
     const interval = Number.parseInt(autoSaveInterval, 10);
     if (Number.isNaN(interval) || interval < 1000) {
       toast.error("Auto-save interval must be at least 1000ms");
       return;
     }
 
-    setSaving(true);
-    try {
-      const updated = await updateSettings(context, {
-        defaultOrder,
-        defaultOrderBy,
-        autoSaveInterval: interval,
-      });
-      setSettings(updated);
-      toast.success("Settings saved");
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      toast.error("Failed to save settings");
-    } finally {
-      setSaving(false);
-    }
+    await updateSettings({
+      defaultOrder,
+      defaultOrderBy,
+      autoSaveInterval: interval,
+    });
   };
 
   // Reset settings
   const handleReset = async () => {
-    if (resetting) return;
-
-    setResetting(true);
-    try {
-      const reset = await resetSettings(context);
-      setSettings(reset);
-      setDefaultOrder(reset.defaultOrder);
-      setDefaultOrderBy(reset.defaultOrderBy);
-      setAutoSaveInterval(reset.autoSaveInterval.toString());
-      toast.success("Settings reset to defaults");
-    } catch (error) {
-      console.error("Failed to reset settings:", error);
-      toast.error("Failed to reset settings");
-    } finally {
-      setResetting(false);
-    }
+    await resetSettings();
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner className="h-8 w-8" />
+      <div className="min-h-screen bg-muted/40">
+        <SettingsHeader />
+        <main className="max-w-4xl mx-auto p-4 space-y-6 py-8">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        </main>
       </div>
     );
   }
@@ -127,102 +97,28 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      {/* Header */}
-      <header className="border-b bg-background p-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Link to="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeftIcon className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Settings</h1>
-        </div>
-      </header>
+      <SettingsHeader />
 
-      {/* Content */}
       <main className="max-w-4xl mx-auto p-4 space-y-6 py-8">
-        {/* Default Sort Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Default Sort</CardTitle>
-            <CardDescription>
-              Configure the default sort order for the notes list
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="defaultOrderBy">Sort by</Label>
-              <Select value={defaultOrderBy} onValueChange={setDefaultOrderBy}>
-                <SelectTrigger id="defaultOrderBy">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created">Created date</SelectItem>
-                  <SelectItem value="updated">Updated date</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <SortSettingsCard
+          defaultOrderBy={defaultOrderBy}
+          defaultOrder={defaultOrder}
+          onOrderByChange={setDefaultOrderBy}
+          onOrderChange={setDefaultOrder}
+        />
 
-            <div className="space-y-2">
-              <Label htmlFor="defaultOrder">Order</Label>
-              <Select value={defaultOrder} onValueChange={setDefaultOrder}>
-                <SelectTrigger id="defaultOrder">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">
-                    Descending (newest first)
-                  </SelectItem>
-                  <SelectItem value="asc">Ascending (oldest first)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        <AutoSaveSettingsCard
+          autoSaveInterval={autoSaveInterval}
+          onChange={setAutoSaveInterval}
+        />
 
-        {/* Auto-save Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Auto-save</CardTitle>
-            <CardDescription>
-              Configure how often notes are automatically saved
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="autoSaveInterval">
-                Auto-save interval (milliseconds)
-              </Label>
-              <Input
-                id="autoSaveInterval"
-                type="number"
-                min="1000"
-                step="1000"
-                value={autoSaveInterval}
-                onChange={(e) => setAutoSaveInterval(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Minimum: 1000ms (1 second). Lower values save more frequently.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex gap-2 justify-end">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            disabled={resetting || saving}
-          >
-            {resetting ? <Spinner className="h-4 w-4 mr-2" /> : null}
-            Reset to defaults
-          </Button>
-          <Button onClick={handleSave} disabled={!hasChanges || saving}>
-            {saving ? <Spinner className="h-4 w-4 mr-2" /> : null}
-            Save changes
-          </Button>
-        </div>
+        <SettingsActions
+          hasChanges={!!hasChanges}
+          saving={saving}
+          resetting={resetting}
+          onSave={handleSave}
+          onReset={handleReset}
+        />
       </main>
     </div>
   );

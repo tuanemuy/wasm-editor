@@ -215,6 +215,67 @@ describe("syncNoteTags", () => {
     expect(tagSaveSpy).toHaveBeenCalledTimes(2);
   });
 
+  it("タグ抽出がエラーでもノートは保存される", async () => {
+    const note = createNote({ content: "#test テストメモ" });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
+    // tagExtractorPortがエラーをスローする
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockRejectedValue(
+      new Error("Tag extraction failed"),
+    );
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const tagIds = await syncNoteTags(context, { noteId: note.id });
+
+    // タグは空だが、ノートは保存される
+    expect(tagIds).toHaveLength(0);
+    expect(noteSaveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: note.id,
+        tagIds: [],
+      }),
+    );
+  });
+
+  it("一部のタグが無効でも有効なタグは保存される", async () => {
+    const note = createNote({ content: "#valid #invalid テストメモ" });
+    const validTag = createTag({ name: "valid" });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
+    // tagExtractorPortは両方のタグを返す
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+      "valid",
+      "invalid with spaces", // 無効な文字を含む
+    ]);
+    // validは既存、invalidは新規だが検証エラーになる
+    vi.spyOn(repositories.tagRepository, "findByName")
+      .mockResolvedValueOnce(validTag)
+      .mockResolvedValueOnce(null);
+    const tagSaveSpy = vi
+      .spyOn(repositories.tagRepository, "save")
+      .mockResolvedValue();
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const tagIds = await syncNoteTags(context, { noteId: note.id });
+
+    // validのみが保存される
+    expect(tagIds).toHaveLength(1);
+    expect(tagIds[0]).toBe(validTag.id);
+    expect(tagSaveSpy).not.toHaveBeenCalled(); // 既存タグのみなので保存は呼ばれない
+    expect(noteSaveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: note.id,
+        tagIds: [validTag.id],
+      }),
+    );
+  });
+
   it("無効な文字を含むタグがスキップされる", async () => {
     const note = createNote({ content: "#valid #invalid tag テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
