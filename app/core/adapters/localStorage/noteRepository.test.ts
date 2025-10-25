@@ -2,12 +2,7 @@
  * LocalStorage Note Repository Tests
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  NotFoundError,
-  NotFoundErrorCode,
-  SystemError,
-  SystemErrorCode,
-} from "@/core/application/error";
+import { NotFoundError, SystemError } from "@/core/application/error";
 import type { Note } from "@/core/domain/note/entity";
 import {
   createNoteContent,
@@ -44,7 +39,7 @@ describe("LocalStorageNoteRepository", () => {
 
   beforeEach(() => {
     localStorageMock = new LocalStorageMock();
-    global.localStorage = localStorageMock as any;
+    global.localStorage = localStorageMock as unknown as Storage;
     repository = new LocalStorageNoteRepository();
   });
 
@@ -63,7 +58,7 @@ describe("LocalStorageNoteRepository", () => {
 
       const stored = localStorageMock.getItem("app_notes");
       expect(stored).toBeTruthy();
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["test-id-1"]).toBeDefined();
       expect(parsed["test-id-1"].text).toBe("Test note");
       // Verify timestamps are in seconds
@@ -85,7 +80,7 @@ describe("LocalStorageNoteRepository", () => {
 
       const relations = localStorageMock.getItem("app_note_tag_relations");
       expect(relations).toBeTruthy();
-      const parsed = JSON.parse(relations!);
+      const parsed = JSON.parse(relations as string);
       expect(parsed).toHaveLength(2);
       expect(parsed[0]).toEqual({ note_id: "test-id-1", tag_id: "tag-1" });
       expect(parsed[1]).toEqual({ note_id: "test-id-1", tag_id: "tag-2" });
@@ -103,12 +98,7 @@ describe("LocalStorageNoteRepository", () => {
 
       // Mock setItem to throw QuotaExceededError
       localStorageMock.setItem = () => {
-        const error = new DOMException(
-          "QuotaExceededError",
-          "QuotaExceededError",
-        );
-        (error as any).name = "QuotaExceededError";
-        throw error;
+        throw new DOMException("QuotaExceededError", "QuotaExceededError");
       };
 
       await expect(repository.save(note)).rejects.toThrow(SystemError);
@@ -306,7 +296,7 @@ describe("LocalStorageNoteRepository", () => {
       await repository.delete(createNoteId("test-id-1"));
 
       const stored = localStorageMock.getItem("app_notes");
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["test-id-1"]).toBeUndefined();
     });
 
@@ -332,7 +322,7 @@ describe("LocalStorageNoteRepository", () => {
       await repository.delete(createNoteId("test-id-1"));
 
       const relations = localStorageMock.getItem("app_note_tag_relations");
-      const parsed = JSON.parse(relations!);
+      const parsed = JSON.parse(relations as string);
       expect(parsed).toHaveLength(1);
       expect(parsed[0].note_id).toBe("test-id-2");
     });

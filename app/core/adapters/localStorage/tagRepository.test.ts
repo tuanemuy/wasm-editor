@@ -34,7 +34,7 @@ describe("LocalStorageTagRepository", () => {
 
   beforeEach(() => {
     localStorageMock = new LocalStorageMock();
-    global.localStorage = localStorageMock as any;
+    global.localStorage = localStorageMock as unknown as Storage;
     repository = new LocalStorageTagRepository();
   });
 
@@ -51,7 +51,7 @@ describe("LocalStorageTagRepository", () => {
 
       const stored = localStorageMock.getItem("app_tags");
       expect(stored).toBeTruthy();
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["tag-1"]).toBeDefined();
       expect(parsed["tag-1"].name).toBe("TestTag");
       // Verify timestamps are in seconds
@@ -69,12 +69,7 @@ describe("LocalStorageTagRepository", () => {
 
       // Mock setItem to throw QuotaExceededError
       localStorageMock.setItem = () => {
-        const error = new DOMException(
-          "QuotaExceededError",
-          "QuotaExceededError",
-        );
-        (error as any).name = "QuotaExceededError";
-        throw error;
+        throw new DOMException("QuotaExceededError", "QuotaExceededError");
       };
 
       await expect(repository.save(tag)).rejects.toThrow(SystemError);
@@ -244,7 +239,7 @@ describe("LocalStorageTagRepository", () => {
       await repository.delete(createTagId("tag-1"));
 
       const stored = localStorageMock.getItem("app_tags");
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["tag-1"]).toBeUndefined();
     });
 
@@ -269,7 +264,7 @@ describe("LocalStorageTagRepository", () => {
       await repository.delete(createTagId("tag-1"));
 
       const relations = localStorageMock.getItem("app_note_tag_relations");
-      const parsed = JSON.parse(relations!);
+      const parsed = JSON.parse(relations as string);
       expect(parsed).toHaveLength(1);
       expect(parsed[0].tag_id).toBe("tag-2");
     });
@@ -303,7 +298,7 @@ describe("LocalStorageTagRepository", () => {
       await repository.deleteMany([createTagId("tag-1"), createTagId("tag-2")]);
 
       const stored = localStorageMock.getItem("app_tags");
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["tag-1"]).toBeUndefined();
       expect(parsed["tag-2"]).toBeUndefined();
       expect(parsed["tag-3"]).toBeDefined();
@@ -337,7 +332,7 @@ describe("LocalStorageTagRepository", () => {
       await repository.deleteMany([createTagId("tag-1"), createTagId("tag-2")]);
 
       const relations = localStorageMock.getItem("app_note_tag_relations");
-      const parsed = JSON.parse(relations!);
+      const parsed = JSON.parse(relations as string);
       expect(parsed).toHaveLength(1);
       expect(parsed[0].tag_id).toBe("tag-3");
     });
@@ -356,7 +351,7 @@ describe("LocalStorageTagRepository", () => {
       await repository.deleteMany([]);
 
       const stored = localStorageMock.getItem("app_tags");
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed["tag-1"]).toBeDefined();
     });
   });

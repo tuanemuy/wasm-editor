@@ -29,7 +29,7 @@ export function NoteList({
   onToggleSelect,
   onLoadMore,
 }: NoteListProps) {
-  const { query, sortField, sortOrder, tagIds } = useSearch();
+  const { query, tagIds } = useSearch();
   const hasFilters = !!query || tagIds.length > 0;
   const targetRef = useInfiniteScroll({
     onLoadMore,

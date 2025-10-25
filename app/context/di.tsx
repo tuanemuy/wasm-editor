@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import type { Database } from "@/core/adapters/tursoWasm/client";
 import type { Container } from "@/core/application/container";
 import { createLocalStorageContainer, createTursoWasmContainer } from "@/di";
 import { useDatabase } from "@/hooks/useDatabase";
