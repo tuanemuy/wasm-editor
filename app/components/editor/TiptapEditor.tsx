@@ -54,7 +54,7 @@ export function TiptapEditor({
         },
       }),
     ],
-    content,
+    content: content as any,
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
       onChange(
@@ -85,7 +85,7 @@ export function TiptapEditor({
     const newContent = JSON.stringify(content);
     if (newContent !== currentContent) {
       const { from, to } = editor.state.selection;
-      editor.commands.setContent(content, { emitUpdate: false });
+      editor.commands.setContent(content as any, { emitUpdate: false });
       // Restore cursor position if possible
       const newFrom = Math.min(from, editor.state.doc.content.size - 1);
       const newTo = Math.min(to, editor.state.doc.content.size - 1);

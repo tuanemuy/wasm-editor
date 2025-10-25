@@ -287,7 +287,7 @@ export class LocalStorageTagRepository implements TagRepository {
 
       // Also delete related note-tag relations
       const relations = this.getAllRelations();
-      const filteredRelations = relations.filter((r) => !idSet.has(r.tag_id));
+      const filteredRelations = relations.filter((r) => !idSet.has(createTagId(r.tag_id)));
       this.saveAllRelations(filteredRelations);
     } catch (error) {
       throw new SystemError(

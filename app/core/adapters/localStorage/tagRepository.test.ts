@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { SystemError } from "@/core/application/error";
 import { NotFoundError } from "@/core/application/error";
 import type { Tag } from "@/core/domain/tag/entity";
-import { createTagId } from "@/core/domain/tag/valueObject";
+import { createTagId, createTagName } from "@/core/domain/tag/valueObject";
 import { LocalStorageTagRepository } from "./tagRepository";
 
 // Mock localStorage for testing
@@ -43,7 +43,7 @@ describe("LocalStorageTagRepository", () => {
     it("should save a tag successfully", async () => {
       const tag: Tag = {
         id: createTagId("tag-1"),
-        name: "Test Tag",
+        name: createTagName("TestTag"),
         createdAt: new Date("2025-01-01T00:00:00Z"),
         updatedAt: new Date("2025-01-01T00:00:00Z"),
       };
@@ -54,7 +54,7 @@ describe("LocalStorageTagRepository", () => {
       expect(stored).toBeTruthy();
       const parsed = JSON.parse(stored!);
       expect(parsed["tag-1"]).toBeDefined();
-      expect(parsed["tag-1"].name).toBe("Test Tag");
+      expect(parsed["tag-1"].name).toBe("TestTag");
       // Verify timestamps are in seconds
       expect(parsed["tag-1"].created_at).toBe(1735689600);
       expect(parsed["tag-1"].updated_at).toBe(1735689600);
@@ -63,7 +63,7 @@ describe("LocalStorageTagRepository", () => {
     it("should handle QuotaExceededError", async () => {
       const tag: Tag = {
         id: createTagId("tag-1"),
-        name: "Test Tag",
+        name: createTagName("TestTag"),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -90,7 +90,7 @@ describe("LocalStorageTagRepository", () => {
       const testData = {
         "tag-1": {
           id: "tag-1",
-          name: "Test Tag",
+          name: "TestTag",
           created_at: 1735689600,
           updated_at: 1735689600,
         },
@@ -100,7 +100,7 @@ describe("LocalStorageTagRepository", () => {
       const tag = await repository.findById(createTagId("tag-1"));
 
       expect(tag.id).toBe("tag-1");
-      expect(tag.name).toBe("Test Tag");
+      expect(tag.name).toBe("TestTag");
       expect(tag.createdAt).toEqual(new Date("2025-01-01T00:00:00Z"));
       expect(tag.updatedAt).toEqual(new Date("2025-01-01T00:00:00Z"));
     });
@@ -119,24 +119,24 @@ describe("LocalStorageTagRepository", () => {
       const testData = {
         "tag-1": {
           id: "tag-1",
-          name: "Test Tag",
+          name: "TestTag",
           created_at: 1735689600,
           updated_at: 1735689600,
         },
       };
       localStorageMock.setItem("app_tags", JSON.stringify(testData));
 
-      const tag = await repository.findByName("Test Tag");
+      const tag = await repository.findByName(createTagName("TestTag"));
 
       expect(tag).toBeTruthy();
       expect(tag?.id).toBe("tag-1");
-      expect(tag?.name).toBe("Test Tag");
+      expect(tag?.name).toBe("TestTag");
     });
 
     it("should return null when tag does not exist", async () => {
       localStorageMock.setItem("app_tags", JSON.stringify({}));
 
-      const tag = await repository.findByName("Non-existent");
+      const tag = await repository.findByName(createTagName("Nonexistent"));
 
       expect(tag).toBeNull();
     });
