@@ -11,6 +11,8 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { createTag } from "@/core/domain/tag/entity";
+import { TagCleanupService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
 import { createTestContent } from "./test-helpers";
@@ -29,6 +31,7 @@ describe("updateNote", () => {
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),
+      tagCleanupService: new TagCleanupService(),
     };
   });
 
@@ -366,9 +369,8 @@ describe("updateNote", () => {
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
 
     // 未使用タグが存在する
-    const unusedTag = createNote({
-      content: createTestContent("unused"),
-      text: "unused",
+    const unusedTag = createTag({
+      name: "unused",
     });
     vi.spyOn(context.tagQueryService, "findUnused").mockResolvedValue([
       unusedTag,
