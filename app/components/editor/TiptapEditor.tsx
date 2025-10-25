@@ -18,9 +18,35 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import type { Content } from "@tiptap/core";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+
+/**
+ * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
+ * StructuredContent is a domain-level abstraction that's structurally compatible with
+ * Tiptap's JSON format, but TypeScript requires explicit conversion.
+ */
+function toTiptapContent(content: StructuredContent): Content {
+  // Runtime validation: ensure content has the expected structure
+  if (!content || typeof content !== "object" || !("type" in content)) {
+    throw new Error("Invalid content structure");
+  }
+  return content as unknown as Content;
+}
+
+/**
+ * Type adapter to convert from Tiptap's Content to domain StructuredContent.
+ */
+function fromTiptapContent(content: Content): StructuredContent {
+  // Runtime validation: ensure content has the expected structure
+  const json = content as Record<string, unknown>;
+  if (!json || typeof json !== "object" || !("type" in json)) {
+    throw new Error("Invalid Tiptap content structure");
+  }
+  return json as StructuredContent;
+}
 
 type TiptapEditorProps = {
   content: StructuredContent;
@@ -54,11 +80,11 @@ export function TiptapEditor({
         },
       }),
     ],
-    content: content as any,
+    content: toTiptapContent(content),
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
       onChange(
-        updatedEditor.getJSON() as StructuredContent,
+        fromTiptapContent(updatedEditor.getJSON()),
         updatedEditor.getText(),
       );
     },
@@ -85,7 +111,7 @@ export function TiptapEditor({
     const newContent = JSON.stringify(content);
     if (newContent !== currentContent) {
       const { from, to } = editor.state.selection;
-      editor.commands.setContent(content as any, { emitUpdate: false });
+      editor.commands.setContent(toTiptapContent(content), { emitUpdate: false });
       // Restore cursor position if possible
       const newFrom = Math.min(from, editor.state.doc.content.size - 1);
       const newTo = Math.min(to, editor.state.doc.content.size - 1);

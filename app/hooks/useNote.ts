@@ -1,4 +1,4 @@
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useRef, useState } from "react";
 import { withContainer } from "@/di";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
@@ -43,27 +43,38 @@ export function useNote(
   const [exporting, setExporting] = useState(false);
   const [editable, setEditable] = useState(false);
 
-  // Update note content
+  // Ref to track the debounce timeout for save operations
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Update note content with debouncing to prevent race conditions
   const save = useCallback(
     async (content: StructuredContent, text: string) => {
+      // Clear any pending save operation
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
       setSaveStatus("saving");
 
-      await request(
-        updateNote({
-          id: createNoteId(noteId),
-          content,
-          text,
-        }),
-        {
-          onSuccess: () => {
-            setSaveStatus("saved");
+      // Debounce the save operation (300ms delay)
+      saveTimeoutRef.current = setTimeout(async () => {
+        await request(
+          updateNote({
+            id: createNoteId(noteId),
+            content,
+            text,
+          }),
+          {
+            onSuccess: () => {
+              setSaveStatus("saved");
+            },
+            onError: (error) => {
+              setSaveStatus("unsaved");
+              onError?.(formatError(error));
+            },
           },
-          onError: (error) => {
-            setSaveStatus("unsaved");
-            onError?.(formatError(error));
-          },
-        },
-      );
+        );
+      }, 300);
     },
     [noteId, onError],
   );
