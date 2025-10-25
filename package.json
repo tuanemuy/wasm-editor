@@ -48,6 +48,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@tiptap/core": "^3.6.6",
     "@tiptap/extension-link": "^3.6.6",
     "@tiptap/extension-placeholder": "^3.6.6",
     "@tiptap/pm": "^3.6.6",
