@@ -31,9 +31,6 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
-  optimizeDeps: {
-    exclude: ["@tursodatabase/database-wasm"],
-  },
   server: {
     host: true,
     allowedHosts: ["dev2.suiro.ink"],
