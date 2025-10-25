@@ -1,16 +1,15 @@
-import { use, useCallback, Suspense } from "react";
+import { Suspense, use, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { motion } from "motion/react";
-import { withContainer } from "@/di";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { MemoHeader } from "@/components/layout/MemoHeader";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { Spinner } from "@/components/ui/spinner";
+import { getNote as getNoteService } from "@/core/application/note/getNote";
+import { createNoteId } from "@/core/domain/note/valueObject";
+import { withContainer } from "@/di";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
 import { createNotification } from "@/presenters/notification";
-import { createNoteId } from "@/core/domain/note/valueObject";
-import { getNote as getNoteService } from "@/core/application/note/getNote";
 import type { Route } from "./+types/memos.$id";
 
 const getNote = withContainer(getNoteService);
@@ -74,25 +73,14 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
         onDelete={deleteNote}
       />
       <div className="flex-1 overflow-hidden p-4">
-        <motion.div
-          layoutId={`note-${note.id}`}
-          layout="position"
-          className="h-full bg-card rounded-xl border shadow-sm"
-          transition={{
-            layout: {
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-            },
-          }}
-        >
+        <div className="h-full bg-card rounded-xl border shadow-sm">
           <TiptapEditor
             content={note.content}
             onChange={save}
             placeholder="Start writing your note..."
             editable={editable}
           />
-        </motion.div>
+        </div>
       </div>
       <DeleteConfirmDialog
         open={deleteDialog.isOpen}
