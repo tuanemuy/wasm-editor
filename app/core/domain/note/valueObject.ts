@@ -4,8 +4,8 @@
  * Defines value objects for the Note domain with business rule validation.
  */
 import { v7 as uuidv7 } from "uuid";
-import type { JsonValue } from "@/lib/json";
 import { BusinessRuleError } from "@/core/domain/error";
+import type { JsonValue } from "@/lib/json";
 import { NoteErrorCode } from "./errorCode";
 
 const NOTE_TEXT_MAX_LENGTH = 100000;

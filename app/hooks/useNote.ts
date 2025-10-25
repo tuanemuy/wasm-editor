@@ -1,5 +1,4 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { withContainer } from "@/di";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
@@ -7,9 +6,10 @@ import { updateNote as updateNoteService } from "@/core/application/note/updateN
 import type { Note } from "@/core/domain/note/entity";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { withContainer } from "@/di";
 import { formatError } from "@/presenters/error";
-import { request } from "@/presenters/request";
 import type { Notification } from "@/presenters/notification";
+import { request } from "@/presenters/request";
 
 const getNote = withContainer(getNoteService);
 const updateNote = withContainer(updateNoteService);

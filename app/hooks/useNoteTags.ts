@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { withContainer } from "@/di";
 import { useDIContainer } from "@/context/di";
 import { getTagsByNote as getTagsbyNoteService } from "@/core/application/tag/getTagsByNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
+import { withContainer } from "@/di";
 
 const getTagsByNote = withContainer(getTagsbyNoteService);
 

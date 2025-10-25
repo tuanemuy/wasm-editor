@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router";
-import { withContainer } from "@/di";
-import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
 import { HomeHeader } from "@/components/layout/HomeHeader";
 import { BulkActionBar } from "@/components/note/BulkActionBar";
 import { CreateNoteFAB } from "@/components/note/CreateNoteFAB";
@@ -9,6 +7,8 @@ import { TagSidebar } from "@/components/tag/TagSidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useDIContainer } from "@/context/di";
 import { SearchProvider } from "@/context/search";
+import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
+import { withContainer } from "@/di";
 import { useBulkExport } from "@/hooks/useBulkExport";
 import { useBulkSelect } from "@/hooks/useBulkSelect";
 import { useCreateNote } from "@/hooks/useCreateNote";

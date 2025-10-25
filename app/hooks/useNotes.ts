@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { withContainer } from "@/di";
 import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
 import type { Note } from "@/core/domain/note/entity";
 import { createTagId } from "@/core/domain/tag/valueObject";
+import { withContainer } from "@/di";
 import { createPagination } from "@/lib/pagination";
 import type { SortField, SortOrder } from "@/lib/sort-utils";
 import {

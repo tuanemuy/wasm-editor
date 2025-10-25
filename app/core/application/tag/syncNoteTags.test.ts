@@ -11,8 +11,8 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { createTag } from "@/core/domain/tag/entity";
-import { createTestContent } from "../note/test-helpers";
 import type { Context } from "../context";
+import { createTestContent } from "../note/test-helpers";
 import { syncNoteTags } from "./syncNoteTags";
 
 describe("syncNoteTags", () => {

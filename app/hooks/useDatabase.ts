@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  getDatabase,
-  initializeDatabase,
   closeDatabase,
   type Database,
+  getDatabase,
+  initializeDatabase,
 } from "@/core/adapters/tursoWasm/client";
 
 export const useDatabase = (path: string) => {
