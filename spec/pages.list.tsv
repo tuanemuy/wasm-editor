@@ -1,0 +1,4 @@
+ページ名	パス	ステータス
+ホーム（メモ一覧）	/	done
+メモ詳細・編集	/memos/:id	done
+設定	/settings	done

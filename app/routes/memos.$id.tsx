@@ -1,0 +1,105 @@
+import { use, useCallback, Suspense } from "react";
+import { useNavigate } from "react-router";
+import { motion } from "motion/react";
+import { withContainer } from "@/di";
+import { TiptapEditor } from "@/components/editor/TiptapEditor";
+import { MemoHeader } from "@/components/layout/MemoHeader";
+import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
+import { Spinner } from "@/components/ui/spinner";
+import { useDIContainer } from "@/context/di";
+import { useDialog } from "@/hooks/useDialog";
+import { useNote } from "@/hooks/useNote";
+import { defaultCallbacks } from "@/presenters/callback";
+import { createNoteId } from "@/core/domain/note/valueObject";
+import { getNote } from "@/core/application/note/getNote";
+import type { Route } from "./+types/memos.$id";
+
+export function meta(_: Route.MetaArgs) {
+  return [
+    { title: "Edit Note - WASM Editor" },
+    { name: "description", content: "Edit your note" },
+  ];
+}
+
+export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
+  console.log("Loading note with id:", id);
+  const note = await withContainer(getNote)({ id: createNoteId(id) });
+  console.log(note);
+  return note;
+}
+
+export default function MemoDetail({ params: { id } }: Route.ComponentProps) {
+  const container = useDIContainer();
+  const fetchNote = withContainer(getNote)({ id: createNoteId(id) });
+
+  return (
+    <Suspense>
+      <_MemoDetail fetchNote={fetchNote} />
+    </Suspense>
+  );
+}
+
+export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
+  const navigate = useNavigate();
+  const note = use(props.fetchNote);
+
+  // Use extended useNote hook
+  const {
+    deleting,
+    exporting,
+    editable,
+    saveStatus,
+    save,
+    deleteNote,
+    exportNote,
+    toggleEditable,
+  } = useNote(note.id, defaultCallbacks());
+
+  // Dialog state
+  const deleteDialog = useDialog(false);
+
+  // Handle note deletion with navigation
+  const handleDelete = useCallback(async () => {
+    await deleteNote();
+    navigate("/");
+  }, [deleteNote, navigate]);
+
+  return (
+    <>
+      <motion.div
+        layoutId={`note-${note.id}`}
+        className="flex flex-col h-screen bg-background"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 30,
+        }}
+      >
+        <MemoHeader
+          content={note.content}
+          saveStatus={saveStatus}
+          exporting={exporting}
+          isEditing={editable}
+          onToggleEdit={toggleEditable}
+          onExport={exportNote}
+          onDelete={deleteNote}
+        />
+        <TiptapEditor
+          content={note.content}
+          onChange={save}
+          placeholder="Start writing your note..."
+          editable={editable}
+        />
+      </motion.div>
+      <DeleteConfirmDialog
+        open={deleteDialog.isOpen}
+        deleting={deleting}
+        onOpenChange={deleteDialog.close}
+        onConfirm={handleDelete}
+      />
+    </>
+  );
+}
