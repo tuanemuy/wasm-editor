@@ -105,11 +105,13 @@ export function extractTitle(content: StructuredContent): string {
   }
 
   // Take the first TITLE_MAX_LENGTH characters
-  if (text.length <= TITLE_MAX_LENGTH) {
+  // Use Array.from to handle Unicode code points correctly (e.g., emoji)
+  const codePoints = Array.from(text);
+  if (codePoints.length <= TITLE_MAX_LENGTH) {
     return text;
   }
 
-  return `${text.slice(0, TITLE_MAX_LENGTH)}...`;
+  return `${codePoints.slice(0, TITLE_MAX_LENGTH).join("")}...`;
 }
 
 /**
@@ -124,8 +126,10 @@ export function generateNotePreview(
   const lines = plainContent.split("\n").filter((line) => line.trim());
   const preview = lines.slice(0, 3).join(" ").trim();
 
-  if (preview.length > maxLength) {
-    return `${preview.slice(0, maxLength)}...`;
+  // Use Array.from to handle Unicode code points correctly (e.g., emoji)
+  const codePoints = Array.from(preview);
+  if (codePoints.length > maxLength) {
+    return `${codePoints.slice(0, maxLength).join("")}...`;
   }
 
   return preview || "Empty note";

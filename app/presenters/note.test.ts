@@ -174,6 +174,46 @@ describe("extractTitle", () => {
 
     expect(extractTitle(content)).toBe("Nested Heading");
   });
+
+  it("should handle emoji and surrogate pairs correctly when truncating", () => {
+    // Create a text with exactly 50 emoji characters
+    const emojiText = "🤖".repeat(50);
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: emojiText }],
+        },
+      ],
+    };
+
+    const result = extractTitle(content);
+    // Should not truncate as it's exactly 50 code points
+    expect(result).toBe(emojiText);
+    expect(Array.from(result).length).toBe(50);
+  });
+
+  it("should truncate emoji text correctly at code point boundaries", () => {
+    // Create a text with 60 emoji characters
+    const emojiText = "🤖".repeat(60);
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: emojiText }],
+        },
+      ],
+    };
+
+    const result = extractTitle(content);
+    // Should truncate to 50 emoji + "..."
+    expect(result).toBe("🤖".repeat(50) + "...");
+    // Verify we have exactly 50 emoji characters (not counting the ellipsis)
+    const withoutEllipsis = result.slice(0, -3);
+    expect(Array.from(withoutEllipsis).length).toBe(50);
+  });
 });
 
 describe("generateNotePreview", () => {
