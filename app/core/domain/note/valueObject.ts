@@ -47,7 +47,7 @@ export type NoteContent = string & { readonly brand: "NoteContent" };
 export function createNoteContent(content: string): NoteContent {
   if (content.length > NOTE_CONTENT_MAX_LENGTH) {
     throw new BusinessRuleError(
-      NoteErrorCode.ContentTooLong,
+      NoteErrorCode.NoteContentTooLong,
       `Note content exceeds maximum length of ${NOTE_CONTENT_MAX_LENGTH} characters`,
     );
   }
@@ -69,7 +69,7 @@ export type SortOrder = "asc" | "desc";
 export function createSortOrder(order: string): SortOrder {
   if (order !== "asc" && order !== "desc") {
     throw new BusinessRuleError(
-      NoteErrorCode.InvalidSortOrder,
+      NoteErrorCode.NoteInvalidSortOrder,
       `Invalid sort order: ${order}. Must be "asc" or "desc"`,
     );
   }
@@ -97,7 +97,7 @@ export type OrderBy = "created_at" | "updated_at";
 export function createOrderBy(field: string): OrderBy {
   if (field !== "created_at" && field !== "updated_at") {
     throw new BusinessRuleError(
-      NoteErrorCode.InvalidOrderBy,
+      NoteErrorCode.NoteInvalidOrderBy,
       `Invalid order by field: ${field}. Must be "created_at" or "updated_at"`,
     );
   }

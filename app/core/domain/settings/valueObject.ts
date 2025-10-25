@@ -31,14 +31,14 @@ export type AutoSaveInterval = number & { readonly brand: "AutoSaveInterval" };
 export function createAutoSaveInterval(interval: number): AutoSaveInterval {
   if (interval < AUTO_SAVE_INTERVAL_MIN) {
     throw new BusinessRuleError(
-      SettingsErrorCode.AutoSaveIntervalTooShort,
+      SettingsErrorCode.SettingsAutoSaveIntervalTooShort,
       `Auto-save interval must be at least ${AUTO_SAVE_INTERVAL_MIN} milliseconds`,
     );
   }
 
   if (interval > AUTO_SAVE_INTERVAL_MAX) {
     throw new BusinessRuleError(
-      SettingsErrorCode.AutoSaveIntervalTooLong,
+      SettingsErrorCode.SettingsAutoSaveIntervalTooLong,
       `Auto-save interval must not exceed ${AUTO_SAVE_INTERVAL_MAX} milliseconds`,
     );
   }

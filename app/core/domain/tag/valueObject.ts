@@ -57,21 +57,21 @@ export function createTagName(name: string): TagName {
 
   if (trimmed.length === 0) {
     throw new BusinessRuleError(
-      TagErrorCode.NameEmpty,
+      TagErrorCode.TagNameEmpty,
       "Tag name cannot be empty",
     );
   }
 
   if (trimmed.length > TAG_NAME_MAX_LENGTH) {
     throw new BusinessRuleError(
-      TagErrorCode.NameTooLong,
+      TagErrorCode.TagNameTooLong,
       `Tag name exceeds maximum length of ${TAG_NAME_MAX_LENGTH} characters`,
     );
   }
 
   if (!TAG_NAME_PATTERN.test(trimmed)) {
     throw new BusinessRuleError(
-      TagErrorCode.NameInvalidCharacter,
+      TagErrorCode.TagNameInvalidCharacter,
       "Tag name contains invalid characters. Only alphanumeric, hiragana, katakana, kanji, hyphen, and underscore are allowed",
     );
   }

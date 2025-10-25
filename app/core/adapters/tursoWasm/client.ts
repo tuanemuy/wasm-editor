@@ -1,74 +1,86 @@
-/**
- * Turso WASM Database Client
- *
- * Provides database connection management using Turso WASM API.
- * Note: This does NOT use Drizzle ORM as Turso WASM is not compatible with better-sqlite3.
- *
- * IMPORTANT: Turso WASM can only have ONE active connection per database file.
- * This module implements a singleton pattern to ensure only one connection is created.
- */
-
-import { connect, type Database } from "@tursodatabase/database-wasm/vite";
+import type { Database } from "@tursodatabase/database-wasm/vite";
 
 export type { Database };
 
-// Singleton instance
-let dbInstance: Database | null = null;
-let dbPath: string | null = null;
-let connectionPromise: Promise<Database> | null = null;
+let cachedModule: typeof import("@tursodatabase/database-wasm/vite") | null =
+  null;
+let cachedDatabase: { path: string; database: Database } | null = null;
 
-/**
- * Get or create a database connection (singleton pattern)
- *
- * @param path - Path to the database file or ":memory:" for in-memory database
- * @returns Promise resolving to the database instance
- */
-export async function getDatabase(path: string): Promise<Database> {
-  // Return existing instance if already connected to the same path
-  if (dbInstance && dbPath === path) {
-    return dbInstance;
+export async function getDatabaseModule() {
+  if (!cachedModule) {
+    cachedModule = await import("@tursodatabase/database-wasm/vite");
+  }
+  return cachedModule;
+}
+
+export async function getDatabase(path: string) {
+  if (cachedDatabase && cachedDatabase.path === path) {
+    return cachedDatabase.database;
   }
 
-  // Wait for ongoing connection if in progress
-  if (connectionPromise && dbPath === path) {
-    return connectionPromise;
+  if (cachedDatabase && cachedDatabase.path !== path) {
+    cachedDatabase.database.close();
   }
 
-  // Close existing connection if path is different
-  if (dbInstance && dbPath !== path) {
-    dbInstance.close();
-    dbInstance = null;
-    dbPath = null;
-    connectionPromise = null;
-  }
+  const { connect } = await getDatabaseModule();
 
-  // Create new connection
-  dbPath = path;
-  connectionPromise = connect(path, {
-    timeout: 5000, // busy timeout for handling high-concurrency write cases
-  })
-    .then((db) => {
-      dbInstance = db;
-      return db;
-    })
-    .catch((error) => {
-      // Reset state on error
-      dbInstance = null;
-      dbPath = null;
-      connectionPromise = null;
-      throw error;
-    });
+  const database = await connect(path, {
+    timeout: 1000,
+  });
+  await initializeDatabase(database);
 
-  return connectionPromise;
+  cachedDatabase = { path, database };
+  return database;
 }
 
 /**
  * Close the database connection
  */
-export function closeDatabase(): void {
-  if (dbInstance) {
-    dbInstance.close();
-    dbInstance = null;
-    dbPath = null;
-  }
+export function closeDatabase(database: Database) {
+  database.close();
+}
+
+/**
+ * Initialize database schema
+ *
+ * Creates all tables and indexes if they don't exist.
+ *
+ * @param db - Database instance
+ */
+export async function initializeDatabase(db: Database): Promise<void> {
+  await db.exec(`
+    -- notes テーブル
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    -- tags テーブル
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    -- noteTagRelations テーブル
+    CREATE TABLE IF NOT EXISTS note_tag_relations (
+      note_id TEXT NOT NULL,
+      tag_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      PRIMARY KEY (note_id, tag_id),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+
+    -- インデックス作成
+    CREATE INDEX IF NOT EXISTS notes_content_idx ON notes(content);
+    CREATE INDEX IF NOT EXISTS notes_created_at_idx ON notes(created_at);
+    CREATE INDEX IF NOT EXISTS notes_updated_at_idx ON notes(updated_at);
+    CREATE INDEX IF NOT EXISTS tags_name_idx ON tags(name);
+    CREATE INDEX IF NOT EXISTS note_tag_relations_note_id_idx ON note_tag_relations(note_id);
+    CREATE INDEX IF NOT EXISTS note_tag_relations_tag_id_idx ON note_tag_relations(tag_id);
+  `);
 }
