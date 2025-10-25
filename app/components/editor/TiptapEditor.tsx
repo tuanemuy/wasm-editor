@@ -18,7 +18,7 @@ import {
   StrikethroughIcon,
   Undo2Icon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
@@ -80,8 +80,6 @@ export function TiptapEditor({
   editable = true,
 }: TiptapEditorProps) {
   const isInitialMount = useRef(true);
-  // Track editor state changes to trigger re-renders when cursor position changes
-  const [, setEditorState] = useState(0);
 
   const editor = useEditor({
     extensions: [
@@ -102,6 +100,7 @@ export function TiptapEditor({
     ],
     content: toTiptapContent(content),
     editable,
+    shouldRerenderOnTransaction: true,
     onUpdate: ({ editor: updatedEditor }) => {
       onChange(
         fromTiptapContent(updatedEditor.getJSON()),
@@ -146,25 +145,6 @@ export function TiptapEditor({
     if (!editor || editor.isDestroyed) return;
     editor.setEditable(editable);
   }, [editable, editor]);
-
-  // Subscribe to editor transaction updates to re-render when selection/formatting changes
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-
-    const handleUpdate = () => {
-      // Trigger a re-render by updating state
-      setEditorState((prev) => prev + 1);
-    };
-
-    // Listen to transaction events - fires when selection or content changes
-    editor.on("transaction", handleUpdate);
-    editor.on("selectionUpdate", handleUpdate);
-
-    return () => {
-      editor.off("transaction", handleUpdate);
-      editor.off("selectionUpdate", handleUpdate);
-    };
-  }, [editor]);
 
   if (!editor) {
     return null;
