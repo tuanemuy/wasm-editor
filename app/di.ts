@@ -15,8 +15,19 @@ type StorageAdapter = "localStorage" | "tursoWasm";
 
 // Get storage adapter from environment variable
 // Defaults to localStorage for development convenience
-const STORAGE_ADAPTER: StorageAdapter =
-  (import.meta.env.VITE_STORAGE_ADAPTER as StorageAdapter) || "localStorage";
+const VALID_ADAPTERS = ["localStorage", "tursoWasm"] as const;
+const envAdapter = import.meta.env.VITE_STORAGE_ADAPTER as string | undefined;
+const STORAGE_ADAPTER: StorageAdapter = (() => {
+  if (!envAdapter) {
+    return "localStorage";
+  }
+  if (!VALID_ADAPTERS.includes(envAdapter as StorageAdapter)) {
+    throw new Error(
+      `Invalid VITE_STORAGE_ADAPTER: "${envAdapter}". Must be one of: ${VALID_ADAPTERS.join(", ")}`,
+    );
+  }
+  return envAdapter as StorageAdapter;
+})();
 
 // biome-ignore lint/suspicious/noExplicitAny: any
 export function withContainer<T extends any[], K>(

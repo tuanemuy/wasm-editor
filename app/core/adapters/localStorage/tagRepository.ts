@@ -22,8 +22,8 @@ const NOTE_TAG_RELATIONS_STORAGE_KEY = "app_note_tag_relations";
 interface TagDataModel {
   id: string;
   name: string;
-  created_at: number; // Unix timestamp (milliseconds)
-  updated_at: number; // Unix timestamp (milliseconds)
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
 }
 
 interface NoteTagRelation {
@@ -61,6 +61,18 @@ export class LocalStorageTagRepository implements TagRepository {
       const obj = Object.fromEntries(tags);
       localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(obj));
     } catch (error) {
+      // Check for quota exceeded error
+      if (
+        error instanceof DOMException &&
+        (error.name === "QuotaExceededError" ||
+          error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+      ) {
+        throw new SystemError(
+          SystemErrorCode.StorageError,
+          "Storage quota exceeded. Please delete some data or clear browser data.",
+          error,
+        );
+      }
       throw new SystemError(
         SystemErrorCode.StorageError,
         "Failed to save tags to localStorage",
@@ -99,6 +111,18 @@ export class LocalStorageTagRepository implements TagRepository {
         JSON.stringify(relations),
       );
     } catch (error) {
+      // Check for quota exceeded error
+      if (
+        error instanceof DOMException &&
+        (error.name === "QuotaExceededError" ||
+          error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+      ) {
+        throw new SystemError(
+          SystemErrorCode.StorageError,
+          "Storage quota exceeded. Please delete some data or clear browser data.",
+          error,
+        );
+      }
       throw new SystemError(
         SystemErrorCode.StorageError,
         "Failed to save note-tag relations to localStorage",
@@ -114,8 +138,8 @@ export class LocalStorageTagRepository implements TagRepository {
     return {
       id: createTagId(data.id),
       name: data.name as Tag["name"],
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.created_at * 1000),
+      updatedAt: new Date(data.updated_at * 1000),
     };
   }
 
@@ -126,8 +150,8 @@ export class LocalStorageTagRepository implements TagRepository {
       tags.set(tag.id, {
         id: tag.id,
         name: tag.name,
-        created_at: tag.createdAt.getTime(),
-        updated_at: tag.updatedAt.getTime(),
+        created_at: Math.floor(tag.createdAt.getTime() / 1000),
+        updated_at: Math.floor(tag.updatedAt.getTime() / 1000),
       });
 
       this.saveAllTags(tags);

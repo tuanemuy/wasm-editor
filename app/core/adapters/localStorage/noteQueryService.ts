@@ -30,8 +30,8 @@ interface NoteDataModel {
   id: string;
   content: string; // JSON string
   text: string;
-  created_at: number; // Unix timestamp (milliseconds)
-  updated_at: number; // Unix timestamp (milliseconds)
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
 }
 
 interface NoteTagRelation {
@@ -108,8 +108,8 @@ export class LocalStorageNoteQueryService implements NoteQueryService {
       content: createNoteContent(content as StructuredContent),
       text: createText(data.text),
       tagIds,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.created_at * 1000),
+      updatedAt: new Date(data.updated_at * 1000),
     };
   }
 
@@ -129,15 +129,15 @@ export class LocalStorageNoteQueryService implements NoteQueryService {
 
       // Step 1: Filter by tags (AND search)
       if (tagIds.length > 0) {
-        const tagIdSet = new Set(tagIds);
         notesArray = notesArray.filter((note) => {
           // Get tag IDs for this note
           const noteTagIds = relations
             .filter((r) => r.note_id === note.id)
             .map((r) => r.tag_id);
+          const noteTagIdSet = new Set(noteTagIds);
 
           // Check if note has ALL specified tags
-          return tagIds.every((tagId) => noteTagIds.includes(tagId));
+          return tagIds.every((tagId) => noteTagIdSet.has(tagId));
         });
       }
 

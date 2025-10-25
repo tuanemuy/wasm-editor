@@ -34,8 +34,8 @@ interface NoteDataModel {
   id: string;
   content: string; // JSON string
   text: string;
-  created_at: number; // Unix timestamp (milliseconds)
-  updated_at: number; // Unix timestamp (milliseconds)
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
 }
 
 interface NoteTagRelation {
@@ -73,6 +73,18 @@ export class LocalStorageNoteRepository implements NoteRepository {
       const obj = Object.fromEntries(notes);
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(obj));
     } catch (error) {
+      // Check for quota exceeded error
+      if (
+        error instanceof DOMException &&
+        (error.name === "QuotaExceededError" ||
+          error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+      ) {
+        throw new SystemError(
+          SystemErrorCode.StorageError,
+          "Storage quota exceeded. Please delete some notes or clear browser data.",
+          error,
+        );
+      }
       throw new SystemError(
         SystemErrorCode.StorageError,
         "Failed to save notes to localStorage",
@@ -111,6 +123,18 @@ export class LocalStorageNoteRepository implements NoteRepository {
         JSON.stringify(relations),
       );
     } catch (error) {
+      // Check for quota exceeded error
+      if (
+        error instanceof DOMException &&
+        (error.name === "QuotaExceededError" ||
+          error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+      ) {
+        throw new SystemError(
+          SystemErrorCode.StorageError,
+          "Storage quota exceeded. Please delete some notes or clear browser data.",
+          error,
+        );
+      }
       throw new SystemError(
         SystemErrorCode.StorageError,
         "Failed to save note-tag relations to localStorage",
@@ -146,8 +170,8 @@ export class LocalStorageNoteRepository implements NoteRepository {
       content: createNoteContent(content as StructuredContent),
       text: createText(data.text),
       tagIds,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.created_at * 1000),
+      updatedAt: new Date(data.updated_at * 1000),
     };
   }
 
@@ -163,8 +187,8 @@ export class LocalStorageNoteRepository implements NoteRepository {
         id: note.id,
         content: contentJson,
         text: note.text,
-        created_at: note.createdAt.getTime(),
-        updated_at: note.updatedAt.getTime(),
+        created_at: Math.floor(note.createdAt.getTime() / 1000),
+        updated_at: Math.floor(note.updatedAt.getTime() / 1000),
       });
 
       this.saveAllNotes(notes);

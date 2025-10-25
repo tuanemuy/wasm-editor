@@ -16,8 +16,8 @@ const NOTE_TAG_RELATIONS_STORAGE_KEY = "app_note_tag_relations";
 interface TagDataModel {
   id: string;
   name: string;
-  created_at: number; // Unix timestamp (milliseconds)
-  updated_at: number; // Unix timestamp (milliseconds)
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
 }
 
 interface NoteTagRelation {
@@ -74,8 +74,8 @@ export class LocalStorageTagQueryService implements TagQueryService {
     return {
       id: createTagId(data.id),
       name: data.name as Tag["name"],
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
+      createdAt: new Date(data.created_at * 1000),
+      updatedAt: new Date(data.updated_at * 1000),
     };
   }
 

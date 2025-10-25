@@ -8,15 +8,26 @@ import {
   createTursoWasmContainer,
 } from "@/di";
 
-const DIContainer = createContext<Container>({} as Container);
+const DIContainer = createContext<Container | null>(null);
 
 // Storage adapter type
 type StorageAdapter = "localStorage" | "tursoWasm";
 
 // Get storage adapter from environment variable
 // Defaults to localStorage for development convenience
-const STORAGE_ADAPTER: StorageAdapter =
-  (import.meta.env.VITE_STORAGE_ADAPTER as StorageAdapter) || "localStorage";
+const VALID_ADAPTERS = ["localStorage", "tursoWasm"] as const;
+const envAdapter = import.meta.env.VITE_STORAGE_ADAPTER as string | undefined;
+const STORAGE_ADAPTER: StorageAdapter = (() => {
+  if (!envAdapter) {
+    return "localStorage";
+  }
+  if (!VALID_ADAPTERS.includes(envAdapter as StorageAdapter)) {
+    throw new Error(
+      `Invalid VITE_STORAGE_ADAPTER: "${envAdapter}". Must be one of: ${VALID_ADAPTERS.join(", ")}`,
+    );
+  }
+  return envAdapter as StorageAdapter;
+})();
 
 export function DIContainerProvider(props: {
   databasePath?: string;
