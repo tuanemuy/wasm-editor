@@ -3,6 +3,7 @@
  *
  * Updates an existing note's content.
  * Automatically extracts and syncs tags from the content.
+ * Cleans up unused tags after update.
  */
 
 import type { Note } from "@/core/domain/note/entity";
@@ -12,6 +13,7 @@ import { createTag } from "@/core/domain/tag/entity";
 import type { TagId } from "@/core/domain/tag/valueObject";
 import { createTagName } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
+import { cleanupUnusedTags } from "../tag/cleanupUnusedTags";
 
 export type UpdateNoteInput = {
   id: NoteId;
@@ -79,5 +81,15 @@ export async function updateNote(
     await repositories.noteRepository.save(updatedNote);
 
     return updatedNote;
+  }).then(async (note) => {
+    // Cleanup unused tags after transaction completes
+    // This ensures tags not used by any note are removed
+    try {
+      await cleanupUnusedTags(context);
+    } catch (_error) {
+      // Silently ignore cleanup errors to not fail the note update
+      // Logging strategy is a future consideration
+    }
+    return note;
   });
 }
