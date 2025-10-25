@@ -1,7 +1,8 @@
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { extractTitle } from "@/lib/note-utils";
 
 export interface NoteTitleProps {
-  content: string;
+  content: StructuredContent;
 }
 
 export function NoteTitle({ content }: NoteTitleProps) {

@@ -6,13 +6,14 @@ import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { MemoHeader } from "@/components/layout/MemoHeader";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useDIContainer } from "@/context/di";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
 import { defaultCallbacks } from "@/presenters/callback";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { getNote } from "@/core/application/note/getNote";
+import { getNote as getNoteService } from "@/core/application/note/getNote";
 import type { Route } from "./+types/memos.$id";
+
+const getNote = withContainer(getNoteService);
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -23,14 +24,13 @@ export function meta(_: Route.MetaArgs) {
 
 export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
   console.log("Loading note with id:", id);
-  const note = await withContainer(getNote)({ id: createNoteId(id) });
+  const note = await getNote({ id: createNoteId(id) });
   console.log(note);
   return note;
 }
 
 export default function MemoDetail({ params: { id } }: Route.ComponentProps) {
-  const container = useDIContainer();
-  const fetchNote = withContainer(getNote)({ id: createNoteId(id) });
+  const fetchNote = getNote({ id: createNoteId(id) });
 
   return (
     <Suspense>

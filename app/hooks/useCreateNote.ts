@@ -26,11 +26,14 @@ export function useCreateNote({
   const handleCreateNote = useCallback(async () => {
     setCreating(true);
 
-    const note = await request(createNote({ content: "" }), {
-      onError(error) {
-        err?.("Failed to create note", error);
+    const note = await request(
+      createNote({ content: { type: "doc", content: [] }, text: " " }),
+      {
+        onError(error) {
+          err?.("Failed to create note", error);
+        },
       },
-    });
+    );
 
     setCreating(false);
 

@@ -1,4 +1,5 @@
 import { EyeIcon, PencilIcon } from "lucide-react";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { NoteActions } from "@/components/note/NoteActions";
 import { NoteTitle } from "@/components/note/NoteTitle";
 import { SaveStatusIndicator } from "@/components/note/SaveStatusIndicator";
@@ -7,7 +8,7 @@ import type { SaveStatus } from "@/types";
 import { BackButton } from "./BackButton";
 
 export interface MemoHeaderProps {
-  content: string;
+  content: StructuredContent;
   saveStatus: SaveStatus;
   exporting: boolean;
   isEditing: boolean;

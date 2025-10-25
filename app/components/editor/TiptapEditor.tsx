@@ -18,12 +18,13 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 type TiptapEditorProps = {
-  content: string;
-  onChange: (content: string) => void;
+  content: StructuredContent;
+  onChange: (content: StructuredContent, text: string) => void;
   placeholder?: string;
   editable?: boolean;
 };
@@ -56,7 +57,10 @@ export function TiptapEditor({
     content,
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
-      onChange(updatedEditor.getHTML());
+      onChange(
+        updatedEditor.getJSON() as StructuredContent,
+        updatedEditor.getText(),
+      );
     },
     editorProps: {
       attributes: {
@@ -77,8 +81,9 @@ export function TiptapEditor({
       return;
     }
 
-    const currentContent = editor.getHTML();
-    if (content !== currentContent) {
+    const currentContent = JSON.stringify(editor.getJSON());
+    const newContent = JSON.stringify(content);
+    if (newContent !== currentContent) {
       const { from, to } = editor.state.selection;
       editor.commands.setContent(content, { emitUpdate: false });
       // Restore cursor position if possible
