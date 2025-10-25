@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Code Quality
 
 - Run `pnpm typecheck`, `pnpm run lint:fix` and `pnpm run format` after making changes to ensure code quality and consistency.
+- **IMPORTANT**: Before committing any changes, you MUST run `pnpm format` to ensure all code is properly formatted. This prevents CI failures on PR checks.
 
 ## Tech Stack
 
