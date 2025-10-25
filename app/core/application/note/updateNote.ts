@@ -37,9 +37,10 @@ export async function updateNote(
     let tagNames: string[] = [];
     try {
       tagNames = await context.tagExtractorPort.extractTags(updatedNote.text);
-    } catch (_error) {
+    } catch (error) {
       // Silently ignore tag extraction errors
-      // Logging strategy is a future consideration
+      // TODO: Add proper logging when logging infrastructure is implemented
+      console.error("Tag extraction failed:", error);
     }
 
     // Get or create tags
@@ -63,9 +64,10 @@ export async function updateNote(
             const newTag = createTag({ name: tagName });
             await repositories.tagRepository.save(newTag);
             return newTag;
-          } catch (_error) {
+          } catch (error) {
             // Skip invalid tag names
-            // Logging strategy is a future consideration
+            // TODO: Add proper logging when logging infrastructure is implemented
+            console.error("Invalid tag name:", tagName, error);
             return null;
           }
         }),
@@ -80,16 +82,21 @@ export async function updateNote(
     // Save updated note
     await repositories.noteRepository.save(updatedNote);
 
-    return updatedNote;
-  }).then(async (note) => {
-    // Cleanup unused tags after transaction completes
-    // This ensures tags not used by any note are removed
+    // Cleanup unused tags within the same transaction
+    // This ensures atomicity and prevents race conditions
     try {
-      await cleanupUnusedTags(context);
-    } catch (_error) {
+      // Find unused tags
+      const unusedTags = await context.tagQueryService.findUnused();
+      if (unusedTags.length > 0) {
+        const unusedTagIds = unusedTags.map((tag) => tag.id);
+        await repositories.tagRepository.deleteMany(unusedTagIds);
+      }
+    } catch (error) {
       // Silently ignore cleanup errors to not fail the note update
-      // Logging strategy is a future consideration
+      // TODO: Add proper logging when logging infrastructure is implemented
+      console.error("Tag cleanup failed:", error);
     }
-    return note;
+
+    return updatedNote;
   });
 }
