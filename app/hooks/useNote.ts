@@ -9,7 +9,7 @@ import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { formatError } from "@/presenters/error";
 import { request } from "@/presenters/request";
-import type { Callbacks } from "@/presenters/callback";
+import type { Notification } from "@/presenters/notification";
 
 const getNote = withContainer(getNoteService);
 const updateNote = withContainer(updateNoteService);
@@ -18,7 +18,7 @@ const exportNoteAsMarkdown = withContainer(exportNoteWithMarkdownService);
 
 export type SaveStatus = "saved" | "saving" | "unsaved";
 
-export type UseNoteOptions = Callbacks;
+export type UseNoteOptions = Notification;
 
 export interface UseNoteResult {
   deleting: boolean;
@@ -36,7 +36,7 @@ export interface UseNoteResult {
  */
 export function useNote(
   noteId: string,
-  { onSuccess, onError }: UseNoteOptions = {},
+  { success, err }: UseNoteOptions = {},
 ): UseNoteResult {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [deleting, setDeleting] = useState(false);
@@ -86,14 +86,14 @@ export function useNote(
               // Only update if this is still the latest save
               if (currentSaveId === saveCounterRef.current) {
                 setSaveStatus("unsaved");
-                onError?.(formatError(error));
+                err?.(formatError(error), error);
               }
             },
           },
         );
       }, 300);
     },
-    [noteId, onError],
+    [noteId, err],
   );
 
   // Delete note
@@ -103,16 +103,16 @@ export function useNote(
 
     await request(deleteNote({ id: createNoteId(noteId) }), {
       onSuccess: () => {
-        onSuccess?.("Note deleted");
+        success?.("Note deleted");
       },
       onError: (error) => {
-        onError?.(formatError(error));
+        err?.(formatError(error), error);
       },
       onFinally: () => {
         setDeleting(false);
       },
     });
-  }, [noteId, deleting, onSuccess, onError]);
+  }, [noteId, deleting, success, err]);
 
   // Export note
   const exportNote = useCallback(async (): Promise<void> => {
@@ -122,16 +122,16 @@ export function useNote(
 
     await request(exportNoteAsMarkdown({ id: createNoteId(noteId) }), {
       onSuccess: () => {
-        onSuccess?.("Note exported as Markdown");
+        success?.("Note exported as Markdown");
       },
       onError: (error) => {
-        onError?.(formatError(error));
+        err?.(formatError(error), error);
       },
       onFinally: () => {
         setExporting(false);
       },
     });
-  }, [noteId, exporting, onSuccess, onError]);
+  }, [noteId, exporting, success, err]);
 
   const toggleEditable = useCallback(() => {
     setEditable((prev) => !prev);

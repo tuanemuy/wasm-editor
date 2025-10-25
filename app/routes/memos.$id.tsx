@@ -8,7 +8,7 @@ import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
-import { defaultCallbacks } from "@/presenters/callback";
+import { createNotification } from "@/presenters/notification";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
 import type { Route } from "./+types/memos.$id";
@@ -51,7 +51,7 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
     deleteNote,
     exportNote,
     toggleEditable,
-  } = useNote(note.id, defaultCallbacks());
+  } = useNote(note.id, createNotification());
 
   // Dialog state
   const deleteDialog = useDialog(false);
