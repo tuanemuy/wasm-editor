@@ -69,7 +69,7 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
         saveStatus={saveStatus}
         exporting={exporting}
         onExport={exportNote}
-        onDelete={deleteNote}
+        onDelete={deleteDialog.open}
       />
       <div className="flex-1 overflow-hidden p-4 relative">
         <div className="h-full bg-card rounded-xl border shadow-sm">
@@ -97,7 +97,7 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
       <DeleteConfirmDialog
         open={deleteDialog.isOpen}
         deleting={deleting}
-        onOpenChange={deleteDialog.close}
+        onOpenChange={deleteDialog.setOpen}
         onConfirm={handleDelete}
       />
     </div>

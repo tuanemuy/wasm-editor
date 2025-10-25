@@ -21,6 +21,7 @@ export function useDialog(initialOpen = false): DialogState {
 
   return {
     isOpen,
+    setOpen: setIsOpen,
     open,
     close,
     toggle,
