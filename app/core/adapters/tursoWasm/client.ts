@@ -58,10 +58,12 @@ export async function initializeDatabase(db: Database): Promise<void> {
   `);
 
   // Get current schema version
-  const versionResult = await db.prepare(
-    "SELECT version FROM schema_version ORDER BY version DESC LIMIT 1",
-  ).get();
-  const currentVersion = versionResult ? (versionResult as { version: number }).version : 0;
+  const versionResult = await db
+    .prepare("SELECT version FROM schema_version ORDER BY version DESC LIMIT 1")
+    .get();
+  const currentVersion = versionResult
+    ? (versionResult as { version: number }).version
+    : 0;
 
   // Create initial schema (v1 or migrate from v1 to v2)
   if (currentVersion === 0) {

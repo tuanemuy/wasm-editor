@@ -33,7 +33,8 @@ describe("exportNoteAsMarkdown", () => {
 
   it("有効なメモIDでメモをエクスポートできる", async () => {
     const note = createNote({
-      content: createTestContent("# テストメモ\n\nこれはテスト内容です。"), text: "# テストメモ\n\nこれはテスト内容です。",
+      content: createTestContent("# テストメモ\n\nこれはテスト内容です。"),
+      text: "# テストメモ\n\nこれはテスト内容です。",
     });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -70,7 +71,10 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("エクスポートされたファイル名が正しい", async () => {
-    const note = createNote({ content: createTestContent("# マイタイトル\n\n本文"), text: "# マイタイトル\n\n本文" });
+    const note = createNote({
+      content: createTestContent("# マイタイトル\n\n本文"),
+      text: "# マイタイトル\n\n本文",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -85,7 +89,10 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("エクスポートされたファイル拡張子が.mdである", async () => {
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -116,7 +123,10 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("タイトルが抽出できない場合は作成日時をファイル名とする", async () => {
-    const note = createNote({ content: createTestContent("タイトルなしの本文"), text: "タイトルなしの本文" });
+    const note = createNote({
+      content: createTestContent("タイトルなしの本文"),
+      text: "タイトルなしの本文",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);

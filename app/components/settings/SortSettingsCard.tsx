@@ -35,7 +35,7 @@ export function SortSettingsCard({
           Configure the default sort order for the notes list
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         <Field>
           <FieldLabel htmlFor="defaultOrderBy">Sort by</FieldLabel>
           <Select value={defaultOrderBy} onValueChange={onOrderByChange}>

@@ -34,7 +34,9 @@ function toTiptapContent(content: StructuredContent): Content {
     throw new Error("Invalid content structure: must be an object");
   }
   if (!("type" in content) || typeof content.type !== "string") {
-    throw new Error("Invalid content structure: missing or invalid 'type' field");
+    throw new Error(
+      "Invalid content structure: missing or invalid 'type' field",
+    );
   }
   if ("content" in content && !Array.isArray(content.content)) {
     throw new Error("Invalid content structure: 'content' must be an array");
@@ -52,10 +54,14 @@ function fromTiptapContent(content: Content): StructuredContent {
     throw new Error("Invalid Tiptap content structure: must be an object");
   }
   if (!("type" in json) || typeof json.type !== "string") {
-    throw new Error("Invalid Tiptap content structure: missing or invalid 'type' field");
+    throw new Error(
+      "Invalid Tiptap content structure: missing or invalid 'type' field",
+    );
   }
   if ("content" in json && !Array.isArray(json.content)) {
-    throw new Error("Invalid Tiptap content structure: 'content' must be an array");
+    throw new Error(
+      "Invalid Tiptap content structure: 'content' must be an array",
+    );
   }
   return json as StructuredContent;
 }
@@ -123,7 +129,9 @@ export function TiptapEditor({
     const newContent = JSON.stringify(content);
     if (newContent !== currentContent) {
       const { from, to } = editor.state.selection;
-      editor.commands.setContent(toTiptapContent(content), { emitUpdate: false });
+      editor.commands.setContent(toTiptapContent(content), {
+        emitUpdate: false,
+      });
       // Restore cursor position if possible
       const newFrom = Math.min(from, editor.state.doc.content.size - 1);
       const newTo = Math.min(to, editor.state.doc.content.size - 1);
@@ -166,7 +174,9 @@ export function TiptapEditor({
       }
     } catch {
       // Invalid URL format - show error
-      alert("Invalid URL format. Please enter a valid URL (e.g., https://example.com)");
+      alert(
+        "Invalid URL format. Please enter a valid URL (e.g., https://example.com)",
+      );
       return;
     }
 
