@@ -18,12 +18,51 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import type { Content } from "@tiptap/core";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+/**
+ * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
+ * StructuredContent is a domain-level abstraction that's structurally compatible with
+ * Tiptap's JSON format, but TypeScript requires explicit conversion.
+ */
+function toTiptapContent(content: StructuredContent): Content {
+  // Runtime validation: ensure content has the expected structure
+  if (!content || typeof content !== "object") {
+    throw new Error("Invalid content structure: must be an object");
+  }
+  if (!("type" in content) || typeof content.type !== "string") {
+    throw new Error("Invalid content structure: missing or invalid 'type' field");
+  }
+  if ("content" in content && !Array.isArray(content.content)) {
+    throw new Error("Invalid content structure: 'content' must be an array");
+  }
+  return content as unknown as Content;
+}
+
+/**
+ * Type adapter to convert from Tiptap's Content to domain StructuredContent.
+ */
+function fromTiptapContent(content: Content): StructuredContent {
+  // Runtime validation: ensure content has the expected structure
+  const json = content as Record<string, unknown>;
+  if (!json || typeof json !== "object") {
+    throw new Error("Invalid Tiptap content structure: must be an object");
+  }
+  if (!("type" in json) || typeof json.type !== "string") {
+    throw new Error("Invalid Tiptap content structure: missing or invalid 'type' field");
+  }
+  if ("content" in json && !Array.isArray(json.content)) {
+    throw new Error("Invalid Tiptap content structure: 'content' must be an array");
+  }
+  return json as StructuredContent;
+}
+
 type TiptapEditorProps = {
-  content: string;
-  onChange: (content: string) => void;
+  content: StructuredContent;
+  onChange: (content: StructuredContent, text: string) => void;
   placeholder?: string;
   editable?: boolean;
 };
@@ -53,10 +92,13 @@ export function TiptapEditor({
         },
       }),
     ],
-    content,
+    content: toTiptapContent(content),
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
-      onChange(updatedEditor.getHTML());
+      onChange(
+        fromTiptapContent(updatedEditor.getJSON()),
+        updatedEditor.getText(),
+      );
     },
     editorProps: {
       attributes: {
@@ -77,10 +119,11 @@ export function TiptapEditor({
       return;
     }
 
-    const currentContent = editor.getHTML();
-    if (content !== currentContent) {
+    const currentContent = JSON.stringify(editor.getJSON());
+    const newContent = JSON.stringify(content);
+    if (newContent !== currentContent) {
       const { from, to } = editor.state.selection;
-      editor.commands.setContent(content, { emitUpdate: false });
+      editor.commands.setContent(toTiptapContent(content), { emitUpdate: false });
       // Restore cursor position if possible
       const newFrom = Math.min(from, editor.state.doc.content.size - 1);
       const newTo = Math.min(to, editor.state.doc.content.size - 1);
@@ -102,12 +145,28 @@ export function TiptapEditor({
     const previousUrl = editor.getAttributes("link").href;
     const url = window.prompt("URL", previousUrl);
 
+    // User cancelled
     if (url === null) {
       return;
     }
 
+    // Remove link if empty
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+
+    // Validate URL
+    try {
+      const parsed = new URL(url);
+      // Prevent javascript: URLs for security
+      if (parsed.protocol === "javascript:") {
+        alert("javascript: URLs are not allowed for security reasons");
+        return;
+      }
+    } catch {
+      // Invalid URL format - show error
+      alert("Invalid URL format. Please enter a valid URL (e.g., https://example.com)");
       return;
     }
 

@@ -108,20 +108,13 @@ export type Text = string & { readonly brand: "Text" };
  * Create Text with validation
  *
  * Business Rules:
- * - Must not be empty (minimum 1 character required)
+ * - Can be empty (allows new notes to start empty for better UX)
  * - Must not exceed 100,000 characters
  * - Must be a string type
  *
  * @throws {BusinessRuleError} If validation fails
  */
 export function createText(text: string): Text {
-  if (text.length === 0) {
-    throw new BusinessRuleError(
-      NoteErrorCode.NoteTextEmpty,
-      "Note text must not be empty",
-    );
-  }
-
   if (text.length > NOTE_TEXT_MAX_LENGTH) {
     throw new BusinessRuleError(
       NoteErrorCode.NoteTextTooLong,

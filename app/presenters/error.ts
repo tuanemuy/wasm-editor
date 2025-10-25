@@ -115,7 +115,6 @@ export function formatSystemError(error: SystemError): string {
 }
 
 export function formatError(error: unknown): string {
-  console.error(error);
   if (isBusinessRuleError(error)) {
     return formatBusinessRuleError(error);
   }

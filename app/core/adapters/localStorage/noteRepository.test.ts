@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { SystemError, SystemErrorCode } from "@/core/application/error";
 import { NotFoundError, NotFoundErrorCode } from "@/core/application/error";
 import type { Note } from "@/core/domain/note/entity";
-import { createNoteId } from "@/core/domain/note/valueObject";
+import { createNoteId, createNoteContent, createText } from "@/core/domain/note/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import { LocalStorageNoteRepository } from "./noteRepository";
 
@@ -44,8 +44,8 @@ describe("LocalStorageNoteRepository", () => {
     it("should save a note successfully", async () => {
       const note: Note = {
         id: createNoteId("test-id-1"),
-        content: { type: "doc", content: [] },
-        text: "Test note",
+        content: createNoteContent({ type: "doc", content: [] }),
+        text: createText("Test note"),
         tagIds: [],
         createdAt: new Date("2025-01-01T00:00:00Z"),
         updatedAt: new Date("2025-01-01T00:00:00Z"),
@@ -66,8 +66,8 @@ describe("LocalStorageNoteRepository", () => {
     it("should save note with tags", async () => {
       const note: Note = {
         id: createNoteId("test-id-1"),
-        content: { type: "doc", content: [] },
-        text: "Test note",
+        content: createNoteContent({ type: "doc", content: [] }),
+        text: createText("Test note"),
         tagIds: [createTagId("tag-1"), createTagId("tag-2")],
         createdAt: new Date("2025-01-01T00:00:00Z"),
         updatedAt: new Date("2025-01-01T00:00:00Z"),
@@ -86,8 +86,8 @@ describe("LocalStorageNoteRepository", () => {
     it("should handle QuotaExceededError", async () => {
       const note: Note = {
         id: createNoteId("test-id-1"),
-        content: { type: "doc", content: [] },
-        text: "Test note",
+        content: createNoteContent({ type: "doc", content: [] }),
+        text: createText("Test note"),
         tagIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -81,10 +81,10 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent(" "), text: " ",
+      content: createTestContent(""), text: "",
     });
 
-    expect(updatedNote.content).toBe("");
+    expect(updatedNote.text).toBe("");
     expect(saveSpy).toHaveBeenCalledWith(updatedNote);
   });
 

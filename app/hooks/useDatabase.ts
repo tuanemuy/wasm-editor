@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   getDatabase,
   initializeDatabase,
@@ -21,10 +22,10 @@ export const useDatabase = (path: string) => {
 
         setDatabase(db);
       } catch (error) {
-        console.error(
-          "Failed to load database module or initialize database:",
-          error,
-        );
+        toast.error("Failed to initialize database");
+        if (import.meta.env.DEV) {
+          console.error("Database initialization failed:", error);
+        }
       }
     })();
 

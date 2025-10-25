@@ -212,7 +212,7 @@ export class LocalStorageNoteQueryService implements NoteQueryService {
       // Group by note_id
       const noteTagMap = new Map<string, Set<string>>();
       for (const relation of relations) {
-        if (tagIdSet.has(relation.tag_id)) {
+        if (tagIdSet.has(createTagId(relation.tag_id))) {
           if (!noteTagMap.has(relation.note_id)) {
             noteTagMap.set(relation.note_id, new Set());
           }

@@ -1,12 +1,14 @@
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { withContainer } from "@/di";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
 import { updateNote as updateNoteService } from "@/core/application/note/updateNote";
 import type { Note } from "@/core/domain/note/entity";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { formatError } from "@/presenters/error";
+import { request } from "@/presenters/request";
 import type { Callbacks } from "@/presenters/callback";
 
 const getNote = withContainer(getNoteService);
@@ -19,12 +21,11 @@ export type SaveStatus = "saved" | "saving" | "unsaved";
 export type UseNoteOptions = Callbacks;
 
 export interface UseNoteResult {
-  loading: boolean;
   deleting: boolean;
   exporting: boolean;
   editable: boolean;
   saveStatus: SaveStatus;
-  save: (content: string) => Promise<void>;
+  save: (content: StructuredContent, text: string) => Promise<void>;
   deleteNote: () => Promise<void>;
   exportNote: () => Promise<void>;
   toggleEditable: () => void;
@@ -37,27 +38,60 @@ export function useNote(
   noteId: string,
   { onSuccess, onError }: UseNoteOptions = {},
 ): UseNoteResult {
-  const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [editable, setEditable] = useState(false);
 
-  // Update note content
-  const save = useCallback(
-    async (content: string) => {
-      setSaveStatus("saving");
+  // Ref to track the debounce timeout for save operations
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to track save counter to prevent race conditions
+  const saveCounterRef = useRef(0);
 
-      try {
-        await updateNote({
-          id: createNoteId(noteId),
-          content,
-        });
-        setSaveStatus("saved");
-      } catch (error) {
-        setSaveStatus("unsaved");
-        onError?.(formatError(error));
+  // Update note content with debouncing to prevent race conditions
+  const save = useCallback(
+    async (content: StructuredContent, text: string) => {
+      // Clear any pending save operation
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
+
+      // Increment save counter to track this save operation
+      const currentSaveId = ++saveCounterRef.current;
+
+      // Set status to "unsaved" immediately to indicate changes pending
+      setSaveStatus("unsaved");
+
+      // Debounce the save operation (300ms delay)
+      saveTimeoutRef.current = setTimeout(async () => {
+        // Only proceed if this is still the latest save request
+        if (currentSaveId !== saveCounterRef.current) return;
+
+        setSaveStatus("saving");
+
+        await request(
+          updateNote({
+            id: createNoteId(noteId),
+            content,
+            text,
+          }),
+          {
+            onSuccess: () => {
+              // Only update if this is still the latest save
+              if (currentSaveId === saveCounterRef.current) {
+                setSaveStatus("saved");
+              }
+            },
+            onError: (error) => {
+              // Only update if this is still the latest save
+              if (currentSaveId === saveCounterRef.current) {
+                setSaveStatus("unsaved");
+                onError?.(formatError(error));
+              }
+            },
+          },
+        );
+      }, 300);
     },
     [noteId, onError],
   );
@@ -66,13 +100,18 @@ export function useNote(
   const _deleteNote = useCallback(async (): Promise<void> => {
     if (!noteId || deleting) return;
     setDeleting(true);
-    try {
-      await deleteNote({ id: createNoteId(noteId) });
-      onSuccess?.("Note deleted");
-    } catch (error) {
-      onError?.(formatError(error));
-    }
-    setDeleting(false);
+
+    await request(deleteNote({ id: createNoteId(noteId) }), {
+      onSuccess: () => {
+        onSuccess?.("Note deleted");
+      },
+      onError: (error) => {
+        onError?.(formatError(error));
+      },
+      onFinally: () => {
+        setDeleting(false);
+      },
+    });
   }, [noteId, deleting, onSuccess, onError]);
 
   // Export note
@@ -80,21 +119,34 @@ export function useNote(
     if (!noteId || exporting) return;
 
     setExporting(true);
-    try {
-      await exportNoteAsMarkdown({ id: createNoteId(noteId) });
-      onSuccess?.("Note exported as Markdown");
-    } catch (error) {
-      onError?.(formatError(error));
-    }
-    setExporting(false);
+
+    await request(exportNoteAsMarkdown({ id: createNoteId(noteId) }), {
+      onSuccess: () => {
+        onSuccess?.("Note exported as Markdown");
+      },
+      onError: (error) => {
+        onError?.(formatError(error));
+      },
+      onFinally: () => {
+        setExporting(false);
+      },
+    });
   }, [noteId, exporting, onSuccess, onError]);
 
   const toggleEditable = useCallback(() => {
     setEditable((prev) => !prev);
   }, []);
 
+  // Cleanup: clear pending timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return {
-    loading,
     deleting,
     exporting,
     saveStatus,
