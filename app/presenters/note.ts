@@ -29,16 +29,17 @@ function extractTextFromJSON(content: StructuredContent): string {
   // Recursively process content array
   if (Array.isArray(content.content)) {
     for (const child of content.content) {
-      text += extractTextFromJSON(child as StructuredContent);
-      // Add newline after block elements
-      if (
-        child &&
-        typeof child === "object" &&
-        "type" in child &&
-        typeof child.type === "string" &&
-        BLOCK_ELEMENTS.has(child.type)
-      ) {
-        text += "\n";
+      // Type guard: ensure child is an object before processing
+      if (typeof child === "object" && child !== null) {
+        text += extractTextFromJSON(child as StructuredContent);
+        // Add newline after block elements
+        if (
+          "type" in child &&
+          typeof child.type === "string" &&
+          BLOCK_ELEMENTS.has(child.type)
+        ) {
+          text += "\n";
+        }
       }
     }
   }

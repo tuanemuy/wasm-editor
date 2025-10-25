@@ -21,7 +21,6 @@ export type SaveStatus = "saved" | "saving" | "unsaved";
 export type UseNoteOptions = Callbacks;
 
 export interface UseNoteResult {
-  loading: boolean;
   deleting: boolean;
   exporting: boolean;
   editable: boolean;
@@ -39,7 +38,6 @@ export function useNote(
   noteId: string,
   { onSuccess, onError }: UseNoteOptions = {},
 ): UseNoteResult {
-  const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -112,7 +110,6 @@ export function useNote(
   }, []);
 
   return {
-    loading,
     deleting,
     exporting,
     saveStatus,

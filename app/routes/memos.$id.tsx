@@ -23,9 +23,7 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
-  console.log("Loading note with id:", id);
   const note = await getNote({ id: createNoteId(id) });
-  console.log(note);
   return note;
 }
 

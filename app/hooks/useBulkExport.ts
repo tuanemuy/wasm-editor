@@ -19,21 +19,32 @@ export function useBulkExport() {
 
     setExporting(true);
 
+    let successCount = 0;
+    const errors: Array<{ note: Note; error: unknown }> = [];
+
     try {
       // Export each note as markdown
       for (const note of notes) {
-        await request(exportNoteAsMarkdown({ id: createNoteId(note.id) }), {
-          onError(error) {
-            console.error("Failed to export note:", error);
-            throw error;
-          },
-        });
+        try {
+          await request(exportNoteAsMarkdown({ id: createNoteId(note.id) }));
+          successCount++;
+        } catch (error) {
+          console.error("Failed to export note:", error);
+          errors.push({ note, error });
+          // Continue with remaining notes instead of stopping
+        }
       }
 
-      toast.success(`${notes.length}件のメモをエクスポートしました`);
-    } catch (error) {
-      console.error("Failed to export notes:", error);
-      toast.error("メモのエクスポートに失敗しました");
+      // Report results
+      if (errors.length === 0) {
+        toast.success(`${notes.length}件のメモをエクスポートしました`);
+      } else if (successCount > 0) {
+        toast.warning(
+          `${successCount}/${notes.length}件のメモをエクスポートしました（${errors.length}件失敗）`,
+        );
+      } else {
+        toast.error("メモのエクスポートに失敗しました");
+      }
     } finally {
       setExporting(false);
     }
