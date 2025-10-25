@@ -48,9 +48,12 @@ export function NoteCard({
   const content = (
     <motion.div
       layoutId={`note-${note.id}`}
+      layout="position"
       transition={{
         layout: {
-          duration: 0.3,
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
         },
       }}
     >

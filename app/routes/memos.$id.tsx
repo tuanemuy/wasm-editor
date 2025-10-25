@@ -76,10 +76,13 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
       <div className="flex-1 overflow-hidden p-4">
         <motion.div
           layoutId={`note-${note.id}`}
+          layout="position"
           className="h-full bg-card rounded-xl border shadow-sm"
           transition={{
             layout: {
-              duration: 0.3,
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
             },
           }}
         >
