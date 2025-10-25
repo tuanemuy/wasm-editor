@@ -20,34 +20,37 @@ export function useBulkExport() {
     setExporting(true);
 
     let successCount = 0;
-    const errors: Array<{ note: Note; error: unknown }> = [];
+    let failureCount = 0;
 
-    try {
-      // Export each note as markdown
-      for (const note of notes) {
-        try {
-          await request(exportNoteAsMarkdown({ id: createNoteId(note.id) }));
-          successCount++;
-        } catch (error) {
-          console.error("Failed to export note:", error);
-          errors.push({ note, error });
-          // Continue with remaining notes instead of stopping
-        }
-      }
+    // Export each note as markdown
+    for (const note of notes) {
+      const result = await request(
+        exportNoteAsMarkdown({ id: createNoteId(note.id) }),
+        {
+          onError: (error) => {
+            console.error("Failed to export note:", error);
+            failureCount++;
+          },
+        },
+      );
 
-      // Report results
-      if (errors.length === 0) {
-        toast.success(`${notes.length}件のメモをエクスポートしました`);
-      } else if (successCount > 0) {
-        toast.warning(
-          `${successCount}/${notes.length}件のメモをエクスポートしました（${errors.length}件失敗）`,
-        );
-      } else {
-        toast.error("メモのエクスポートに失敗しました");
+      if (result) {
+        successCount++;
       }
-    } finally {
-      setExporting(false);
     }
+
+    // Report results
+    if (failureCount === 0) {
+      toast.success(`${notes.length}件のメモをエクスポートしました`);
+    } else if (successCount > 0) {
+      toast.warning(
+        `${successCount}/${notes.length}件のメモをエクスポートしました（${failureCount}件失敗）`,
+      );
+    } else {
+      toast.error("メモのエクスポートに失敗しました");
+    }
+
+    setExporting(false);
   }, []);
 
   return { exporting, exportNotes };

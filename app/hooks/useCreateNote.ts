@@ -32,10 +32,11 @@ export function useCreateNote({
         onError(error) {
           err?.("Failed to create note", error);
         },
+        onFinally() {
+          setCreating(false);
+        },
       },
     );
-
-    setCreating(false);
 
     return note;
   }, [err]);
