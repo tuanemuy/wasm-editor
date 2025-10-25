@@ -10,21 +10,8 @@ import {
 import type { Route } from "./+types/root";
 import "./styles/index.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AppContextProvider } from "./lib/context";
-import { UIStateProvider } from "./lib/uiStateContext";
-
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+import { DIContainerProvider } from "./context/di";
+import { SharedLayoutProvider } from "./context/sharedLayout";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -46,12 +33,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AppContextProvider>
-      <UIStateProvider>
+    <DIContainerProvider databasePath={import.meta.env.VITE_DATABASE_PATH}>
+      <SharedLayoutProvider>
         <Outlet />
         <Toaster />
-      </UIStateProvider>
-    </AppContextProvider>
+      </SharedLayoutProvider>
+    </DIContainerProvider>
   );
 }
 

@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
-import { ClientOnly } from "@/components/ClientOnly";
+import { use, useCallback, Suspense } from "react";
+import { useNavigate } from "react-router";
+import { motion } from "motion/react";
+import { withContainer } from "@/di";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { MemoHeader } from "@/components/layout/MemoHeader";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useAutoSave } from "@/hooks/useAutoSave";
+import { useDIContainer } from "@/context/di";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
+import { defaultCallbacks } from "@/presenters/callback";
+import { createNoteId } from "@/core/domain/note/valueObject";
+import { getNote } from "@/core/application/note/getNote";
 import type { Route } from "./+types/memos.$id";
 
 export function meta(_: Route.MetaArgs) {
@@ -17,44 +21,42 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
-export default function MemoDetail() {
-  const params = useParams();
+export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
+  console.log("Loading note with id:", id);
+  const note = await withContainer(getNote)({ id: createNoteId(id) });
+  console.log(note);
+  return note;
+}
+
+export default function MemoDetail({ params: { id } }: Route.ComponentProps) {
+  const container = useDIContainer();
+  const fetchNote = withContainer(getNote)({ id: createNoteId(id) });
+
+  return (
+    <Suspense>
+      <_MemoDetail fetchNote={fetchNote} />
+    </Suspense>
+  );
+}
+
+export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
   const navigate = useNavigate();
+  const note = use(props.fetchNote);
 
   // Use extended useNote hook
   const {
-    note,
-    loading,
     deleting,
     exporting,
-    updateContent,
+    editable,
+    saveStatus,
+    save,
     deleteNote,
     exportNote,
-  } = useNote(params.id);
+    toggleEditable,
+  } = useNote(note.id, defaultCallbacks());
 
   // Dialog state
   const deleteDialog = useDialog(false);
-
-  // Edit mode state
-  const [isEditing, setIsEditing] = useState(true);
-
-  // Auto-save with note content
-  const [content, setContent] = useState(note?.content || "");
-
-  useEffect(() => {
-    if (note) {
-      setContent(note.content);
-    }
-  }, [note]);
-
-  const { saveStatus } = useAutoSave(content, {
-    onSave: updateContent,
-    interval: 2000,
-  });
-
-  const handleToggleEdit = () => {
-    setIsEditing((prev) => !prev);
-  };
 
   // Handle note deletion with navigation
   const handleDelete = useCallback(async () => {
@@ -62,54 +64,42 @@ export default function MemoDetail() {
     navigate("/");
   }, [deleteNote, navigate]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
-  }
-
-  if (!note) {
-    navigate("/");
-    return null;
-  }
-
   return (
-    <div className="flex flex-col h-screen">
-      <MemoHeader
-        content={content}
-        saveStatus={saveStatus}
-        exporting={exporting}
-        isEditing={isEditing}
-        onToggleEdit={handleToggleEdit}
-        onExport={exportNote}
-        onDelete={deleteDialog.open}
-      />
-
-      <div className="flex-1 overflow-hidden">
-        <ClientOnly
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <Spinner className="h-8 w-8" />
-            </div>
-          }
-        >
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Start writing your note..."
-            editable={isEditing}
-          />
-        </ClientOnly>
-      </div>
-
+    <>
+      <motion.div
+        layoutId={`note-${note.id}`}
+        className="flex flex-col h-screen bg-background"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 30,
+        }}
+      >
+        <MemoHeader
+          content={note.content}
+          saveStatus={saveStatus}
+          exporting={exporting}
+          isEditing={editable}
+          onToggleEdit={toggleEditable}
+          onExport={exportNote}
+          onDelete={deleteNote}
+        />
+        <TiptapEditor
+          content={note.content}
+          onChange={save}
+          placeholder="Start writing your note..."
+          editable={editable}
+        />
+      </motion.div>
       <DeleteConfirmDialog
         open={deleteDialog.isOpen}
         deleting={deleting}
         onOpenChange={deleteDialog.close}
         onConfirm={handleDelete}
       />
-    </div>
+    </>
   );
 }

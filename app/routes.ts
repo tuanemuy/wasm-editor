@@ -4,4 +4,5 @@ export default [
   index("routes/home.tsx"),
   route("memos/:id", "routes/memos.$id.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("test", "routes/test.tsx"),
 ] satisfies RouteConfig;

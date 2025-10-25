@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { SettingsHeader } from "@/components/layout/SettingsHeader";
 import { AutoSaveSettingsCard } from "@/components/settings/AutoSaveSettingsCard";
@@ -16,29 +16,43 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
-export default function SettingsPage() {
-  const {
-    settings,
-    loading,
-    saving,
-    resetting,
-    updateSettings,
-    resetSettings,
-  } = useSettings();
+interface SettingsFormProps {
+  settings: {
+    defaultOrder: string;
+    defaultOrderBy: string;
+    autoSaveInterval: number;
+  };
+  saving: boolean;
+  resetting: boolean;
+  updateSettings: (settings: {
+    defaultOrder?: string;
+    defaultOrderBy?: string;
+    autoSaveInterval?: number;
+  }) => Promise<void>;
+  resetSettings: () => Promise<void>;
+}
 
-  // Form state
-  const [defaultOrder, setDefaultOrder] = useState<string>("desc");
-  const [defaultOrderBy, setDefaultOrderBy] = useState<string>("created");
-  const [autoSaveInterval, setAutoSaveInterval] = useState<string>("2000");
-
-  // Sync form state with settings
-  useEffect(() => {
-    if (settings) {
-      setDefaultOrder(settings.defaultOrder);
-      setDefaultOrderBy(settings.defaultOrderBy);
-      setAutoSaveInterval(settings.autoSaveInterval.toString());
-    }
-  }, [settings]);
+/**
+ * Settings form component
+ * Uses key prop from parent to reset form state when settings are loaded
+ */
+function SettingsForm({
+  settings,
+  saving,
+  resetting,
+  updateSettings,
+  resetSettings,
+}: SettingsFormProps) {
+  // Form state initialized with settings (no useEffect needed)
+  const [defaultOrder, setDefaultOrder] = useState<string>(
+    settings.defaultOrder,
+  );
+  const [defaultOrderBy, setDefaultOrderBy] = useState<string>(
+    settings.defaultOrderBy,
+  );
+  const [autoSaveInterval, setAutoSaveInterval] = useState<string>(
+    settings.autoSaveInterval.toString(),
+  );
 
   // Save settings
   const handleSave = async () => {
@@ -60,7 +74,47 @@ export default function SettingsPage() {
     await resetSettings();
   };
 
-  if (loading) {
+  const hasChanges =
+    defaultOrder !== settings.defaultOrder ||
+    defaultOrderBy !== settings.defaultOrderBy ||
+    autoSaveInterval !== settings.autoSaveInterval.toString();
+
+  return (
+    <>
+      <SortSettingsCard
+        defaultOrderBy={defaultOrderBy}
+        defaultOrder={defaultOrder}
+        onOrderByChange={setDefaultOrderBy}
+        onOrderChange={setDefaultOrder}
+      />
+
+      <AutoSaveSettingsCard
+        autoSaveInterval={autoSaveInterval}
+        onChange={setAutoSaveInterval}
+      />
+
+      <SettingsActions
+        hasChanges={hasChanges}
+        saving={saving}
+        resetting={resetting}
+        onSave={handleSave}
+        onReset={handleReset}
+      />
+    </>
+  );
+}
+
+export default function SettingsPage() {
+  const {
+    settings,
+    loading,
+    saving,
+    resetting,
+    updateSettings,
+    resetSettings,
+  } = useSettings();
+
+  if (loading || !settings) {
     return (
       <div className="min-h-screen bg-muted/40">
         <SettingsHeader />
@@ -89,35 +143,19 @@ export default function SettingsPage() {
     );
   }
 
-  const hasChanges =
-    settings &&
-    (defaultOrder !== settings.defaultOrder ||
-      defaultOrderBy !== settings.defaultOrderBy ||
-      autoSaveInterval !== settings.autoSaveInterval.toString());
-
   return (
     <div className="min-h-screen bg-muted/40">
       <SettingsHeader />
 
       <main className="max-w-4xl mx-auto p-4 space-y-6 py-8">
-        <SortSettingsCard
-          defaultOrderBy={defaultOrderBy}
-          defaultOrder={defaultOrder}
-          onOrderByChange={setDefaultOrderBy}
-          onOrderChange={setDefaultOrder}
-        />
-
-        <AutoSaveSettingsCard
-          autoSaveInterval={autoSaveInterval}
-          onChange={setAutoSaveInterval}
-        />
-
-        <SettingsActions
-          hasChanges={!!hasChanges}
+        {/* Use key prop to remount SettingsForm when settings change */}
+        <SettingsForm
+          key={`settings-${settings.defaultOrder}-${settings.defaultOrderBy}-${settings.autoSaveInterval}`}
+          settings={settings}
           saving={saving}
           resetting={resetting}
-          onSave={handleSave}
-          onReset={handleReset}
+          updateSettings={updateSettings}
+          resetSettings={resetSettings}
         />
       </main>
     </div>
