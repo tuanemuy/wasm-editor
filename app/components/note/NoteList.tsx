@@ -39,7 +39,7 @@ export function NoteList({
 
   return (
     <ScrollArea className="flex-1">
-      <div className="p-4 space-y-4 max-w-4xl mx-auto w-full">
+      <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
         {loading ? (
           <NoteListSkeleton />
         ) : notes.length === 0 ? (
@@ -73,7 +73,7 @@ export function NoteList({
 
 export function NoteListSkeleton() {
   return (
-    <div className="p-4 space-y-4 max-w-4xl mx-auto w-full">
+    <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
       <NoteCardSkeleton />
       <NoteCardSkeleton />
       <NoteCardSkeleton />

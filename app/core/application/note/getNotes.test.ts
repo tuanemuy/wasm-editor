@@ -32,9 +32,18 @@ describe("getNotes", () => {
   });
 
   it("デフォルトのソート順（降順）でメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -59,8 +68,14 @@ describe("getNotes", () => {
   });
 
   it("デフォルトのソート対象（作成日時）でメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -84,9 +99,18 @@ describe("getNotes", () => {
   });
 
   it("昇順でメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -111,9 +135,18 @@ describe("getNotes", () => {
   });
 
   it("降順でメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -138,8 +171,14 @@ describe("getNotes", () => {
   });
 
   it("作成日時でソートしたメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -163,8 +202,14 @@ describe("getNotes", () => {
   });
 
   it("更新日時でソートしたメモ一覧を取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
 
     const repositories = unitOfWorkProvider.getRepositories();
     const findAllSpy = vi
@@ -190,7 +235,12 @@ describe("getNotes", () => {
   it("ページネーション付きでメモ一覧を取得できる", async () => {
     const notes: Note[] = [];
     for (let i = 0; i < 25; i++) {
-      notes.push(createNote({ content: createTestContent(`メモ${i + 1}`), text: `メモ${i + 1}` }));
+      notes.push(
+        createNote({
+          content: createTestContent(`メモ${i + 1}`),
+          text: `メモ${i + 1}`,
+        }),
+      );
     }
 
     const repositories = unitOfWorkProvider.getRepositories();
@@ -219,7 +269,12 @@ describe("getNotes", () => {
   it("デフォルトのページサイズ（20件）でメモ一覧を取得できる", async () => {
     const notes: Note[] = [];
     for (let i = 0; i < 20; i++) {
-      notes.push(createNote({ content: createTestContent(`メモ${i + 1}`), text: `メモ${i + 1}` }));
+      notes.push(
+        createNote({
+          content: createTestContent(`メモ${i + 1}`),
+          text: `メモ${i + 1}`,
+        }),
+      );
     }
 
     const repositories = unitOfWorkProvider.getRepositories();
@@ -264,7 +319,12 @@ describe("getNotes", () => {
   it("ページネーション情報が正しい", async () => {
     const notes: Note[] = [];
     for (let i = 0; i < 15; i++) {
-      notes.push(createNote({ content: createTestContent(`メモ${i + 1}`), text: `メモ${i + 1}` }));
+      notes.push(
+        createNote({
+          content: createTestContent(`メモ${i + 1}`),
+          text: `メモ${i + 1}`,
+        }),
+      );
     }
 
     const repositories = unitOfWorkProvider.getRepositories();

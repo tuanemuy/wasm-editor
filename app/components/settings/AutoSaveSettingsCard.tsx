@@ -25,7 +25,7 @@ export function AutoSaveSettingsCard({
           Configure how often notes are automatically saved
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         <Field>
           <FieldLabel htmlFor="autoSaveInterval">
             Auto-save interval (milliseconds)

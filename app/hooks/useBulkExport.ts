@@ -34,7 +34,10 @@ export function useBulkExport() {
             if (error instanceof Error) {
               const errorMessage = error.message.toLowerCase();
               // Quota exceeded or permission errors should stop the process
-              if (errorMessage.includes("quota") || errorMessage.includes("permission")) {
+              if (
+                errorMessage.includes("quota") ||
+                errorMessage.includes("permission")
+              ) {
                 criticalError = true;
                 if (import.meta.env.DEV) {
                   console.error("Critical error during bulk export:", error);

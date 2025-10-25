@@ -118,13 +118,13 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen bg-muted/40">
         <SettingsHeader />
-        <main className="max-w-4xl mx-auto p-4 space-y-6 py-8">
+        <main className="max-w-4xl mx-auto p-4 py-8 flex flex-col gap-6">
           <Card>
             <CardHeader>
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-4 w-64" />
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-col gap-4">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </CardContent>
@@ -147,7 +147,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-muted/40">
       <SettingsHeader />
 
-      <main className="max-w-4xl mx-auto p-4 space-y-6 py-8">
+      <main className="max-w-4xl mx-auto p-4 py-8 flex flex-col gap-6">
         {/* Use key prop to remount SettingsForm when settings change */}
         <SettingsForm
           key={`settings-${settings.defaultOrder}-${settings.defaultOrderBy}-${settings.autoSaveInterval}`}

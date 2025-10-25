@@ -41,8 +41,8 @@ export function SortPopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64">
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             <h4 className="font-medium text-sm">Sort by</h4>
             <RadioGroup
               value={sortField}
@@ -61,7 +61,7 @@ export function SortPopover({
 
           <Separator />
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <h4 className="font-medium text-sm">Order</h4>
             <RadioGroup
               value={sortOrder}
