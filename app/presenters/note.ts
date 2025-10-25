@@ -7,6 +7,9 @@ import type { StructuredContent } from "@/core/domain/note/valueObject";
 // Block elements that should have newlines after them
 const BLOCK_ELEMENTS = new Set(["paragraph", "heading", "blockquote"]);
 
+// Maximum length for title extraction from plain text
+const TITLE_MAX_LENGTH = 50;
+
 /**
  * Extract text content from Tiptap JSON structure
  */
@@ -67,7 +70,7 @@ function extractFirstHeading(content: StructuredContent): string | null {
   // Recursively search in children
   if (Array.isArray(content.content)) {
     for (const child of content.content) {
-      if (typeof child === "object" && child !== null) {
+      if (typeof child === "object" && child !== null && "type" in child) {
         const heading = extractFirstHeading(child as StructuredContent);
         if (heading) {
           return heading;
@@ -83,6 +86,8 @@ function extractFirstHeading(content: StructuredContent): string | null {
  * Extract title from note content
  * 1. Uses the first heading if available
  * 2. Otherwise, extracts the first 50 characters from the beginning of the text
+ *    - Adds "..." if text exceeds 50 characters
+ * 3. Returns "Untitled" if no content exists
  */
 export function extractTitle(content: StructuredContent): string {
   // First, try to find a heading
@@ -99,13 +104,12 @@ export function extractTitle(content: StructuredContent): string {
     return "Untitled";
   }
 
-  // Take the first 50 characters
-  const maxLength = 50;
-  if (text.length <= maxLength) {
+  // Take the first TITLE_MAX_LENGTH characters
+  if (text.length <= TITLE_MAX_LENGTH) {
     return text;
   }
 
-  return `${text.slice(0, maxLength)}...`;
+  return `${text.slice(0, TITLE_MAX_LENGTH)}...`;
 }
 
 /**

@@ -154,6 +154,26 @@ describe("extractTitle", () => {
 
     expect(extractTitle(content)).toBe("Valid Heading");
   });
+
+  it("should extract heading from nested structures", () => {
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "blockquote",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ text: "Nested Heading" }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(extractTitle(content)).toBe("Nested Heading");
+  });
 });
 
 describe("generateNotePreview", () => {
