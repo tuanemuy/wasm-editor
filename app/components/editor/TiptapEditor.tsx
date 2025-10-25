@@ -1,7 +1,7 @@
 import type { Content } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   BoldIcon,
@@ -100,7 +100,6 @@ export function TiptapEditor({
     ],
     content: toTiptapContent(content),
     editable,
-    shouldRerenderOnTransaction: true,
     onUpdate: ({ editor: updatedEditor }) => {
       onChange(
         fromTiptapContent(updatedEditor.getJSON()),
@@ -114,6 +113,15 @@ export function TiptapEditor({
       },
     },
     immediatelyRender: false,
+  });
+
+  // Use useEditorState to track selection changes for toolbar state updates
+  // This only re-renders when the selection changes, not on every transaction
+  useEditorState({
+    editor,
+    selector: (ctx) => ({
+      selection: ctx.editor?.state.selection,
+    }),
   });
 
   // Update editor content when prop changes (but avoid unnecessary updates)
