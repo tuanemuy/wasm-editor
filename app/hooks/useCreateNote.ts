@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { withContainer } from "@/di";
 import { createNote as createNoteService } from "@/core/application/note/createNote";
 import type { Note } from "@/core/domain/note/entity";
+import { withContainer } from "@/di";
 import {
   defaultNotification,
   type Notification,

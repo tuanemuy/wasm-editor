@@ -11,9 +11,9 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import type { Context } from "../context";
-import { createTestContent } from "./test-helpers";
 import { NotFoundError } from "../error";
 import { deleteNote } from "./deleteNote";
+import { createTestContent } from "./test-helpers";
 
 describe("deleteNote", () => {
   let context: Context;

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { extractTitle, generateNotePreview } from "./note";
+import { describe, expect, it } from "vitest";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
+import { extractTitle, generateNotePreview } from "./note";
 
 describe("extractTitle", () => {
   it("should extract first line as title", () => {

@@ -2,12 +2,16 @@
  * LocalStorage Note Repository Tests
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import { SystemError, SystemErrorCode } from "@/core/application/error";
-import { NotFoundError, NotFoundErrorCode } from "@/core/application/error";
+import {
+  NotFoundError,
+  NotFoundErrorCode,
+  SystemError,
+  SystemErrorCode,
+} from "@/core/application/error";
 import type { Note } from "@/core/domain/note/entity";
 import {
-  createNoteId,
   createNoteContent,
+  createNoteId,
   createText,
 } from "@/core/domain/note/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";

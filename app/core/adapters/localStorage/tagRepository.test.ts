@@ -2,8 +2,7 @@
  * LocalStorage Tag Repository Tests
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import { SystemError } from "@/core/application/error";
-import { NotFoundError } from "@/core/application/error";
+import { NotFoundError, SystemError } from "@/core/application/error";
 import type { Tag } from "@/core/domain/tag/entity";
 import { createTagId, createTagName } from "@/core/domain/tag/valueObject";
 import { LocalStorageTagRepository } from "./tagRepository";

@@ -4,7 +4,7 @@ import { BrowserTagExtractorPort } from "@/core/adapters/browser/tagExtractorPor
 import { LocalStorageNoteQueryService } from "@/core/adapters/localStorage/noteQueryService";
 import { LocalStorageTagQueryService } from "@/core/adapters/localStorage/tagQueryService";
 import { LocalStorageUnitOfWorkProvider } from "@/core/adapters/localStorage/unitOfWork";
-import { getDatabase, type Database } from "@/core/adapters/tursoWasm/client";
+import { type Database, getDatabase } from "@/core/adapters/tursoWasm/client";
 import { TursoWasmNoteQueryService } from "@/core/adapters/tursoWasm/noteQueryService";
 import { TursoWasmTagQueryService } from "@/core/adapters/tursoWasm/tagQueryService";
 import { TursoWasmUnitOfWorkProvider } from "@/core/adapters/tursoWasm/unitOfWork";

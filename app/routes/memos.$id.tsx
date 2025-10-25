@@ -1,8 +1,10 @@
+import { EyeIcon, PencilIcon } from "lucide-react";
 import { Suspense, use, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { MemoHeader } from "@/components/layout/MemoHeader";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
@@ -67,12 +69,10 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
         content={note.content}
         saveStatus={saveStatus}
         exporting={exporting}
-        isEditing={editable}
-        onToggleEdit={toggleEditable}
         onExport={exportNote}
         onDelete={deleteNote}
       />
-      <div className="flex-1 overflow-hidden p-4">
+      <div className="flex-1 overflow-hidden p-4 relative">
         <div className="h-full bg-card rounded-xl border shadow-sm">
           <TiptapEditor
             content={note.content}
@@ -81,6 +81,19 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
             editable={editable}
           />
         </div>
+        {/* FAB button to toggle edit/view mode */}
+        <Button
+          size="lg"
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg"
+          onClick={toggleEditable}
+          title={editable ? "閲覧モードに切り替え" : "編集モードに切り替え"}
+        >
+          {editable ? (
+            <EyeIcon className="h-5 w-5" />
+          ) : (
+            <PencilIcon className="h-5 w-5" />
+          )}
+        </Button>
       </div>
       <DeleteConfirmDialog
         open={deleteDialog.isOpen}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { withContainer } from "@/di";
 import { useDIContainer } from "@/context/di";
 import { getTags as getTagsService } from "@/core/application/tag/getTags";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
+import { withContainer } from "@/di";
 
 const getTags = withContainer(getTagsService);
 

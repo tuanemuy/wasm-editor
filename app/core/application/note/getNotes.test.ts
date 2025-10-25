@@ -10,10 +10,10 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import type { Note } from "@/core/domain/note/entity";
 import { createNote } from "@/core/domain/note/entity";
-import { createTestContent } from "./test-helpers";
 import type { PaginationResult } from "@/lib/pagination";
 import type { Context } from "../context";
 import { getNotes } from "./getNotes";
+import { createTestContent } from "./test-helpers";
 
 describe("getNotes", () => {
   let context: Context;

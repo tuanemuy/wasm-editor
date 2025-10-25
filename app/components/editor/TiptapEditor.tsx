@@ -1,3 +1,4 @@
+import type { Content } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -18,10 +19,9 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import type { Content } from "@tiptap/core";
-import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 
 /**
  * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
@@ -187,7 +187,7 @@ export function TiptapEditor({
     <div className="flex flex-col h-full">
       {/* Toolbar - only show in edit mode */}
       {editable && (
-        <div className="border-b p-2 flex items-center gap-1 flex-wrap">
+        <div className="border-b p-2 flex items-center gap-1 overflow-x-auto">
           <Button
             variant="ghost"
             size="icon"

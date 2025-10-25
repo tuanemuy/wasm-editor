@@ -1,6 +1,6 @@
 import { NoteErrorCode } from "./note/errorCode";
-import { TagErrorCode } from "./tag/errorCode";
 import { SettingsErrorCode } from "./settings/errorCode";
+import { TagErrorCode } from "./tag/errorCode";
 
 export const BusinessRuleErrorCode = {
   ...NoteErrorCode,

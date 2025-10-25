@@ -248,7 +248,7 @@ export class LocalStorageNoteRepository implements NoteRepository {
 
     try {
       const notes = this.getAllNotes();
-      let notesArray = Array.from(notes.values());
+      const notesArray = Array.from(notes.values());
 
       // Sort
       const sortField = orderBy === "created_at" ? "created_at" : "updated_at";

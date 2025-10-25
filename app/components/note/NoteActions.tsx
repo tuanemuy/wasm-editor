@@ -1,5 +1,11 @@
-import { DownloadIcon, Trash2Icon } from "lucide-react";
+import { DownloadIcon, MoreVerticalIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 
 export interface NoteActionsProps {
@@ -14,25 +20,26 @@ export function NoteActions({
   onDelete,
 }: NoteActionsProps) {
   return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onExport}
-        disabled={exporting}
-      >
-        {exporting ? (
-          <Spinner className="h-4 w-4 mr-2" />
-        ) : (
-          <DownloadIcon className="h-4 w-4 mr-2" />
-        )}
-        Export
-      </Button>
-
-      <Button variant="destructive" size="sm" onClick={onDelete}>
-        <Trash2Icon className="h-4 w-4 mr-2" />
-        Delete
-      </Button>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" title="More actions">
+          <MoreVerticalIcon className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onExport} disabled={exporting}>
+          {exporting ? (
+            <Spinner className="h-4 w-4" />
+          ) : (
+            <DownloadIcon className="h-4 w-4" />
+          )}
+          Export
+        </DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onClick={onDelete}>
+          <Trash2Icon className="h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

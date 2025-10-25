@@ -1,10 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { createLocalStorageContainer } from "@/di";
-import type { Container } from "@/core/application/container";
 import type { Database } from "@/core/adapters/tursoWasm/client";
+import type { Container } from "@/core/application/container";
+import { createLocalStorageContainer, createTursoWasmContainer } from "@/di";
 import { useDatabase } from "@/hooks/useDatabase";
-import { createTursoWasmContainer } from "@/di";
 
 const DIContainer = createContext<Container | null>(null);
 
