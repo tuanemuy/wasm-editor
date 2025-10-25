@@ -29,8 +29,10 @@ export async function syncNoteTags(
     try {
       tagNames = await context.tagExtractorPort.extractTags(note.text);
     } catch (error) {
-      // Log error but don't fail note save
-      console.warn("Failed to extract tags from note text:", error);
+      // Log error in development mode but don't fail note save
+      if (import.meta.env.DEV) {
+        console.warn("Failed to extract tags from note text:", error);
+      }
     }
 
     // Get or create tags
@@ -55,8 +57,10 @@ export async function syncNoteTags(
             await repositories.tagRepository.save(newTag);
             return newTag;
           } catch (error) {
-            // Skip invalid tag names
-            console.warn(`Failed to process tag "${tagName}":`, error);
+            // Skip invalid tag names (log only in development mode)
+            if (import.meta.env.DEV) {
+              console.warn(`Failed to process tag "${tagName}":`, error);
+            }
             return null;
           }
         }),

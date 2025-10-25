@@ -12,8 +12,13 @@ import type {
   NoteId,
   OrderBy,
   SortOrder,
+  StructuredContent,
 } from "@/core/domain/note/valueObject";
-import { createNoteId } from "@/core/domain/note/valueObject";
+import {
+  createNoteContent,
+  createNoteId,
+  createText,
+} from "@/core/domain/note/valueObject";
 import type { TagId } from "@/core/domain/tag/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Pagination, PaginationResult } from "@/lib/pagination";
@@ -48,13 +53,22 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
     );
     const tagRelations = (await stmt.all([row.id])) as TagRelationRow[];
 
-    // Parse JSON content from database
-    const content = JSON.parse(row.content);
+    // Parse JSON content from database with error handling
+    let content: unknown;
+    try {
+      content = JSON.parse(row.content);
+    } catch (error) {
+      throw new SystemError(
+        SystemErrorCode.DatabaseError,
+        `Failed to parse note content for note ${row.id}: ${error}`,
+        error,
+      );
+    }
 
     return {
       id: createNoteId(row.id),
-      content: content as Note["content"],
-      text: row.text as Note["text"],
+      content: createNoteContent(content as StructuredContent),
+      text: createText(row.text),
       tagIds: tagRelations.map((r) => createTagId(r.tag_id)),
       createdAt: new Date(row.created_at * 1000),
       updatedAt: new Date(row.updated_at * 1000),
@@ -125,6 +139,8 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
         conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
       // Get items
+      // Safe: orderColumn and orderDirection are validated by domain layer
+      // and come from createOrderBy() and createSortOrder() functions
       const itemsStmt = this.db.prepare(`
         SELECT id, content, text, created_at, updated_at
         FROM notes
