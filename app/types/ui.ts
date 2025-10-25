@@ -14,6 +14,7 @@ export type SaveStatus = "saved" | "saving" | "unsaved";
  */
 export interface DialogState {
   isOpen: boolean;
+  setOpen: (open: boolean) => void;
   open: () => void;
   close: () => void;
   toggle: () => void;
