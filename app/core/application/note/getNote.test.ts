@@ -10,6 +10,7 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { createTestContent } from "./test-helpers";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
 import { getNote } from "./getNote";
@@ -31,7 +32,7 @@ describe("getNote", () => {
   });
 
   it("有効なメモIDでメモを取得できる", async () => {
-    const note = createNote({ content: "取得するメモ" });
+    const note = createNote({ content: createTestContent("取得するメモ"), text: "取得するメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -62,7 +63,7 @@ describe("getNote", () => {
 
   it("取得されたメモのすべての属性が正しい", async () => {
     const tagIds = [createTagId("tag1"), createTagId("tag2")];
-    const note = createNote({ content: "テストメモ", tagIds });
+    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ", tagIds });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);

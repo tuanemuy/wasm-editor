@@ -12,6 +12,7 @@ import { createNote } from "@/core/domain/note/entity";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
 import { searchNotesByTag } from "./searchNotesByTag";
+import { createTestContent } from "./test-helpers";
 
 describe("searchNotesByTag", () => {
   let context: Context;
@@ -31,15 +32,15 @@ describe("searchNotesByTag", () => {
 
   it("有効なタグ名でメモを検索できる", async () => {
     const note1 = createNote({
-      content: "TypeScriptメモ",
+      content: createTestContent("TypeScriptメモ"), text: "TypeScriptメモ",
       tagIds: [createTagId("tech")],
     });
     const note2 = createNote({
-      content: "JavaScriptメモ",
+      content: createTestContent("JavaScriptメモ"), text: "JavaScriptメモ",
       tagIds: [createTagId("tech")],
     });
     const _note3 = createNote({
-      content: "料理メモ",
+      content: createTestContent("料理メモ"), text: "料理メモ",
       tagIds: [createTagId("cooking")],
     });
 
@@ -96,11 +97,11 @@ describe("searchNotesByTag", () => {
 
   it("大文字小文字を区別して検索される", async () => {
     const _note1 = createNote({
-      content: "メモ1",
+      content: createTestContent("メモ1"), text: "メモ1",
       tagIds: [createTagId("Tech")],
     });
     const note2 = createNote({
-      content: "メモ2",
+      content: createTestContent("メモ2"), text: "メモ2",
       tagIds: [createTagId("tech")],
     });
 
@@ -131,15 +132,15 @@ describe("searchNotesByTag", () => {
 
   it("検索結果のソートが正しい", async () => {
     const note1 = createNote({
-      content: "メモ1",
+      content: createTestContent("メモ1"), text: "メモ1",
       tagIds: [createTagId("tech")],
     });
     const note2 = createNote({
-      content: "メモ2",
+      content: createTestContent("メモ2"), text: "メモ2",
       tagIds: [createTagId("tech")],
     });
     const note3 = createNote({
-      content: "メモ3",
+      content: createTestContent("メモ3"), text: "メモ3",
       tagIds: [createTagId("tech")],
     });
 
@@ -169,7 +170,7 @@ describe("searchNotesByTag", () => {
 
   it("検索結果のページネーションが正しい", async () => {
     const notes = Array.from({ length: 25 }, (_, i) =>
-      createNote({ content: `メモ${i + 1}`, tagIds: [createTagId("tech")] }),
+      createNote({ content: createTestContent(`メモ${i + 1}`), text: `メモ${i + 1}`, tagIds: [createTagId("tech")] }),
     );
 
     const searchSpy = vi

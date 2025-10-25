@@ -4,10 +4,32 @@
  * Defines value objects for the Note domain with business rule validation.
  */
 import { v7 as uuidv7 } from "uuid";
+import type { JsonValue } from "@/lib/json";
 import { BusinessRuleError } from "@/core/domain/error";
 import { NoteErrorCode } from "./errorCode";
 
-const NOTE_CONTENT_MAX_LENGTH = 100000;
+const NOTE_TEXT_MAX_LENGTH = 100000;
+
+// ============================================================================
+// Structured Content (Note-specific)
+// ============================================================================
+
+/**
+ * Structured content for rich text editors
+ * Generic structure that doesn't depend on specific editor implementations (e.g., Tiptap)
+ *
+ * Required field:
+ * - type: Document type (e.g., "doc", "paragraph")
+ *
+ * Optional fields:
+ * - content: Child elements or content
+ * - [other properties]: Additional attributes (attrs, marks, etc.)
+ */
+export type StructuredContent = {
+  type: string;
+  content?: JsonValue;
+  [key: string]: JsonValue | undefined;
+};
 
 // ============================================================================
 // NoteId
@@ -33,26 +55,81 @@ export function generateNoteId(): NoteId {
 // NoteContent
 // ============================================================================
 
-export type NoteContent = string & { readonly brand: "NoteContent" };
+export type NoteContent = StructuredContent & { readonly brand: "NoteContent" };
 
 /**
  * Create NoteContent with validation
  *
  * Business Rules:
- * - Content can be empty (allows creating new notes without content)
- * - Content must not exceed 100,000 characters
+ * - Must be an object type
+ * - Must have required field 'type' (string)
+ * - Must be JSON serializable
+ * - All properties must be JSON-compatible values
  *
  * @throws {BusinessRuleError} If validation fails
  */
-export function createNoteContent(content: string): NoteContent {
-  if (content.length > NOTE_CONTENT_MAX_LENGTH) {
+export function createNoteContent(content: StructuredContent): NoteContent {
+  // Validate that content is an object
+  if (typeof content !== "object" || content === null) {
     throw new BusinessRuleError(
-      NoteErrorCode.NoteContentTooLong,
-      `Note content exceeds maximum length of ${NOTE_CONTENT_MAX_LENGTH} characters`,
+      NoteErrorCode.NoteContentInvalid,
+      "Note content must be a valid JSON object",
+    );
+  }
+
+  // Validate that content has required field 'type'
+  if (!("type" in content) || typeof content.type !== "string") {
+    throw new BusinessRuleError(
+      NoteErrorCode.NoteContentInvalid,
+      "Note content must have required field 'type' (string)",
+    );
+  }
+
+  // Validate that content is JSON serializable
+  try {
+    JSON.stringify(content);
+  } catch {
+    throw new BusinessRuleError(
+      NoteErrorCode.NoteContentInvalid,
+      "Note content must be JSON serializable",
     );
   }
 
   return content as NoteContent;
+}
+
+// ============================================================================
+// Text
+// ============================================================================
+
+export type Text = string & { readonly brand: "Text" };
+
+/**
+ * Create Text with validation
+ *
+ * Business Rules:
+ * - Must not be empty (minimum 1 character required)
+ * - Must not exceed 100,000 characters
+ * - Must be a string type
+ *
+ * @throws {BusinessRuleError} If validation fails
+ */
+export function createText(text: string): Text {
+  if (text.length === 0) {
+    throw new BusinessRuleError(
+      NoteErrorCode.NoteTextEmpty,
+      "Note text must not be empty",
+    );
+  }
+
+  if (text.length > NOTE_TEXT_MAX_LENGTH) {
+    throw new BusinessRuleError(
+      NoteErrorCode.NoteTextTooLong,
+      `Note text exceeds maximum length of ${NOTE_TEXT_MAX_LENGTH} characters`,
+    );
+  }
+
+  return text as Text;
 }
 
 // ============================================================================

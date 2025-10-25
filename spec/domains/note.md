@@ -16,34 +16,38 @@ Noteは集約ルートであり、タグとの関連を所有します。
 
 **属性:**
 - `id: NoteId` - メモの一意識別子 (UUID v7)
-- `content: NoteContent` - メモの本文 (Markdown形式)
+- `content: NoteContent` - メモの本文 (リッチテキストエディタの構造化されたJSON)
+- `text: Text` - プレーンテキスト (検索用)
 - `tagIds: TagId[]` - 関連付けられたタグのIDリスト
 - `createdAt: Date` - 作成日時
 - `updatedAt: Date` - 更新日時
 
 **ビジネスルール:**
-1. メモの本文は空であってはならない (最低1文字必要)
-2. メモの本文の最大長は100,000文字とする
+1. メモのテキストは空であってはならない (最低1文字必要)
+2. メモのテキストの最大長は100,000文字とする
 3. 作成日時は変更不可
 4. 更新日時は自動更新される
 5. tagIdsは重複を許さない（Set的な振る舞い）
+6. contentとtextは常に同期していること（同時に更新される）
 
 **エンティティ操作:**
 - `createNote(params: CreateNoteParams): Note` - 新規メモを作成
-- `updateContent(note: Note, content: string): Note` - メモ本文を更新
+- `updateContent(note: Note, content: StructuredContent, text: string): Note` - メモ本文を更新
 - `updateTagIds(note: Note, tagIds: TagId[]): Note` - タグIDリストを更新
 
 ```typescript
 export type Note = {
   id: NoteId;
   content: NoteContent;
+  text: Text;
   tagIds: TagId[];
   createdAt: Date;
   updatedAt: Date;
 };
 
 export type CreateNoteParams = {
-  content: string;
+  content: StructuredContent; // 構造化されたJSON
+  text: string; // プレーンテキスト
   tagIds?: TagId[];
 };
 ```
@@ -67,17 +71,63 @@ export function generateNoteId(): NoteId;
 
 ### NoteContent (メモ本文)
 
-メモの本文を表す値オブジェクト。Markdown形式。
+メモの本文を表す値オブジェクト。リッチテキストエディタの構造化されたJSON形式。
+
+**型定義:**
+```typescript
+// JSON型は汎用的なため app/lib/json.ts で定義されています
+import type { JsonValue } from "@/lib/json";
+
+// 構造化されたエディタコンテンツ（Tiptapに依存しない汎用的な構造）
+export type StructuredContent = {
+  type: string;  // ドキュメントタイプ（例: "doc", "paragraph" など）- 必須
+  content?: JsonValue;  // 子要素または内容 - オプショナル
+  [key: string]: JsonValue | undefined;  // その他の属性（attrs, marks など）- オプショナル
+};
+
+export type NoteContent = StructuredContent & { readonly brand: "NoteContent" };
+
+export function createNoteContent(content: StructuredContent): NoteContent;
+```
+
+**JSON型の定義 (`app/lib/json.ts`):**
+```typescript
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonObject = { [key in string]?: JsonValue };
+export type JsonArray = JsonValue[];
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+```
+
+**バリデーションルール:**
+1. オブジェクト型であること
+2. 必須フィールド `type: string` を持つこと
+3. JSONとしてシリアライズ可能であること
+4. すべてのプロパティがJSON互換の値であること
+
+**注記:**
+- 具体的なエディタの実装（Tiptapなど）に依存しない汎用的なJSONスキーマ
+- プレゼンテーション層（アダプター）で具体的なエディタ形式に変換される
+- ドメイン層では`StructuredContent`型として型安全に扱う
+- `type`フィールドは必須だが、`content`フィールドはオプション（空のドキュメントも許可）
+
+### Text (プレーンテキスト)
+
+メモのプレーンテキストを表す値オブジェクト。全文検索に使用される。
 
 **バリデーションルール:**
 1. 空文字列は許可しない (最低1文字必要)
 2. 最大長は100,000文字
 3. 文字列型であること
 
-```typescript
-export type NoteContent = string & { readonly brand: "NoteContent" };
+**注記:**
+- リッチテキストエディタのコンテンツからプレーンテキストを抽出したもの
+- 検索インデックスの対象となる
+- HTMLタグやマークダウン記法などの装飾は除去されている
 
-export function createNoteContent(content: string): NoteContent;
+```typescript
+export type Text = string & { readonly brand: "Text" };
+
+export function createText(text: string): Text;
 ```
 
 ### SortOrder (ソート順)
@@ -117,8 +167,11 @@ Noteドメインで発生するエラーコードを定義します。
 ```typescript
 export const NoteErrorCode = {
   // 本文関連
-  ContentEmpty: "NOTE_CONTENT_EMPTY",
-  ContentTooLong: "NOTE_CONTENT_TOO_LONG",
+  ContentInvalid: "NOTE_CONTENT_INVALID",
+
+  // テキスト関連
+  TextEmpty: "NOTE_TEXT_EMPTY",
+  TextTooLong: "NOTE_TEXT_TOO_LONG",
 
   // ソート関連
   InvalidSortOrder: "NOTE_INVALID_SORT_ORDER",
@@ -276,18 +329,22 @@ Noteドメインで提供されるユースケース一覧。
 新規メモを作成します。
 
 **入力:**
-- `content: string` - メモ本文 (Markdown)
+- `content: StructuredContent` - メモ本文 (構造化されたJSON)
+- `text: string` - プレーンテキスト
 
 **出力:**
 - `Note` - 作成されたメモ
 
 **ビジネスルール:**
-- 空のメモは作成できない (最低1文字必要)
-- 本文の最大長は100,000文字
+- テキストは空であってはならない (最低1文字必要)
+- テキストの最大長は100,000文字
+- contentは有効なJSON構造でなければならない
+- contentとtextは同期していること
 
 **エラー:**
-- `BusinessRuleError(ContentEmpty)` - 本文が空
-- `BusinessRuleError(ContentTooLong)` - 本文が長すぎる
+- `BusinessRuleError(ContentInvalid)` - 本文が無効なJSON
+- `BusinessRuleError(TextEmpty)` - テキストが空
+- `BusinessRuleError(TextTooLong)` - テキストが長すぎる
 - `SystemError` - 保存に失敗
 
 **実装パス:** `app/core/application/note/createNote.ts`
@@ -300,20 +357,24 @@ Noteドメインで提供されるユースケース一覧。
 
 **入力:**
 - `id: NoteId` - メモID
-- `content: string` - 新しいメモ本文
+- `content: StructuredContent` - 新しいメモ本文 (構造化されたJSON)
+- `text: string` - プレーンテキスト
 
 **出力:**
 - `Note` - 更新されたメモ
 
 **ビジネスルール:**
-- 空のメモには更新できない
-- 本文の最大長は100,000文字
+- テキストは空であってはならない
+- テキストの最大長は100,000文字
+- contentは有効なJSON構造でなければならない
+- contentとtextは同期していること
 - 更新日時は自動更新される
 
 **エラー:**
 - `NotFoundError` - メモが見つからない
-- `BusinessRuleError(ContentEmpty)` - 本文が空
-- `BusinessRuleError(ContentTooLong)` - 本文が長すぎる
+- `BusinessRuleError(ContentInvalid)` - 本文が無効なJSON
+- `BusinessRuleError(TextEmpty)` - テキストが空
+- `BusinessRuleError(TextTooLong)` - テキストが長すぎる
 - `SystemError` - 保存に失敗
 
 **実装パス:** `app/core/application/note/updateNote.ts`
@@ -402,14 +463,14 @@ IDでメモを取得します。
 - query のみ指定された場合は全文検索のみ
 - tagIds のみ指定された場合はタグ検索のみ
 - 両方とも空の場合は全件取得（getNotes相当）
-- 検索対象（全文検索）: メモ本文
+- 検索対象（全文検索）: メモのプレーンテキスト (text)
 - 部分一致検索、大文字小文字を区別しない
 - 複数タグ指定時は AND 検索（すべてのタグIDを持つメモのみ）
 
 **処理フロー:**
 1. NoteQueryService の `combinedSearch()` を呼び出し
 2. 内部で noteTagRelations テーブルをJOINしてタグ検索を実行
-3. query が指定されている場合は content カラムで全文検索
+3. query が指定されている場合は text カラムで全文検索
 4. ページネーションとソートを適用
 
 **エラー:**
@@ -529,7 +590,8 @@ IDでメモを取得します。
 
 export const notes = sqliteTable("notes", {
   id: text("id").primaryKey(),
-  content: text("content").notNull(),
+  content: text("content", { mode: "json" }).notNull(), // 構造化されたJSON
+  text: text("text").notNull(), // プレーンテキスト
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -560,6 +622,8 @@ export const noteTagRelations = sqliteTable(
 ```
 
 **注記:**
+- `content` カラムはJSON型で構造化されたエディタの状態を保存
+- `text` カラムは全文検索用のプレーンテキスト
 - `noteTagRelations` テーブルはNote集約の実装詳細
 - NoteRepositoryがこのテーブルを管理し、`tagIds` 配列として抽象化
 - ドメイン層からは中間テーブルの存在を隠蔽
@@ -567,8 +631,8 @@ export const noteTagRelations = sqliteTable(
 ### インデックス
 
 ```typescript
-// 全文検索用
-export const notesContentIndex = index("notes_content_idx").on(notes.content);
+// 全文検索用（プレーンテキストに対して）
+export const notesTextIndex = index("notes_text_idx").on(notes.text);
 
 // ソート用
 export const notesCreatedAtIndex = index("notes_created_at_idx").on(notes.createdAt);

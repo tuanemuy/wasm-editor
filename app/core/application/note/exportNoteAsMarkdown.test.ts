@@ -10,6 +10,7 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { createTestContent } from "./test-helpers";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
 import { exportNoteAsMarkdown } from "./exportNoteAsMarkdown";
@@ -32,7 +33,7 @@ describe("exportNoteAsMarkdown", () => {
 
   it("有効なメモIDでメモをエクスポートできる", async () => {
     const note = createNote({
-      content: "# テストメモ\n\nこれはテスト内容です。",
+      content: createTestContent("# テストメモ\n\nこれはテスト内容です。"), text: "# テストメモ\n\nこれはテスト内容です。",
     });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -69,7 +70,7 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("エクスポートされたファイル名が正しい", async () => {
-    const note = createNote({ content: "# マイタイトル\n\n本文" });
+    const note = createNote({ content: createTestContent("# マイタイトル\n\n本文"), text: "# マイタイトル\n\n本文" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -84,7 +85,7 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("エクスポートされたファイル拡張子が.mdである", async () => {
-    const note = createNote({ content: "テストメモ" });
+    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -99,23 +100,23 @@ describe("exportNoteAsMarkdown", () => {
   });
 
   it("エクスポートされたファイル内容が正しい", async () => {
-    const content = "# タイトル\n\n本文内容\n\n- リスト1\n- リスト2";
-    const note = createNote({ content });
+    const text = "# タイトル\n\n本文内容\n\n- リスト1\n- リスト2";
+    const note = createNote({ content: createTestContent(text), text });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
     vi.spyOn(context.exportPort, "exportAsMarkdown").mockResolvedValue({
       filename: "タイトル.md",
-      content: content,
+      content: text,
     });
 
     const result = await exportNoteAsMarkdown(context, { id: note.id });
 
-    expect(result.content).toBe(content);
+    expect(result.content).toBe(text);
   });
 
   it("タイトルが抽出できない場合は作成日時をファイル名とする", async () => {
-    const note = createNote({ content: "タイトルなしの本文" });
+    const note = createNote({ content: createTestContent("タイトルなしの本文"), text: "タイトルなしの本文" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);

@@ -7,7 +7,7 @@
 
 import type { Note } from "@/core/domain/note/entity";
 import { updateContent, updateTagIds } from "@/core/domain/note/entity";
-import type { NoteId } from "@/core/domain/note/valueObject";
+import type { NoteId, StructuredContent } from "@/core/domain/note/valueObject";
 import { createTag } from "@/core/domain/tag/entity";
 import type { TagId } from "@/core/domain/tag/valueObject";
 import { createTagName } from "@/core/domain/tag/valueObject";
@@ -15,7 +15,8 @@ import type { Context } from "../context";
 
 export type UpdateNoteInput = {
   id: NoteId;
-  content: string;
+  content: StructuredContent;
+  text: string;
 };
 
 export async function updateNote(
@@ -26,19 +27,17 @@ export async function updateNote(
     // Find existing note
     const note = await repositories.noteRepository.findById(input.id);
 
-    // Update content (validates content)
-    let updatedNote = updateContent(note, input.content);
+    // Update content (validates content and text)
+    let updatedNote = updateContent(note, input.content, input.text);
 
-    // Extract tags from content
+    // Extract tags from text (plain text for easier extraction)
     // If extraction fails, continue with empty tags
     let tagNames: string[] = [];
     try {
-      tagNames = await context.tagExtractorPort.extractTags(
-        updatedNote.content,
-      );
+      tagNames = await context.tagExtractorPort.extractTags(updatedNote.text);
     } catch (error) {
-      // Log error but don't fail note save
-      console.warn("Failed to extract tags from note content:", error);
+      // Silently ignore tag extraction errors
+      // Logging strategy is a future consideration
     }
 
     // Get or create tags
@@ -64,7 +63,7 @@ export async function updateNote(
             return newTag;
           } catch (error) {
             // Skip invalid tag names
-            console.warn(`Failed to process tag "${tagName}":`, error);
+            // Logging strategy is a future consideration
             return null;
           }
         }),

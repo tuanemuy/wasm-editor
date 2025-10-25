@@ -19,8 +19,13 @@ import type {
   NoteId,
   OrderBy,
   SortOrder,
+  StructuredContent,
 } from "@/core/domain/note/valueObject";
-import { createNoteId } from "@/core/domain/note/valueObject";
+import {
+  createNoteContent,
+  createNoteId,
+  createText,
+} from "@/core/domain/note/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Pagination, PaginationResult } from "@/lib/pagination";
 import type { Executor } from "./client";
@@ -43,7 +48,8 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
 
     return {
       id: createNoteId(data.id),
-      content: data.content as Note["content"],
+      content: createNoteContent(data.content as StructuredContent),
+      text: createText(data.text as string),
       tagIds: tagRelations.map((r) => createTagId(r.tagId)),
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
@@ -58,6 +64,7 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
         .values({
           id: note.id,
           content: note.content,
+          text: note.text,
           createdAt: note.createdAt,
           updatedAt: note.updatedAt,
         })
@@ -65,6 +72,7 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
           target: notes.id,
           set: {
             content: note.content,
+            text: note.text,
             updatedAt: note.updatedAt,
           },
         });

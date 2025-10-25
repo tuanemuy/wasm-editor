@@ -53,7 +53,7 @@ export class BrowserExportPort implements ExportPort {
    * Generate filename from note
    */
   private generateFilename(note: Note): string {
-    const title = this.extractTitle(note.content);
+    const title = this.extractTitle(note.text);
     const sanitized = this.sanitizeFilename(title);
 
     if (sanitized.length > 0) {
@@ -68,7 +68,7 @@ export class BrowserExportPort implements ExportPort {
   async exportAsMarkdown(note: Note): Promise<ExportedFile> {
     try {
       const filename = this.generateFilename(note);
-      const content = note.content;
+      const content = note.text;
 
       return {
         filename,

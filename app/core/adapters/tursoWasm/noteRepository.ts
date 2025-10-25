@@ -17,15 +17,21 @@ import type {
   NoteId,
   OrderBy,
   SortOrder,
+  StructuredContent,
 } from "@/core/domain/note/valueObject";
-import { createNoteId } from "@/core/domain/note/valueObject";
+import {
+  createNoteContent,
+  createNoteId,
+  createText,
+} from "@/core/domain/note/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Pagination, PaginationResult } from "@/lib/pagination";
 import type { Database } from "./client";
 
 interface NoteRow {
   id: string;
-  content: string;
+  content: string; // JSON string from database
+  text: string;
   created_at: number;
   updated_at: number;
 }
@@ -47,9 +53,22 @@ export class TursoWasmNoteRepository implements NoteRepository {
     );
     const tagRelations = (await stmt.all([row.id])) as TagRelationRow[];
 
+    // Parse JSON content from database with error handling
+    let content: unknown;
+    try {
+      content = JSON.parse(row.content);
+    } catch (error) {
+      throw new SystemError(
+        SystemErrorCode.DatabaseError,
+        `Failed to parse note content for note ${row.id}: ${error}`,
+        error,
+      );
+    }
+
     return {
       id: createNoteId(row.id),
-      content: row.content as Note["content"],
+      content: createNoteContent(content as StructuredContent),
+      text: createText(row.text),
       tagIds: tagRelations.map((r) => createTagId(r.tag_id)),
       createdAt: new Date(row.created_at * 1000),
       updatedAt: new Date(row.updated_at * 1000),
@@ -61,17 +80,22 @@ export class TursoWasmNoteRepository implements NoteRepository {
       const createdAtUnix = Math.floor(note.createdAt.getTime() / 1000);
       const updatedAtUnix = Math.floor(note.updatedAt.getTime() / 1000);
 
+      // Serialize content to JSON string
+      const contentJson = JSON.stringify(note.content);
+
       // Upsert note
       const upsertStmt = this.db.prepare(`
-        INSERT INTO notes (id, content, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO notes (id, content, text, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           content = excluded.content,
+          text = excluded.text,
           updated_at = excluded.updated_at
       `);
       await upsertStmt.run([
         note.id,
-        note.content,
+        contentJson,
+        note.text,
         createdAtUnix,
         updatedAtUnix,
       ]);
@@ -104,7 +128,7 @@ export class TursoWasmNoteRepository implements NoteRepository {
   async findById(id: NoteId): Promise<Note> {
     try {
       const stmt = this.db.prepare(
-        "SELECT id, content, created_at, updated_at FROM notes WHERE id = ? LIMIT 1",
+        "SELECT id, content, text, created_at, updated_at FROM notes WHERE id = ? LIMIT 1",
       );
       const row = (await stmt.get([id])) as NoteRow | undefined;
 
@@ -143,8 +167,10 @@ export class TursoWasmNoteRepository implements NoteRepository {
 
     try {
       // Get items
+      // Safe: orderColumn and orderDirection are validated by domain layer
+      // and come from createOrderBy() and createSortOrder() functions
       const itemsStmt = this.db.prepare(`
-        SELECT id, content, created_at, updated_at
+        SELECT id, content, text, created_at, updated_at
         FROM notes
         ORDER BY ${orderColumn} ${orderDirection}
         LIMIT ? OFFSET ?
