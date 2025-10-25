@@ -48,14 +48,64 @@ function extractTextFromJSON(content: StructuredContent): string {
 }
 
 /**
+ * Extract the first heading from note content
+ * Returns the text content of the first heading node found
+ */
+function extractFirstHeading(content: StructuredContent): string | null {
+  if (typeof content !== "object" || content === null) {
+    return null;
+  }
+
+  // Check if this node is a heading
+  if (content.type === "heading" && Array.isArray(content.content)) {
+    const headingText = extractTextFromJSON(content).trim();
+    if (headingText) {
+      return headingText;
+    }
+  }
+
+  // Recursively search in children
+  if (Array.isArray(content.content)) {
+    for (const child of content.content) {
+      if (typeof child === "object" && child !== null) {
+        const heading = extractFirstHeading(child as StructuredContent);
+        if (heading) {
+          return heading;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Extract title from note content
- * Takes the first line from the JSON structure
+ * 1. Uses the first heading if available
+ * 2. Otherwise, extracts the first 50 characters from the beginning of the text
  */
 export function extractTitle(content: StructuredContent): string {
+  // First, try to find a heading
+  const heading = extractFirstHeading(content);
+  if (heading) {
+    return heading;
+  }
+
+  // If no heading, extract the first 50 characters
   const plainContent = extractTextFromJSON(content);
-  const firstLine = plainContent.split("\n")[0];
-  const title = firstLine.trim();
-  return title || "Untitled";
+  const text = plainContent.trim();
+
+  if (!text) {
+    return "Untitled";
+  }
+
+  // Take the first 50 characters
+  const maxLength = 50;
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength)}...`;
 }
 
 /**
