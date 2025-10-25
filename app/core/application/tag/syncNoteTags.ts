@@ -29,10 +29,8 @@ export async function syncNoteTags(
     try {
       tagNames = await context.tagExtractorPort.extractTags(note.text);
     } catch (error) {
-      // Log error in development mode but don't fail note save
-      if (import.meta.env.DEV) {
-        console.warn("Failed to extract tags from note text:", error);
-      }
+      // Silently ignore tag extraction errors
+      // Logging strategy is a future consideration
     }
 
     // Get or create tags
@@ -57,10 +55,8 @@ export async function syncNoteTags(
             await repositories.tagRepository.save(newTag);
             return newTag;
           } catch (error) {
-            // Skip invalid tag names (log only in development mode)
-            if (import.meta.env.DEV) {
-              console.warn(`Failed to process tag "${tagName}":`, error);
-            }
+            // Skip invalid tag names
+            // Logging strategy is a future consideration
             return null;
           }
         }),
