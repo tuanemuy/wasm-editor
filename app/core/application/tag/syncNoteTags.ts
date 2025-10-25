@@ -23,14 +23,14 @@ export async function syncNoteTags(
     // Find note
     const note = await repositories.noteRepository.findById(input.noteId);
 
-    // Extract tags from content
+    // Extract tags from text (plain text for easier extraction)
     // If extraction fails, continue with empty tags
     let tagNames: string[] = [];
     try {
-      tagNames = await context.tagExtractorPort.extractTags(note.content);
+      tagNames = await context.tagExtractorPort.extractTags(note.text);
     } catch (error) {
       // Log error but don't fail note save
-      console.warn("Failed to extract tags from note content:", error);
+      console.warn("Failed to extract tags from note text:", error);
     }
 
     // Get or create tags

@@ -7,9 +7,12 @@
 import type { TagId } from "@/core/domain/tag/valueObject";
 import {
   createNoteContent,
+  createText,
   generateNoteId,
   type NoteContent,
   type NoteId,
+  type StructuredContent,
+  type Text,
 } from "./valueObject";
 
 // ============================================================================
@@ -19,6 +22,7 @@ import {
 export type Note = Readonly<{
   id: NoteId;
   content: NoteContent;
+  text: Text;
   tagIds: TagId[];
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +33,8 @@ export type Note = Readonly<{
 // ============================================================================
 
 export type CreateNoteParams = {
-  content: string;
+  content: StructuredContent;
+  text: string;
   tagIds?: TagId[];
 };
 
@@ -37,13 +42,15 @@ export type CreateNoteParams = {
  * Create a new note
  *
  * Business Rules:
- * - Content must not be empty (validated by createNoteContent)
- * - Content must not exceed 100,000 characters (validated by createNoteContent)
+ * - Text must not be empty (validated by createText)
+ * - Text must not exceed 100,000 characters (validated by createText)
+ * - Content must be valid JSON structure (validated by createNoteContent)
+ * - Content and text must be synchronized
  * - tagIds defaults to empty array if not provided
  * - tagIds are deduplicated (Set behavior)
  * - createdAt and updatedAt are set to current time
  *
- * @throws {BusinessRuleError} If content validation fails
+ * @throws {BusinessRuleError} If validation fails
  */
 export function createNote(params: CreateNoteParams): Note {
   const now = new Date();
@@ -52,6 +59,7 @@ export function createNote(params: CreateNoteParams): Note {
   return {
     id: generateNoteId(),
     content: createNoteContent(params.content),
+    text: createText(params.text),
     tagIds: uniqueTagIds,
     createdAt: now,
     updatedAt: now,
@@ -62,17 +70,24 @@ export function createNote(params: CreateNoteParams): Note {
  * Update note content
  *
  * Business Rules:
- * - Content must not be empty (validated by createNoteContent)
- * - Content must not exceed 100,000 characters (validated by createNoteContent)
+ * - Text must not be empty (validated by createText)
+ * - Text must not exceed 100,000 characters (validated by createText)
+ * - Content must be valid JSON structure (validated by createNoteContent)
+ * - Content and text must be synchronized
  * - updatedAt is automatically updated to current time
  * - createdAt remains unchanged
  *
- * @throws {BusinessRuleError} If content validation fails
+ * @throws {BusinessRuleError} If validation fails
  */
-export function updateContent(note: Note, newContent: string): Note {
+export function updateContent(
+  note: Note,
+  newContent: StructuredContent,
+  newText: string,
+): Note {
   return {
     ...note,
     content: createNoteContent(newContent),
+    text: createText(newText),
     updatedAt: new Date(),
   };
 }

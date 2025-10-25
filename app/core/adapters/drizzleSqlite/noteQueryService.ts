@@ -40,6 +40,7 @@ export class DrizzleSqliteNoteQueryService implements NoteQueryService {
     return {
       id: createNoteId(data.id),
       content: data.content as Note["content"],
+      text: data.text as Note["text"],
       tagIds: tagRelations.map((r) => createTagId(r.tagId)),
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
@@ -66,9 +67,9 @@ export class DrizzleSqliteNoteQueryService implements NoteQueryService {
       // Build WHERE conditions
       const conditions = [];
 
-      // Full-text search condition
+      // Full-text search condition (search on plain text)
       if (query.length > 0) {
-        conditions.push(like(notes.content, `%${query}%`));
+        conditions.push(like(notes.text, `%${query}%`));
       }
 
       // Tag search condition (AND logic - all tags must match)

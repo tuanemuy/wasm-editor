@@ -43,7 +43,8 @@ Drizzle ORM を使用してスキーマ定義とクエリを管理します。
 | カラム名 | 型 | 制約 | 説明 |
 |---------|-----|-----|------|
 | `id` | TEXT | PRIMARY KEY | メモID (UUID v7) |
-| `content` | TEXT | NOT NULL | メモ本文 (Markdown形式) |
+| `content` | TEXT (JSON) | NOT NULL | メモ本文 (リッチテキストエディタの構造化されたJSON) |
+| `text` | TEXT | NOT NULL | プレーンテキスト (検索用) |
 | `created_at` | INTEGER | NOT NULL, DEFAULT (unixepoch()) | 作成日時 (Unix timestamp) |
 | `updated_at` | INTEGER | NOT NULL, DEFAULT (unixepoch()) | 更新日時 (Unix timestamp、自動更新) |
 
@@ -54,7 +55,8 @@ Drizzle ORM を使用してスキーマ定義とクエリを管理します。
 
 export const notes = sqliteTable("notes", {
   id: text("id").primaryKey(),
-  content: text("content").notNull(),
+  content: text("content", { mode: "json" }).notNull(), // 構造化されたJSON
+  text: text("text").notNull(), // プレーンテキスト
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -68,8 +70,8 @@ export const notes = sqliteTable("notes", {
 **インデックス:**
 
 ```typescript
-// 全文検索用
-export const notesContentIndex = index("notes_content_idx").on(notes.content);
+// 全文検索用（プレーンテキストに対して）
+export const notesTextIndex = index("notes_text_idx").on(notes.text);
 
 // ソート用
 export const notesCreatedAtIndex = index("notes_created_at_idx").on(notes.createdAt);
@@ -77,10 +79,18 @@ export const notesUpdatedAtIndex = index("notes_updated_at_idx").on(notes.update
 ```
 
 **ビジネスルール:**
-- メモ本文は空であってはならない (最低1文字必要) - アプリケーション層で検証
-- メモ本文の最大長は100,000文字 - アプリケーション層で検証
+- テキスト (text) は空であってはならない (最低1文字必要) - アプリケーション層で検証
+- テキストの最大長は100,000文字 - アプリケーション層で検証
+- content は有効なJSON構造でなければならない - アプリケーション層で検証
+- content と text は常に同期していること - アプリケーション層で保証
 - 作成日時は変更不可
 - 更新日時は自動更新される
+
+**注記:**
+- `content` カラムはJSON型として保存され、リッチテキストエディタの状態を格納
+- 具体的なエディタ（Tiptapなど）に依存しない汎用的なJSON構造
+- `text` カラムは全文検索専用で、contentから抽出されたプレーンテキスト
+- 全文検索は `text` カラムに対して実行される
 
 ---
 
@@ -298,7 +308,7 @@ OFFSET {offset}
 
 ```sql
 SELECT * FROM notes
-WHERE content LIKE '%' || {query} || '%'
+WHERE text LIKE '%' || {query} || '%'
 ORDER BY {orderBy} {order}
 LIMIT {limit}
 OFFSET {offset}
@@ -341,7 +351,7 @@ OFFSET {offset}
 ```sql
 SELECT notes.* FROM notes
 WHERE
-  content LIKE '%' || {query} || '%'
+  text LIKE '%' || {query} || '%'
   AND notes.id IN (
     SELECT note_id FROM noteTagRelations
     WHERE tag_id IN ({tagIds})
@@ -392,7 +402,8 @@ WHERE noteTagRelations.note_id IS NULL
 -- notes テーブル
 CREATE TABLE IF NOT EXISTS notes (
   id TEXT PRIMARY KEY,
-  content TEXT NOT NULL,
+  content TEXT NOT NULL, -- JSON形式で保存
+  text TEXT NOT NULL, -- プレーンテキスト (検索用)
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -416,7 +427,7 @@ CREATE TABLE IF NOT EXISTS note_tag_relations (
 );
 
 -- インデックス作成
-CREATE INDEX IF NOT EXISTS notes_content_idx ON notes(content);
+CREATE INDEX IF NOT EXISTS notes_text_idx ON notes(text);
 CREATE INDEX IF NOT EXISTS notes_created_at_idx ON notes(created_at);
 CREATE INDEX IF NOT EXISTS notes_updated_at_idx ON notes(updated_at);
 CREATE INDEX IF NOT EXISTS tags_name_idx ON tags(name);
@@ -446,8 +457,9 @@ pnpm drizzle-kit migrate
 ### インデックス戦略
 
 1. **全文検索最適化**
-   - `notes.content` にインデックスを作成
+   - `notes.text` にインデックスを作成
    - SQLite の LIKE 演算子を使用（部分一致検索）
+   - プレーンテキストに対してインデックスを作成することで高速な全文検索を実現
 
 2. **ソート最適化**
    - `notes.created_at` と `notes.updated_at` にインデックスを作成
@@ -494,7 +506,8 @@ await db.transaction(async (tx) => {
   // メモを保存
   await tx.insert(notes).values({
     id: note.id,
-    content: note.content,
+    content: note.content, // JSON形式
+    text: note.text, // プレーンテキスト
     createdAt: note.createdAt,
     updatedAt: note.updatedAt,
   });
@@ -560,6 +573,7 @@ SQLite の FTS5 (Full-Text Search) 拡張を検討:
 - より高度な全文検索機能
 - トークナイザーによる日本語対応
 - 検索結果のランキング
+- 現在は `text` カラムに LIKE 検索を使用しているが、FTS5 仮想テーブルへの移行で高速化が可能
 
 ### 2. メモのバージョン管理
 

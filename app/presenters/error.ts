@@ -26,10 +26,12 @@ import {
 
 export function formatBusinessRuleError(error: BusinessRuleError): string {
   switch (error.code) {
-    case NoteErrorCode.NoteContentEmpty:
-      return "Note content cannot be empty.";
-    case NoteErrorCode.NoteContentTooLong:
-      return "Note content exceeds the maximum allowed length.";
+    case NoteErrorCode.NoteContentInvalid:
+      return "Note content must be a valid JSON structure.";
+    case NoteErrorCode.NoteTextEmpty:
+      return "Note text cannot be empty.";
+    case NoteErrorCode.NoteTextTooLong:
+      return "Note text exceeds the maximum allowed length.";
     case NoteErrorCode.NoteInvalidSortOrder:
       return "Invalid sort order specified.";
     case NoteErrorCode.NoteInvalidOrderBy:

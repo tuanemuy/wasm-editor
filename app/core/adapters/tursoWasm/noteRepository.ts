@@ -25,7 +25,8 @@ import type { Database } from "./client";
 
 interface NoteRow {
   id: string;
-  content: string;
+  content: string; // JSON string from database
+  text: string;
   created_at: number;
   updated_at: number;
 }
@@ -47,9 +48,13 @@ export class TursoWasmNoteRepository implements NoteRepository {
     );
     const tagRelations = (await stmt.all([row.id])) as TagRelationRow[];
 
+    // Parse JSON content from database
+    const content = JSON.parse(row.content);
+
     return {
       id: createNoteId(row.id),
-      content: row.content as Note["content"],
+      content: content as Note["content"],
+      text: row.text as Note["text"],
       tagIds: tagRelations.map((r) => createTagId(r.tag_id)),
       createdAt: new Date(row.created_at * 1000),
       updatedAt: new Date(row.updated_at * 1000),
@@ -61,17 +66,22 @@ export class TursoWasmNoteRepository implements NoteRepository {
       const createdAtUnix = Math.floor(note.createdAt.getTime() / 1000);
       const updatedAtUnix = Math.floor(note.updatedAt.getTime() / 1000);
 
+      // Serialize content to JSON string
+      const contentJson = JSON.stringify(note.content);
+
       // Upsert note
       const upsertStmt = this.db.prepare(`
-        INSERT INTO notes (id, content, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO notes (id, content, text, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           content = excluded.content,
+          text = excluded.text,
           updated_at = excluded.updated_at
       `);
       await upsertStmt.run([
         note.id,
-        note.content,
+        contentJson,
+        note.text,
         createdAtUnix,
         updatedAtUnix,
       ]);
@@ -104,7 +114,7 @@ export class TursoWasmNoteRepository implements NoteRepository {
   async findById(id: NoteId): Promise<Note> {
     try {
       const stmt = this.db.prepare(
-        "SELECT id, content, created_at, updated_at FROM notes WHERE id = ? LIMIT 1",
+        "SELECT id, content, text, created_at, updated_at FROM notes WHERE id = ? LIMIT 1",
       );
       const row = (await stmt.get([id])) as NoteRow | undefined;
 
@@ -144,7 +154,7 @@ export class TursoWasmNoteRepository implements NoteRepository {
     try {
       // Get items
       const itemsStmt = this.db.prepare(`
-        SELECT id, content, created_at, updated_at
+        SELECT id, content, text, created_at, updated_at
         FROM notes
         ORDER BY ${orderColumn} ${orderDirection}
         LIMIT ? OFFSET ?

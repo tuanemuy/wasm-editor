@@ -35,69 +35,76 @@ describe("createNote", () => {
       .mockResolvedValue();
 
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
 
-    expect(note.content).toBe("テストメモ");
+    expect(note.text).toBe("テストメモ");
     expect(saveSpy).toHaveBeenCalledWith(note);
   });
 
-  it("空の本文でメモを作成できる", async () => {
-    const repositories = unitOfWorkProvider.getRepositories();
-    const saveSpy = vi
-      .spyOn(repositories.noteRepository, "save")
-      .mockResolvedValue();
-
-    const note = await createNote(context, {
-      content: "",
-    });
-
-    expect(note.content).toBe("");
-    expect(saveSpy).toHaveBeenCalledWith(note);
-  });
-
-  it("100,000文字の本文でメモを作成できる", async () => {
-    const repositories = unitOfWorkProvider.getRepositories();
-    const saveSpy = vi
-      .spyOn(repositories.noteRepository, "save")
-      .mockResolvedValue();
-
-    const content = "a".repeat(100000);
-    const note = await createNote(context, {
-      content,
-    });
-
-    expect(note.content).toBe(content);
-    expect(saveSpy).toHaveBeenCalledWith(note);
-  });
-
-  it("100,001文字の本文でメモ作成時に例外が発生する", async () => {
-    const content = "a".repeat(100001);
-
+  it("空のテキストでメモを作成しようとすると例外が発生する", async () => {
     await expect(
       createNote(context, {
-        content,
+        content: { type: "doc", content: [] },
+        text: "",
       }),
     ).rejects.toThrow(BusinessRuleError);
 
     await expect(
       createNote(context, {
-        content,
+        content: { type: "doc", content: [] },
+        text: "",
       }),
-    ).rejects.toThrow("Note content exceeds maximum length");
+    ).rejects.toThrow("Note text must not be empty");
   });
 
-  it("1文字の本文でメモを作成できる", async () => {
+  it("100,000文字のテキストでメモを作成できる", async () => {
+    const repositories = unitOfWorkProvider.getRepositories();
+    const saveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    const text = "a".repeat(100000);
+    const note = await createNote(context, {
+      content: { type: "doc", content: [] },
+      text,
+    });
+
+    expect(note.text).toBe(text);
+    expect(saveSpy).toHaveBeenCalledWith(note);
+  });
+
+  it("100,001文字のテキストでメモ作成時に例外が発生する", async () => {
+    const text = "a".repeat(100001);
+
+    await expect(
+      createNote(context, {
+        content: { type: "doc", content: [] },
+        text,
+      }),
+    ).rejects.toThrow(BusinessRuleError);
+
+    await expect(
+      createNote(context, {
+        content: { type: "doc", content: [] },
+        text,
+      }),
+    ).rejects.toThrow("Note text exceeds maximum length");
+  });
+
+  it("1文字のテキストでメモを作成できる", async () => {
     const repositories = unitOfWorkProvider.getRepositories();
     const saveSpy = vi
       .spyOn(repositories.noteRepository, "save")
       .mockResolvedValue();
 
     const note = await createNote(context, {
-      content: "a",
+      content: { type: "doc", content: [] },
+      text: "a",
     });
 
-    expect(note.content).toBe("a");
+    expect(note.text).toBe("a");
     expect(saveSpy).toHaveBeenCalledWith(note);
   });
 
@@ -106,7 +113,8 @@ describe("createNote", () => {
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
 
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
 
     expect(note.id).toBeDefined();
@@ -120,7 +128,8 @@ describe("createNote", () => {
 
     const before = new Date();
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
     const after = new Date();
 
@@ -135,7 +144,8 @@ describe("createNote", () => {
 
     const before = new Date();
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
     const after = new Date();
 
@@ -149,7 +159,8 @@ describe("createNote", () => {
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
 
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
 
     expect(note.tagIds).toEqual([]);
@@ -162,10 +173,43 @@ describe("createNote", () => {
       .mockResolvedValue();
 
     const note = await createNote(context, {
-      content: "テストメモ",
+      content: { type: "doc", content: [] },
+      text: "テストメモ",
     });
 
     expect(saveSpy).toHaveBeenCalledTimes(1);
     expect(saveSpy).toHaveBeenCalledWith(note);
+  });
+
+  it("無効なcontentでメモ作成時に例外が発生する（typeフィールドなし）", async () => {
+    await expect(
+      createNote(context, {
+        content: { content: [] } as any,
+        text: "テストメモ",
+      }),
+    ).rejects.toThrow(BusinessRuleError);
+
+    await expect(
+      createNote(context, {
+        content: { content: [] } as any,
+        text: "テストメモ",
+      }),
+    ).rejects.toThrow("Note content must have required field 'type'");
+  });
+
+  it("contentがnullの場合に例外が発生する", async () => {
+    await expect(
+      createNote(context, {
+        content: null as any,
+        text: "テストメモ",
+      }),
+    ).rejects.toThrow(BusinessRuleError);
+
+    await expect(
+      createNote(context, {
+        content: null as any,
+        text: "テストメモ",
+      }),
+    ).rejects.toThrow("Note content must be a valid JSON object");
   });
 });

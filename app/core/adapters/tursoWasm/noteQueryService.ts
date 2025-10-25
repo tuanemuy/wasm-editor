@@ -21,7 +21,8 @@ import type { Database } from "./client";
 
 interface NoteRow {
   id: string;
-  content: string;
+  content: string; // JSON string from database
+  text: string;
   created_at: number;
   updated_at: number;
 }
@@ -47,9 +48,13 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
     );
     const tagRelations = (await stmt.all([row.id])) as TagRelationRow[];
 
+    // Parse JSON content from database
+    const content = JSON.parse(row.content);
+
     return {
       id: createNoteId(row.id),
-      content: row.content as Note["content"],
+      content: content as Note["content"],
+      text: row.text as Note["text"],
       tagIds: tagRelations.map((r) => createTagId(r.tag_id)),
       createdAt: new Date(row.created_at * 1000),
       updatedAt: new Date(row.updated_at * 1000),
@@ -102,9 +107,9 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
       const conditions: string[] = [];
       const whereParams: (string | number)[] = [];
 
-      // Full-text search condition
+      // Full-text search condition (search on plain text)
       if (query.length > 0) {
-        conditions.push("content LIKE ?");
+        conditions.push("text LIKE ?");
         whereParams.push(`%${query}%`);
       }
 
@@ -121,7 +126,7 @@ export class TursoWasmNoteQueryService implements NoteQueryService {
 
       // Get items
       const itemsStmt = this.db.prepare(`
-        SELECT id, content, created_at, updated_at
+        SELECT id, content, text, created_at, updated_at
         FROM notes
         ${whereClause}
         ORDER BY ${orderColumn} ${orderDirection}

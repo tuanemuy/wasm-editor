@@ -15,7 +15,8 @@ export const notes = sqliteTable(
   "notes",
   {
     id: text("id").primaryKey(),
-    content: text("content").notNull(),
+    content: text("content", { mode: "json" }).notNull(), // Structured JSON
+    text: text("text").notNull(), // Plain text for search
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -25,7 +26,7 @@ export const notes = sqliteTable(
       .$onUpdate(() => new Date()),
   },
   (table) => ({
-    contentIdx: index("notes_content_idx").on(table.content),
+    textIdx: index("notes_text_idx").on(table.text), // Full-text search on plain text
     createdAtIdx: index("notes_created_at_idx").on(table.createdAt),
     updatedAtIdx: index("notes_updated_at_idx").on(table.updatedAt),
   }),

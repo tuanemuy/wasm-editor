@@ -11,6 +11,7 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { createTag } from "@/core/domain/tag/entity";
+import { createTestContent } from "../note/test-helpers";
 import type { Context } from "../context";
 import { syncNoteTags } from "./syncNoteTags";
 
@@ -31,7 +32,7 @@ describe("syncNoteTags", () => {
   });
 
   it("有効な本文からタグを抽出して同期できる", async () => {
-    const note = createNote({ content: "#test #sample テストメモ" });
+    const note = createNote({ content: createTestContent("#test #sample テストメモ"), text: "#test #sample テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -55,7 +56,7 @@ describe("syncNoteTags", () => {
   });
 
   it("新しいタグが自動作成される", async () => {
-    const note = createNote({ content: "#newtag テストメモ" });
+    const note = createNote({ content: createTestContent("#newtag テストメモ"), text: "#newtag テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -83,7 +84,7 @@ describe("syncNoteTags", () => {
   });
 
   it("既存のタグが再利用される", async () => {
-    const note = createNote({ content: "#existing テストメモ" });
+    const note = createNote({ content: createTestContent("#existing テストメモ"), text: "#existing テストメモ" });
     const existingTag = createTag({ name: "existing" });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -112,7 +113,7 @@ describe("syncNoteTags", () => {
   it("タグが削除されたメモのタグリストが更新される", async () => {
     const tag1 = createTag({ name: "tag1" });
     const tag2 = createTag({ name: "tag2" });
-    const note = createNote({ content: "#tag1 テストメモ" });
+    const note = createNote({ content: createTestContent("#tag1 テストメモ"), text: "#tag1 テストメモ" });
     // 元々2つのタグが関連付けられていた状態をシミュレート
     const noteWithTags = { ...note, tagIds: [tag1.id, tag2.id] };
     const repositories = unitOfWorkProvider.getRepositories();
@@ -154,7 +155,7 @@ describe("syncNoteTags", () => {
   });
 
   it("本文にタグが含まれない場合はタグリストが空になる", async () => {
-    const note = createNote({ content: "タグのないメモ" });
+    const note = createNote({ content: createTestContent("タグのないメモ"), text: "タグのないメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -175,7 +176,7 @@ describe("syncNoteTags", () => {
   });
 
   it("重複するタグが1つにまとめられる", async () => {
-    const note = createNote({ content: "#duplicate #duplicate テストメモ" });
+    const note = createNote({ content: createTestContent("#duplicate #duplicate テストメモ"), text: "#duplicate #duplicate テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -195,7 +196,7 @@ describe("syncNoteTags", () => {
   });
 
   it("タグ名の大文字小文字が区別される", async () => {
-    const note = createNote({ content: "#Test #test テストメモ" });
+    const note = createNote({ content: createTestContent("#Test #test テストメモ"), text: "#Test #test テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -216,7 +217,7 @@ describe("syncNoteTags", () => {
   });
 
   it("タグ抽出がエラーでもノートは保存される", async () => {
-    const note = createNote({ content: "#test テストメモ" });
+    const note = createNote({ content: createTestContent("#test テストメモ"), text: "#test テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -241,7 +242,7 @@ describe("syncNoteTags", () => {
   });
 
   it("一部のタグが無効でも有効なタグは保存される", async () => {
-    const note = createNote({ content: "#valid #invalid テストメモ" });
+    const note = createNote({ content: createTestContent("#valid #invalid テストメモ"), text: "#valid #invalid テストメモ" });
     const validTag = createTag({ name: "valid" });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -277,7 +278,7 @@ describe("syncNoteTags", () => {
   });
 
   it("無効な文字を含むタグがスキップされる", async () => {
-    const note = createNote({ content: "#valid #invalid tag テストメモ" });
+    const note = createNote({ content: createTestContent("#valid #invalid tag テストメモ"), text: "#valid #invalid tag テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -305,7 +306,7 @@ describe("syncNoteTags", () => {
   });
 
   it("最大長を超えるタグ名がスキップされる", async () => {
-    const note = createNote({ content: "#valid #toolongtag テストメモ" });
+    const note = createNote({ content: createTestContent("#valid #toolongtag テストメモ"), text: "#valid #toolongtag テストメモ" });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);

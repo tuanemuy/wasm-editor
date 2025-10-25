@@ -44,6 +44,7 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
     return {
       id: createNoteId(data.id),
       content: data.content as Note["content"],
+      text: data.text as Note["text"],
       tagIds: tagRelations.map((r) => createTagId(r.tagId)),
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
@@ -58,6 +59,7 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
         .values({
           id: note.id,
           content: note.content,
+          text: note.text,
           createdAt: note.createdAt,
           updatedAt: note.updatedAt,
         })
@@ -65,6 +67,7 @@ export class DrizzleSqliteNoteRepository implements NoteRepository {
           target: notes.id,
           set: {
             content: note.content,
+            text: note.text,
             updatedAt: note.updatedAt,
           },
         });
