@@ -5,7 +5,6 @@ import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { MemoHeader } from "@/components/layout/MemoHeader";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { withContainer } from "@/di";

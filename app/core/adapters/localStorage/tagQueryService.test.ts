@@ -2,7 +2,6 @@
  * LocalStorage Tag Query Service Tests
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import { createTagId } from "@/core/domain/tag/valueObject";
 import { LocalStorageTagQueryService } from "./tagQueryService";
 
 // Mock localStorage for testing
@@ -32,7 +31,7 @@ describe("LocalStorageTagQueryService", () => {
 
   beforeEach(() => {
     localStorageMock = new LocalStorageMock();
-    global.localStorage = localStorageMock as any;
+    global.localStorage = localStorageMock as unknown as Storage;
     service = new LocalStorageTagQueryService();
   });
 

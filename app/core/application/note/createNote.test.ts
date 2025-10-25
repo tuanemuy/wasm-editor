@@ -9,6 +9,7 @@ import { EmptyTagExtractorPort } from "@/core/adapters/empty/tagExtractorPort";
 import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
+import type { StructuredContent } from "@/core/domain/note/valueObject";
 import type { Context } from "../context";
 import { createNote } from "./createNote";
 
@@ -183,14 +184,14 @@ describe("createNote", () => {
   it("無効なcontentでメモ作成時に例外が発生する（typeフィールドなし）", async () => {
     await expect(
       createNote(context, {
-        content: { content: [] } as any,
+        content: { content: [] } as unknown as StructuredContent,
         text: "テストメモ",
       }),
     ).rejects.toThrow(BusinessRuleError);
 
     await expect(
       createNote(context, {
-        content: { content: [] } as any,
+        content: { content: [] } as unknown as StructuredContent,
         text: "テストメモ",
       }),
     ).rejects.toThrow("Note content must have required field 'type'");
@@ -199,14 +200,14 @@ describe("createNote", () => {
   it("contentがnullの場合に例外が発生する", async () => {
     await expect(
       createNote(context, {
-        content: null as any,
+        content: null as unknown as StructuredContent,
         text: "テストメモ",
       }),
     ).rejects.toThrow(BusinessRuleError);
 
     await expect(
       createNote(context, {
-        content: null as any,
+        content: null as unknown as StructuredContent,
         text: "テストメモ",
       }),
     ).rejects.toThrow("Note content must be a valid JSON object");

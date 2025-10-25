@@ -2,7 +2,6 @@
  * LocalStorage Note Query Service Tests
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import { createNoteId } from "@/core/domain/note/valueObject";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import { LocalStorageNoteQueryService } from "./noteQueryService";
 
@@ -33,7 +32,7 @@ describe("LocalStorageNoteQueryService", () => {
 
   beforeEach(() => {
     localStorageMock = new LocalStorageMock();
-    global.localStorage = localStorageMock as any;
+    global.localStorage = localStorageMock as unknown as Storage;
     service = new LocalStorageNoteQueryService();
   });
 

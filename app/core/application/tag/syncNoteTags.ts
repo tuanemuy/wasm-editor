@@ -28,7 +28,7 @@ export async function syncNoteTags(
     let tagNames: string[] = [];
     try {
       tagNames = await context.tagExtractorPort.extractTags(note.text);
-    } catch (error) {
+    } catch (_error) {
       // Silently ignore tag extraction errors
       // Logging strategy is a future consideration
     }
@@ -54,7 +54,7 @@ export async function syncNoteTags(
             const newTag = createTag({ name: tagName });
             await repositories.tagRepository.save(newTag);
             return newTag;
-          } catch (error) {
+          } catch (_error) {
             // Skip invalid tag names
             // Logging strategy is a future consideration
             return null;
