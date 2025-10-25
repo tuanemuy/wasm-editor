@@ -27,7 +27,7 @@ export function useCreateNote({
     setCreating(true);
 
     const note = await request(
-      createNote({ content: { type: "doc", content: [] }, text: " " }),
+      createNote({ content: { type: "doc", content: [] }, text: "" }),
       {
         onError(error) {
           err?.("Failed to create note", error);

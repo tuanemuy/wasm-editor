@@ -4,6 +4,9 @@
 
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 
+// Block elements that should have newlines after them
+const BLOCK_ELEMENTS = new Set(["paragraph", "heading", "blockquote"]);
+
 /**
  * Extract text content from Tiptap JSON structure
  */
@@ -32,9 +35,8 @@ function extractTextFromJSON(content: StructuredContent): string {
         child &&
         typeof child === "object" &&
         "type" in child &&
-        (child.type === "paragraph" ||
-          child.type === "heading" ||
-          child.type === "blockquote")
+        typeof child.type === "string" &&
+        BLOCK_ELEMENTS.has(child.type)
       ) {
         text += "\n";
       }
