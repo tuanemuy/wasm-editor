@@ -1,38 +1,41 @@
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { createNote } from "@/core/application/note/createNote";
+import { withContainer } from "@/di";
+import { createNote as createNoteService } from "@/core/application/note/createNote";
 import type { Note } from "@/core/domain/note/entity";
-import { useAppContext } from "@/lib/context";
+import {
+  defaultNotification,
+  type Notification,
+} from "@/presenters/notification";
+import { request } from "@/presenters/request";
+
+const createNote = withContainer(createNoteService);
 
 export interface UseCreateNoteResult {
   creating: boolean;
-  createNote: () => Promise<Note>;
+  createNote: () => Promise<Note | null>;
 }
 
 /**
  * ノート作成を管理するフック
  */
-export function useCreateNote(): UseCreateNoteResult {
-  const context = useAppContext();
+export function useCreateNote({
+  err,
+}: Notification = defaultNotification): UseCreateNoteResult {
   const [creating, setCreating] = useState(false);
 
-  const handleCreateNote = useCallback(async (): Promise<Note> => {
-    if (creating) {
-      throw new Error("Already creating note");
-    }
-
+  const handleCreateNote = useCallback(async () => {
     setCreating(true);
-    try {
-      const note = await createNote(context, { content: "" });
-      return note;
-    } catch (error) {
-      console.error("Failed to create note:", error);
-      toast.error("Failed to create note");
-      throw error;
-    } finally {
-      setCreating(false);
-    }
-  }, [context, creating]);
+
+    const note = await request(createNote({ content: "" }), {
+      onError(error) {
+        err?.("Failed to create note", error);
+      },
+    });
+
+    setCreating(false);
+
+    return note;
+  }, [err]);
 
   return {
     creating,

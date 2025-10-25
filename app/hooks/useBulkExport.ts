@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { useDIContainer } from "@/context/di";
 import { exportNoteAsMarkdown } from "@/core/application/note/exportNoteAsMarkdown";
 import type { Note } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { useAppContext } from "@/lib/context";
 
 export function useBulkExport() {
-  const context = useAppContext();
+  const context = useDIContainer();
   const [exporting, setExporting] = useState(false);
 
   const exportNotes = useCallback(

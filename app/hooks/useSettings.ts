@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useDIContainer } from "@/context/di";
 import { getSettings } from "@/core/application/settings/getSettings";
 import { resetSettings as resetSettingsService } from "@/core/application/settings/resetSettings";
 import { updateSettings as updateSettingsService } from "@/core/application/settings/updateSettings";
 import type { Settings } from "@/core/domain/settings/entity";
-import { useAppContext } from "@/lib/context";
 
 export interface UseSettingsResult {
   settings: Settings | null;
@@ -26,7 +26,7 @@ export interface UseSettingsResult {
  * 設定の読み込み・保存・リセットを管理するフック
  */
 export function useSettings(): UseSettingsResult {
-  const context = useAppContext();
+  const context = useDIContainer();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

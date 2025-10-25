@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { getTagsByNote } from "@/core/application/tag/getTagsByNote";
+import { withContainer } from "@/di";
+import { useDIContainer } from "@/context/di";
+import { getTagsByNote as getTagsbyNoteService } from "@/core/application/tag/getTagsByNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
-import { useAppContext } from "@/lib/context";
+
+const getTagsByNote = withContainer(getTagsbyNoteService);
 
 export interface UseNoteTagsResult {
   noteTagsMap: Map<string, TagWithUsage[]>;
@@ -13,7 +16,7 @@ export interface UseNoteTagsResult {
  * Hook for fetching tags for multiple notes in parallel
  */
 export function useNoteTags(noteIds: string[]): UseNoteTagsResult {
-  const context = useAppContext();
+  const context = useDIContainer();
   const [noteTagsMap, setNoteTagsMap] = useState<Map<string, TagWithUsage[]>>(
     new Map(),
   );
@@ -38,7 +41,7 @@ export function useNoteTags(noteIds: string[]): UseNoteTagsResult {
 
         // Load tags for all notes in parallel
         const tagPromises = noteIds.map(async (noteId) => {
-          const noteTags = await getTagsByNote(context, {
+          const noteTags = await getTagsByNote({
             noteId: createNoteId(noteId),
           });
           // Use default usageCount of 1 to avoid dependency on tags state
