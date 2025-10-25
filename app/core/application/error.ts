@@ -32,6 +32,10 @@ export class NotFoundError extends ApplicationError {
   }
 }
 
+export function isNotFoundError(error: unknown): error is NotFoundError {
+  return error instanceof NotFoundError;
+}
+
 export const ConflictErrorCode = {
   Conflict: "CONFLICT",
   // ${Entity}Conflict: "${ENTITY}_CONFLICT",
@@ -49,6 +53,10 @@ export class ConflictError extends ApplicationError {
   ) {
     super(code, message, cause);
   }
+}
+
+export function isConflictError(error: unknown): error is ConflictError {
+  return error instanceof ConflictError;
 }
 
 export const UnauthenticatedErrorCode = {
@@ -71,6 +79,12 @@ export class UnauthenticatedError extends ApplicationError {
   }
 }
 
+export function isUnauthenticatedError(
+  error: unknown,
+): error is UnauthenticatedError {
+  return error instanceof UnauthenticatedError;
+}
+
 export const ForbiddenErrorCode = {
   InsufficientPermissions: "INSUFFICIENT_PERMISSIONS",
 } as const;
@@ -89,6 +103,10 @@ export class ForbiddenError extends ApplicationError {
   }
 }
 
+export function isForbiddenError(error: unknown): error is ForbiddenError {
+  return error instanceof ForbiddenError;
+}
+
 export const ValidationErrorCode = {
   InvalidInput: "INVALID_INPUT",
 } as const;
@@ -105,6 +123,10 @@ export class ValidationError extends ApplicationError {
   ) {
     super(code, message, cause);
   }
+}
+
+export function isValidationError(error: unknown): error is ValidationError {
+  return error instanceof ValidationError;
 }
 
 export const SystemErrorCode = {
@@ -131,4 +153,8 @@ export class SystemError extends ApplicationError {
   ) {
     super(code, message, cause);
   }
+}
+
+export function isSystemError(error: unknown): error is SystemError {
+  return error instanceof SystemError;
 }

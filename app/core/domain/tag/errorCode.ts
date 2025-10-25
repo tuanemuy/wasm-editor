@@ -5,9 +5,9 @@
  */
 export const TagErrorCode = {
   // Tag name related
-  NameEmpty: "TAG_NAME_EMPTY",
-  NameTooLong: "TAG_NAME_TOO_LONG",
-  NameInvalidCharacter: "TAG_NAME_INVALID_CHARACTER",
+  TagNameEmpty: "TAG_NAME_EMPTY",
+  TagNameTooLong: "TAG_NAME_TOO_LONG",
+  TagNameInvalidCharacter: "TAG_NAME_INVALID_CHARACTER",
 } as const;
 
 export type TagErrorCode = (typeof TagErrorCode)[keyof typeof TagErrorCode];

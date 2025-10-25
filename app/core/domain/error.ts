@@ -1,3 +1,15 @@
+import { NoteErrorCode } from "./note/errorCode";
+import { TagErrorCode } from "./tag/errorCode";
+import { SettingsErrorCode } from "./settings/errorCode";
+
+export const BusinessRuleErrorCode = {
+  ...NoteErrorCode,
+  ...TagErrorCode,
+  ...SettingsErrorCode,
+};
+export type BusinessRuleErrorCode =
+  (typeof BusinessRuleErrorCode)[keyof typeof BusinessRuleErrorCode];
+
 /**
  * Domain Layer - Business Rule Error
  *
@@ -6,7 +18,7 @@
  */
 export class BusinessRuleError extends Error {
   constructor(
-    public readonly code: string,
+    public readonly code: BusinessRuleErrorCode,
     message: string,
     public readonly details?: unknown,
   ) {
@@ -18,4 +30,10 @@ export class BusinessRuleError extends Error {
       Error.captureStackTrace(this, BusinessRuleError);
     }
   }
+}
+
+export function isBusinessRuleError(
+  error: unknown,
+): error is BusinessRuleError {
+  return error instanceof BusinessRuleError;
 }
