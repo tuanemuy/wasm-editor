@@ -58,9 +58,12 @@ export function useNoteTags(noteIds: string[]): UseNoteTagsResult {
         }
 
         setNoteTagsMap(tagMap);
-      } catch {
+      } catch (error) {
         // Silent failure - tags are supplementary information
         // and their absence doesn't prevent core functionality
+        if (import.meta.env.DEV) {
+          console.error("Failed to load tags for notes:", error);
+        }
       } finally {
         setLoading(false);
       }

@@ -1,4 +1,4 @@
-import { use, useCallback, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { withContainer } from "@/di";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
@@ -45,6 +45,8 @@ export function useNote(
 
   // Ref to track the debounce timeout for save operations
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to track save counter to prevent race conditions
+  const saveCounterRef = useRef(0);
 
   // Update note content with debouncing to prevent race conditions
   const save = useCallback(
@@ -54,10 +56,19 @@ export function useNote(
         clearTimeout(saveTimeoutRef.current);
       }
 
-      setSaveStatus("saving");
+      // Increment save counter to track this save operation
+      const currentSaveId = ++saveCounterRef.current;
+
+      // Set status to "unsaved" immediately to indicate changes pending
+      setSaveStatus("unsaved");
 
       // Debounce the save operation (300ms delay)
       saveTimeoutRef.current = setTimeout(async () => {
+        // Only proceed if this is still the latest save request
+        if (currentSaveId !== saveCounterRef.current) return;
+
+        setSaveStatus("saving");
+
         await request(
           updateNote({
             id: createNoteId(noteId),
@@ -66,11 +77,17 @@ export function useNote(
           }),
           {
             onSuccess: () => {
-              setSaveStatus("saved");
+              // Only update if this is still the latest save
+              if (currentSaveId === saveCounterRef.current) {
+                setSaveStatus("saved");
+              }
             },
             onError: (error) => {
-              setSaveStatus("unsaved");
-              onError?.(formatError(error));
+              // Only update if this is still the latest save
+              if (currentSaveId === saveCounterRef.current) {
+                setSaveStatus("unsaved");
+                onError?.(formatError(error));
+              }
             },
           },
         );
@@ -118,6 +135,15 @@ export function useNote(
 
   const toggleEditable = useCallback(() => {
     setEditable((prev) => !prev);
+  }, []);
+
+  // Cleanup: clear pending timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, []);
 
   return {

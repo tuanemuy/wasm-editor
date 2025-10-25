@@ -21,20 +21,37 @@ export function useBulkExport() {
 
     let successCount = 0;
     let failureCount = 0;
+    let criticalError = false;
 
     // Export each note as markdown
     for (const note of notes) {
       const result = await request(
         exportNoteAsMarkdown({ id: createNoteId(note.id) }),
         {
-          onError: () => {
+          onError: (error) => {
             failureCount++;
+            // Check for critical errors that should stop the export process
+            if (error instanceof Error) {
+              const errorMessage = error.message.toLowerCase();
+              // Quota exceeded or permission errors should stop the process
+              if (errorMessage.includes("quota") || errorMessage.includes("permission")) {
+                criticalError = true;
+                if (import.meta.env.DEV) {
+                  console.error("Critical error during bulk export:", error);
+                }
+              }
+            }
           },
         },
       );
 
       if (result) {
         successCount++;
+      }
+
+      // Stop export if we hit a critical error
+      if (criticalError) {
+        break;
       }
     }
 

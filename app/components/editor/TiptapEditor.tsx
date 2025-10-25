@@ -30,8 +30,14 @@ import { Separator } from "@/components/ui/separator";
  */
 function toTiptapContent(content: StructuredContent): Content {
   // Runtime validation: ensure content has the expected structure
-  if (!content || typeof content !== "object" || !("type" in content)) {
-    throw new Error("Invalid content structure");
+  if (!content || typeof content !== "object") {
+    throw new Error("Invalid content structure: must be an object");
+  }
+  if (!("type" in content) || typeof content.type !== "string") {
+    throw new Error("Invalid content structure: missing or invalid 'type' field");
+  }
+  if ("content" in content && !Array.isArray(content.content)) {
+    throw new Error("Invalid content structure: 'content' must be an array");
   }
   return content as unknown as Content;
 }
@@ -42,8 +48,14 @@ function toTiptapContent(content: StructuredContent): Content {
 function fromTiptapContent(content: Content): StructuredContent {
   // Runtime validation: ensure content has the expected structure
   const json = content as Record<string, unknown>;
-  if (!json || typeof json !== "object" || !("type" in json)) {
-    throw new Error("Invalid Tiptap content structure");
+  if (!json || typeof json !== "object") {
+    throw new Error("Invalid Tiptap content structure: must be an object");
+  }
+  if (!("type" in json) || typeof json.type !== "string") {
+    throw new Error("Invalid Tiptap content structure: missing or invalid 'type' field");
+  }
+  if ("content" in json && !Array.isArray(json.content)) {
+    throw new Error("Invalid Tiptap content structure: 'content' must be an array");
   }
   return json as StructuredContent;
 }

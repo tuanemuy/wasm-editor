@@ -21,8 +21,11 @@ export const useDatabase = (path: string) => {
         await initializeDatabase(db);
 
         setDatabase(db);
-      } catch {
+      } catch (error) {
         toast.error("Failed to initialize database");
+        if (import.meta.env.DEV) {
+          console.error("Database initialization failed:", error);
+        }
       }
     })();
 
