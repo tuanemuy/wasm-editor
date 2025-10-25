@@ -49,15 +49,15 @@ export function NoteCard({
     <motion.div
       layoutId={`note-${note.id}`}
       transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
+        layout: {
+          duration: 0.3,
+        },
       }}
     >
       <Card
-        className={`group hover:bg-muted transition-colors ${isSelected ? "ring-2 ring-primary" : ""}`}
+        className={`group hover:bg-muted transition-colors py-4 ${isSelected ? "ring-2 ring-primary" : ""}`}
       >
-        <CardContent className="p-4">
+        <CardContent className="px-4 py-0">
           <div className="flex gap-3">
             {isSelectMode && (
               <button

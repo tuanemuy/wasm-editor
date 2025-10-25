@@ -73,22 +73,24 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
         onExport={exportNote}
         onDelete={deleteNote}
       />
-      <motion.div
-        layoutId={`note-${note.id}`}
-        className="flex-1 overflow-hidden"
-        transition={{
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-        }}
-      >
-        <TiptapEditor
-          content={note.content}
-          onChange={save}
-          placeholder="Start writing your note..."
-          editable={editable}
-        />
-      </motion.div>
+      <div className="flex-1 overflow-hidden p-4">
+        <motion.div
+          layoutId={`note-${note.id}`}
+          className="h-full bg-card rounded-xl border shadow-sm"
+          transition={{
+            layout: {
+              duration: 0.3,
+            },
+          }}
+        >
+          <TiptapEditor
+            content={note.content}
+            onChange={save}
+            placeholder="Start writing your note..."
+            editable={editable}
+          />
+        </motion.div>
+      </div>
       <DeleteConfirmDialog
         open={deleteDialog.isOpen}
         deleting={deleting}
