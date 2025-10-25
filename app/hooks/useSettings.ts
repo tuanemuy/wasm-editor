@@ -41,7 +41,6 @@ export function useSettings(): UseSettingsResult {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to load settings:", err);
         setError(err as Error);
         toast.error("Failed to load settings");
         setLoading(false);
@@ -65,7 +64,6 @@ export function useSettings(): UseSettingsResult {
         setSettings(updated);
         toast.success("Settings saved");
       } catch (err) {
-        console.error("Failed to save settings:", err);
         toast.error("Failed to save settings");
         throw err;
       } finally {
@@ -85,7 +83,6 @@ export function useSettings(): UseSettingsResult {
       setSettings(reset);
       toast.success("Settings reset to defaults");
     } catch (err) {
-      console.error("Failed to reset settings:", err);
       toast.error("Failed to reset settings");
       throw err;
     } finally {

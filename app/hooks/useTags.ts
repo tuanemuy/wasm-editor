@@ -35,7 +35,6 @@ export function useTags(): UseTagsResult {
       })
       .catch((err) => {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.error("Failed to load tags:", error);
         setError(error);
         toast.error("Failed to load tags");
       })

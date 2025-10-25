@@ -27,11 +27,7 @@ export function useBulkExport() {
       const result = await request(
         exportNoteAsMarkdown({ id: createNoteId(note.id) }),
         {
-          onError: (error) => {
-            // Only log errors in development to avoid leaking information in production
-            if (import.meta.env.DEV) {
-              console.error("Failed to export note:", error);
-            }
+          onError: () => {
             failureCount++;
           },
         },

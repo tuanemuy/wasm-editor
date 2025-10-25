@@ -46,9 +46,8 @@ export function HighlightedText({
     }
 
     return <span className={className}>{elements}</span>;
-  } catch (error) {
-    // If regex fails, just return the original text
-    console.error("HighlightedText regex error:", error);
+  } catch {
+    // If regex fails, just return the original text without highlighting
     return <span className={className}>{text}</span>;
   }
 }
