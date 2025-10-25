@@ -31,9 +31,18 @@ describe("combinedSearch", () => {
   });
 
   it("全文検索のみで検索できる", async () => {
-    const note1 = createNote({ content: createTestContent("TypeScriptの基礎"), text: "TypeScriptの基礎" });
-    const note2 = createNote({ content: createTestContent("JavaScriptの応用"), text: "JavaScriptの応用" });
-    const _note3 = createNote({ content: createTestContent("Pythonの入門"), text: "Pythonの入門" });
+    const note1 = createNote({
+      content: createTestContent("TypeScriptの基礎"),
+      text: "TypeScriptの基礎",
+    });
+    const note2 = createNote({
+      content: createTestContent("JavaScriptの応用"),
+      text: "JavaScriptの応用",
+    });
+    const _note3 = createNote({
+      content: createTestContent("Pythonの入門"),
+      text: "Pythonの入門",
+    });
 
     const searchSpy = vi
       .spyOn(context.noteQueryService, "combinedSearch")
@@ -63,11 +72,13 @@ describe("combinedSearch", () => {
 
   it("タグ検索のみで検索できる", async () => {
     const note1 = createNote({
-      content: createTestContent("TypeScriptメモ"), text: "TypeScriptメモ",
+      content: createTestContent("TypeScriptメモ"),
+      text: "TypeScriptメモ",
       tagIds: [createTagId("tech")],
     });
     const _note2 = createNote({
-      content: createTestContent("料理メモ"), text: "料理メモ",
+      content: createTestContent("料理メモ"),
+      text: "料理メモ",
       tagIds: [createTagId("cooking")],
     });
 
@@ -99,15 +110,18 @@ describe("combinedSearch", () => {
 
   it("全文検索とタグ検索のAND検索ができる", async () => {
     const note1 = createNote({
-      content: createTestContent("TypeScriptメモ"), text: "TypeScriptメモ",
+      content: createTestContent("TypeScriptメモ"),
+      text: "TypeScriptメモ",
       tagIds: [createTagId("tech")],
     });
     const _note2 = createNote({
-      content: createTestContent("JavaScriptメモ"), text: "JavaScriptメモ",
+      content: createTestContent("JavaScriptメモ"),
+      text: "JavaScriptメモ",
       tagIds: [createTagId("tech")],
     });
     const _note3 = createNote({
-      content: createTestContent("料理メモ"), text: "料理メモ",
+      content: createTestContent("料理メモ"),
+      text: "料理メモ",
       tagIds: [createTagId("cooking")],
     });
 
@@ -138,9 +152,18 @@ describe("combinedSearch", () => {
   });
 
   it("空のクエリと空のタグリストで全件取得できる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
 
     const searchSpy = vi
       .spyOn(context.noteQueryService, "combinedSearch")
@@ -169,8 +192,14 @@ describe("combinedSearch", () => {
   });
 
   it("部分一致検索ができる", async () => {
-    const note1 = createNote({ content: createTestContent("TypeScriptの基礎知識"), text: "TypeScriptの基礎知識" });
-    const _note2 = createNote({ content: createTestContent("JavaScriptの基礎"), text: "JavaScriptの基礎" });
+    const note1 = createNote({
+      content: createTestContent("TypeScriptの基礎知識"),
+      text: "TypeScriptの基礎知識",
+    });
+    const _note2 = createNote({
+      content: createTestContent("JavaScriptの基礎"),
+      text: "JavaScriptの基礎",
+    });
 
     const searchSpy = vi
       .spyOn(context.noteQueryService, "combinedSearch")
@@ -198,8 +227,14 @@ describe("combinedSearch", () => {
   });
 
   it("大文字小文字を区別しない検索ができる", async () => {
-    const note1 = createNote({ content: createTestContent("TypeScript Tutorial"), text: "TypeScript Tutorial" });
-    const _note2 = createNote({ content: createTestContent("Python Guide"), text: "Python Guide" });
+    const note1 = createNote({
+      content: createTestContent("TypeScript Tutorial"),
+      text: "TypeScript Tutorial",
+    });
+    const _note2 = createNote({
+      content: createTestContent("Python Guide"),
+      text: "Python Guide",
+    });
 
     const searchSpy = vi
       .spyOn(context.noteQueryService, "combinedSearch")
@@ -228,15 +263,18 @@ describe("combinedSearch", () => {
 
   it("複数タグでAND検索ができる", async () => {
     const note1 = createNote({
-      content: createTestContent("TypeScriptメモ"), text: "TypeScriptメモ",
+      content: createTestContent("TypeScriptメモ"),
+      text: "TypeScriptメモ",
       tagIds: [createTagId("tech"), createTagId("programming")],
     });
     const _note2 = createNote({
-      content: createTestContent("料理メモ"), text: "料理メモ",
+      content: createTestContent("料理メモ"),
+      text: "料理メモ",
       tagIds: [createTagId("cooking")],
     });
     const _note3 = createNote({
-      content: createTestContent("プログラミングメモ"), text: "プログラミングメモ",
+      content: createTestContent("プログラミングメモ"),
+      text: "プログラミングメモ",
       tagIds: [createTagId("programming")],
     });
 
@@ -267,9 +305,18 @@ describe("combinedSearch", () => {
   });
 
   it("検索結果のソートが正しい", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
 
     const searchSpy = vi
       .spyOn(context.noteQueryService, "combinedSearch")
@@ -298,7 +345,10 @@ describe("combinedSearch", () => {
 
   it("検索結果のページネーションが正しい", async () => {
     const notes = Array.from({ length: 25 }, (_, i) =>
-      createNote({ content: createTestContent(`メモ${i + 1}`), text: `メモ${i + 1}` }),
+      createNote({
+        content: createTestContent(`メモ${i + 1}`),
+        text: `メモ${i + 1}`,
+      }),
     );
 
     const searchSpy = vi

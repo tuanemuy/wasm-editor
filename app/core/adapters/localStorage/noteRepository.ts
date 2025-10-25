@@ -260,10 +260,7 @@ export class LocalStorageNoteRepository implements NoteRepository {
       // Paginate
       const total = notesArray.length;
       const offset = (pagination.page - 1) * pagination.limit;
-      const paginatedData = notesArray.slice(
-        offset,
-        offset + pagination.limit,
-      );
+      const paginatedData = notesArray.slice(offset, offset + pagination.limit);
 
       const noteEntities = await Promise.all(
         paginatedData.map((data) => this.into(data)),

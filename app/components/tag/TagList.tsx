@@ -17,7 +17,7 @@ export function TagList({ tags, selectedTagIds, onTagClick }: TagListProps) {
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)]">
-      <div className="space-y-1">
+      <div className="flex flex-col gap-1">
         {tags.map((tag) => (
           <TagItem
             key={tag.id}

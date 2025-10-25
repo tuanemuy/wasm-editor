@@ -32,7 +32,10 @@ describe("deleteNote", () => {
   });
 
   it("有効なメモIDでメモを削除できる", async () => {
-    const note = createNote({ content: createTestContent("削除するメモ"), text: "削除するメモ" });
+    const note = createNote({
+      content: createTestContent("削除するメモ"),
+      text: "削除するメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     const deleteSpy = vi
@@ -63,7 +66,10 @@ describe("deleteNote", () => {
   });
 
   it("削除されたメモがDBから削除される", async () => {
-    const note = createNote({ content: createTestContent("削除するメモ"), text: "削除するメモ" });
+    const note = createNote({
+      content: createTestContent("削除するメモ"),
+      text: "削除するメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     const deleteSpy = vi
@@ -78,7 +84,10 @@ describe("deleteNote", () => {
   it.skip("削除されたメモを取得時に例外が発生する", async () => {
     // NOTE: This test is skipped due to error handling recursion issues in the test environment
     // The actual implementation correctly throws NotFoundError from the repository layer
-    const note = createNote({ content: createTestContent("削除するメモ"), text: "削除するメモ" });
+    const note = createNote({
+      content: createTestContent("削除するメモ"),
+      text: "削除するメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     // First delete succeeds

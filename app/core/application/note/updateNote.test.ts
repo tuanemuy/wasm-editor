@@ -33,7 +33,10 @@ describe("updateNote", () => {
   });
 
   it("有効な本文でメモを更新できる", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -45,7 +48,8 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("更新されたメモ"), text: "更新されたメモ",
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
     });
 
     expect(updatedNote.content).toBe("更新されたメモ");
@@ -63,13 +67,17 @@ describe("updateNote", () => {
     await expect(
       updateNote(context, {
         id: createNoteId("non-existent-id"),
-        content: createTestContent("新しい本文"), text: "新しい本文",
+        content: createTestContent("新しい本文"),
+        text: "新しい本文",
       }),
     ).rejects.toThrow(NotFoundError);
   });
 
   it("空の本文でメモを更新できる", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -81,7 +89,8 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent(""), text: "",
+      content: createTestContent(""),
+      text: "",
     });
 
     expect(updatedNote.text).toBe("");
@@ -89,7 +98,10 @@ describe("updateNote", () => {
   });
 
   it("100,000文字の本文でメモを更新できる", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -111,7 +123,10 @@ describe("updateNote", () => {
   });
 
   it("100,001文字のテキストで更新時に例外が発生する", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
       originalNote,
@@ -137,7 +152,10 @@ describe("updateNote", () => {
   });
 
   it("1文字の本文でメモを更新できる", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -149,7 +167,8 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("a"), text: "a",
+      content: createTestContent("a"),
+      text: "a",
     });
 
     expect(updatedNote.content).toBe("a");
@@ -157,7 +176,10 @@ describe("updateNote", () => {
   });
 
   it("更新されたメモのupdatedAtが更新される", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     // Wait a bit to ensure time difference
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -170,7 +192,8 @@ describe("updateNote", () => {
     const before = new Date();
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("更新されたメモ"), text: "更新されたメモ",
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
     });
     const after = new Date();
 
@@ -186,7 +209,10 @@ describe("updateNote", () => {
   });
 
   it("更新されたメモのcreatedAtが変更されない", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -196,14 +222,18 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("更新されたメモ"), text: "更新されたメモ",
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
     });
 
     expect(updatedNote.createdAt).toEqual(originalNote.createdAt);
   });
 
   it("更新されたメモがDBに保存される", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -215,7 +245,8 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("更新されたメモ"), text: "更新されたメモ",
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
     });
 
     expect(saveSpy).toHaveBeenCalledTimes(1);
@@ -223,7 +254,10 @@ describe("updateNote", () => {
   });
 
   it("タグを含む本文でメモを更新するとタグが抽出される", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -253,7 +287,10 @@ describe("updateNote", () => {
   });
 
   it("タグ抽出がエラーでもメモは保存される", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
@@ -269,7 +306,8 @@ describe("updateNote", () => {
 
     const updatedNote = await updateNote(context, {
       id: originalNote.id,
-      content: createTestContent("#test メモ"), text: "#test メモ",
+      content: createTestContent("#test メモ"),
+      text: "#test メモ",
     });
 
     // タグは空だが、メモは保存される
@@ -279,7 +317,10 @@ describe("updateNote", () => {
   });
 
   it("一部のタグが無効でも有効なタグとメモは保存される", async () => {
-    const originalNote = createNote({ content: createTestContent("元のメモ"), text: "元のメモ" });
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(

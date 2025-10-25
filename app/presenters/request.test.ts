@@ -96,7 +96,9 @@ describe("request", () => {
 
     it("should work with only onError", async () => {
       const onError = vi.fn();
-      const result = await request(Promise.reject(new Error("fail")), { onError });
+      const result = await request(Promise.reject(new Error("fail")), {
+        onError,
+      });
 
       expect(result).toBeNull();
       expect(onError).toHaveBeenCalled();
@@ -134,7 +136,9 @@ describe("request", () => {
       });
 
       // This should not throw
-      await expect(request(Promise.resolve("success"), { onSuccess })).rejects.toThrow("callback error");
+      await expect(
+        request(Promise.resolve("success"), { onSuccess }),
+      ).rejects.toThrow("callback error");
     });
   });
 

@@ -4,9 +4,7 @@ import { createLocalStorageContainer } from "@/di";
 import type { Container } from "@/core/application/container";
 import type { Database } from "@/core/adapters/tursoWasm/client";
 import { useDatabase } from "@/hooks/useDatabase";
-import {
-  createTursoWasmContainer,
-} from "@/di";
+import { createTursoWasmContainer } from "@/di";
 
 const DIContainer = createContext<Container | null>(null);
 

@@ -34,7 +34,10 @@ describe("deleteTagsByNote", () => {
   it("有効なメモIDでタグ関連付けを削除できる", async () => {
     const tag1 = createTag({ name: "tag1" });
     const tag2 = createTag({ name: "tag2" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = { ...note, tagIds: [tag1.id, tag2.id] };
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -72,7 +75,10 @@ describe("deleteTagsByNote", () => {
   it("メモのタグリストが空になる", async () => {
     const tag1 = createTag({ name: "tag1" });
     const tag2 = createTag({ name: "tag2" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = { ...note, tagIds: [tag1.id, tag2.id] };
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -99,7 +105,10 @@ describe("deleteTagsByNote", () => {
     // しかし、現在の実装ではdeleteTagsByNote内でcleanupは行われていない
     // 仕様としては、未使用タグのクリーンアップが期待されている
     const tag = createTag({ name: "tag1" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = { ...note, tagIds: [tag.id] };
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -121,7 +130,10 @@ describe("deleteTagsByNote", () => {
   });
 
   it("タグが関連付けられていないメモで削除してもエラーが発生しない", async () => {
-    const note = createNote({ content: createTestContent("タグなしメモ"), text: "タグなしメモ" });
+    const note = createNote({
+      content: createTestContent("タグなしメモ"),
+      text: "タグなしメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);

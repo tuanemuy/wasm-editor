@@ -32,9 +32,18 @@ describe("exportNotesAsMarkdown", () => {
   });
 
   it("複数のメモを一括エクスポートできる", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
-    const note3 = createNote({ content: createTestContent("メモ3"), text: "メモ3" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
+    const note3 = createNote({
+      content: createTestContent("メモ3"),
+      text: "メモ3",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     const findByIdSpy = vi
@@ -61,8 +70,14 @@ describe("exportNotesAsMarkdown", () => {
   });
 
   it("エクスポートされたファイルがZIP形式である", async () => {
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
-    const note2 = createNote({ content: createTestContent("メモ2"), text: "メモ2" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
+    const note2 = createNote({
+      content: createTestContent("メモ2"),
+      text: "メモ2",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockImplementation(
@@ -86,8 +101,14 @@ describe("exportNotesAsMarkdown", () => {
   });
 
   it("ZIPファイル内に各メモのMarkdownファイルが含まれる", async () => {
-    const note1 = createNote({ content: createTestContent("# メモ1\n本文1"), text: "# メモ1\n本文1" });
-    const note2 = createNote({ content: createTestContent("# メモ2\n本文2"), text: "# メモ2\n本文2" });
+    const note1 = createNote({
+      content: createTestContent("# メモ1\n本文1"),
+      text: "# メモ1\n本文1",
+    });
+    const note2 = createNote({
+      content: createTestContent("# メモ2\n本文2"),
+      text: "# メモ2\n本文2",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockImplementation(
@@ -115,7 +136,10 @@ describe("exportNotesAsMarkdown", () => {
   it.skip("存在しないメモIDはスキップされる", async () => {
     // NOTE: This test is skipped due to error handling recursion issues in the test environment
     // The actual implementation correctly throws NotFoundError from the repository layer
-    const note1 = createNote({ content: createTestContent("メモ1"), text: "メモ1" });
+    const note1 = createNote({
+      content: createTestContent("メモ1"),
+      text: "メモ1",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     const findByIdSpy = vi
@@ -154,7 +178,10 @@ describe("exportNotesAsMarkdown", () => {
   });
 
   it("1つのメモのみで一括エクスポートできる", async () => {
-    const note1 = createNote({ content: createTestContent("単一メモ"), text: "単一メモ" });
+    const note1 = createNote({
+      content: createTestContent("単一メモ"),
+      text: "単一メモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note1);

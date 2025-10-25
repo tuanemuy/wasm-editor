@@ -34,7 +34,10 @@ describe("getTagsByNote", () => {
   it("有効なメモIDでタグ一覧を取得できる", async () => {
     const tag1 = createTag({ name: "tag1" });
     const tag2 = createTag({ name: "tag2" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = { ...note, tagIds: [tag1.id, tag2.id] };
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -70,7 +73,10 @@ describe("getTagsByNote", () => {
     const tagA = createTag({ name: "apple" });
     const tagB = createTag({ name: "banana" });
     const tagC = createTag({ name: "cherry" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = {
       ...note,
       tagIds: [tagC.id, tagA.id, tagB.id],
@@ -96,7 +102,10 @@ describe("getTagsByNote", () => {
   });
 
   it("タグが関連付けられていないメモで空のリストが返される", async () => {
-    const note = createNote({ content: createTestContent("タグなしメモ"), text: "タグなしメモ" });
+    const note = createNote({
+      content: createTestContent("タグなしメモ"),
+      text: "タグなしメモ",
+    });
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
@@ -112,7 +121,10 @@ describe("getTagsByNote", () => {
 
   it("すべてのタグ属性が正しい", async () => {
     const tag = createTag({ name: "testtag" });
-    const note = createNote({ content: createTestContent("テストメモ"), text: "テストメモ" });
+    const note = createNote({
+      content: createTestContent("テストメモ"),
+      text: "テストメモ",
+    });
     const noteWithTags = { ...note, tagIds: [tag.id] };
     const repositories = unitOfWorkProvider.getRepositories();
 
