@@ -3,22 +3,80 @@ import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { extractTitle, generateNotePreview } from "./note";
 
 describe("extractTitle", () => {
-  it("should extract first line as title", () => {
+  it("should extract first heading as title", () => {
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [{ text: "My Title" }],
+        },
+        {
+          type: "paragraph",
+          content: [{ text: "First paragraph" }],
+        },
+      ],
+    };
+
+    expect(extractTitle(content)).toBe("My Title");
+  });
+
+  it("should use first heading even if there are paragraphs before it", () => {
     const content: StructuredContent = {
       type: "doc",
       content: [
         {
           type: "paragraph",
-          content: [{ text: "First line" }],
+          content: [{ text: "Some text before heading" }],
         },
         {
-          type: "paragraph",
-          content: [{ text: "Second line" }],
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ text: "First Heading" }],
+        },
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [{ text: "Second Heading" }],
         },
       ],
     };
 
-    expect(extractTitle(content)).toBe("First line");
+    expect(extractTitle(content)).toBe("First Heading");
+  });
+
+  it("should extract first 50 characters when no heading exists", () => {
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: "This is a long paragraph without any headings" }],
+        },
+      ],
+    };
+
+    expect(extractTitle(content)).toBe(
+      "This is a long paragraph without any headings",
+    );
+  });
+
+  it("should truncate text to 50 characters with ellipsis", () => {
+    const longText = "This is a very long text that exceeds fifty characters and should be truncated";
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: longText }],
+        },
+      ],
+    };
+
+    const result = extractTitle(content);
+    expect(result).toBe("This is a very long text that exceeds fifty char...");
+    expect(result.length).toBe(53); // 50 + "..."
   });
 
   it("should return 'Untitled' for empty content", () => {
@@ -49,7 +107,8 @@ describe("extractTitle", () => {
       type: "doc",
       content: [
         {
-          type: "paragraph",
+          type: "heading",
+          attrs: { level: 1 },
           content: [{ text: "  Title with spaces  " }],
         },
       ],
@@ -58,19 +117,102 @@ describe("extractTitle", () => {
     expect(extractTitle(content)).toBe("Title with spaces");
   });
 
-  it("should handle headings", () => {
+  it("should handle heading with multiple text nodes", () => {
     const content: StructuredContent = {
       type: "doc",
       content: [
         {
           type: "heading",
           attrs: { level: 1 },
-          content: [{ text: "Heading Title" }],
+          content: [
+            { text: "Bold " },
+            { text: "Title", marks: [{ type: "bold" }] },
+          ],
         },
       ],
     };
 
-    expect(extractTitle(content)).toBe("Heading Title");
+    expect(extractTitle(content)).toBe("Bold Title");
+  });
+
+  it("should skip empty headings and use next heading", () => {
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [{ text: "   " }],
+        },
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ text: "Valid Heading" }],
+        },
+      ],
+    };
+
+    expect(extractTitle(content)).toBe("Valid Heading");
+  });
+
+  it("should extract heading from nested structures", () => {
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "blockquote",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ text: "Nested Heading" }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(extractTitle(content)).toBe("Nested Heading");
+  });
+
+  it("should handle emoji and surrogate pairs correctly when truncating", () => {
+    // Create a text with exactly 50 emoji characters
+    const emojiText = "🤖".repeat(50);
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: emojiText }],
+        },
+      ],
+    };
+
+    const result = extractTitle(content);
+    // Should not truncate as it's exactly 50 code points
+    expect(result).toBe(emojiText);
+    expect(Array.from(result).length).toBe(50);
+  });
+
+  it("should truncate emoji text correctly at code point boundaries", () => {
+    // Create a text with 60 emoji characters
+    const emojiText = "🤖".repeat(60);
+    const content: StructuredContent = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ text: emojiText }],
+        },
+      ],
+    };
+
+    const result = extractTitle(content);
+    // Should truncate to 50 emoji + "..."
+    expect(result).toBe("🤖".repeat(50) + "...");
+    // Verify we have exactly 50 emoji characters (not counting the ellipsis)
+    const withoutEllipsis = result.slice(0, -3);
+    expect(Array.from(withoutEllipsis).length).toBe(50);
   });
 });
 

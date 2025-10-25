@@ -7,6 +7,9 @@ import type { StructuredContent } from "@/core/domain/note/valueObject";
 // Block elements that should have newlines after them
 const BLOCK_ELEMENTS = new Set(["paragraph", "heading", "blockquote"]);
 
+// Maximum length for title extraction from plain text
+const TITLE_MAX_LENGTH = 50;
+
 /**
  * Extract text content from Tiptap JSON structure
  */
@@ -48,14 +51,67 @@ function extractTextFromJSON(content: StructuredContent): string {
 }
 
 /**
+ * Extract the first heading from note content
+ * Returns the text content of the first heading node found
+ */
+function extractFirstHeading(content: StructuredContent): string | null {
+  if (typeof content !== "object" || content === null) {
+    return null;
+  }
+
+  // Check if this node is a heading
+  if (content.type === "heading" && Array.isArray(content.content)) {
+    const headingText = extractTextFromJSON(content).trim();
+    if (headingText) {
+      return headingText;
+    }
+  }
+
+  // Recursively search in children
+  if (Array.isArray(content.content)) {
+    for (const child of content.content) {
+      if (typeof child === "object" && child !== null && "type" in child) {
+        const heading = extractFirstHeading(child as StructuredContent);
+        if (heading) {
+          return heading;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Extract title from note content
- * Takes the first line from the JSON structure
+ * 1. Uses the first heading if available
+ * 2. Otherwise, extracts the first 50 characters from the beginning of the text
+ *    - Adds "..." if text exceeds 50 characters
+ * 3. Returns "Untitled" if no content exists
  */
 export function extractTitle(content: StructuredContent): string {
+  // First, try to find a heading
+  const heading = extractFirstHeading(content);
+  if (heading) {
+    return heading;
+  }
+
+  // If no heading, extract the first 50 characters
   const plainContent = extractTextFromJSON(content);
-  const firstLine = plainContent.split("\n")[0];
-  const title = firstLine.trim();
-  return title || "Untitled";
+  const text = plainContent.trim();
+
+  if (!text) {
+    return "Untitled";
+  }
+
+  // Take the first TITLE_MAX_LENGTH characters
+  // Use Array.from to handle Unicode code points correctly (e.g., emoji)
+  const codePoints = Array.from(text);
+  if (codePoints.length <= TITLE_MAX_LENGTH) {
+    return text;
+  }
+
+  return `${codePoints.slice(0, TITLE_MAX_LENGTH).join("")}...`;
 }
 
 /**
@@ -70,8 +126,10 @@ export function generateNotePreview(
   const lines = plainContent.split("\n").filter((line) => line.trim());
   const preview = lines.slice(0, 3).join(" ").trim();
 
-  if (preview.length > maxLength) {
-    return `${preview.slice(0, maxLength)}...`;
+  // Use Array.from to handle Unicode code points correctly (e.g., emoji)
+  const codePoints = Array.from(preview);
+  if (codePoints.length > maxLength) {
+    return `${codePoints.slice(0, maxLength).join("")}...`;
   }
 
   return preview || "Empty note";
