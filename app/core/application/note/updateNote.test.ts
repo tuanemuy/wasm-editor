@@ -11,6 +11,8 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { createTag } from "@/core/domain/tag/entity";
+import { TagCleanupService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
 import { createTestContent } from "./test-helpers";
@@ -29,6 +31,7 @@ describe("updateNote", () => {
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),
+      tagCleanupService: new TagCleanupService(),
     };
   });
 
@@ -350,5 +353,100 @@ describe("updateNote", () => {
     expect(updatedNote.tagIds).toHaveLength(1);
     expect(tagSaveSpy).toHaveBeenCalledTimes(1);
     expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("未使用タグが更新後に自動的にクリーンアップされる", async () => {
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([]);
+    vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
+
+    // 未使用タグが存在する
+    const unusedTag = createTag({
+      name: "unused",
+    });
+    vi.spyOn(context.tagQueryService, "findUnused").mockResolvedValue([
+      unusedTag,
+    ]);
+    const deleteManySpy = vi
+      .spyOn(repositories.tagRepository, "deleteMany")
+      .mockResolvedValue();
+
+    await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
+    });
+
+    // クリーンアップが実行される
+    expect(deleteManySpy).toHaveBeenCalledTimes(1);
+    expect(deleteManySpy).toHaveBeenCalledWith([unusedTag.id]);
+  });
+
+  it("クリーンアップエラーでもメモ更新は成功する", async () => {
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([]);
+    const noteSaveSpy = vi
+      .spyOn(repositories.noteRepository, "save")
+      .mockResolvedValue();
+
+    // クリーンアップがエラーをスローする
+    vi.spyOn(context.tagQueryService, "findUnused").mockRejectedValue(
+      new Error("Cleanup failed"),
+    );
+
+    const updatedNote = await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
+    });
+
+    // メモは正常に保存される
+    expect(updatedNote.text).toBe("更新されたメモ");
+    expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("未使用タグがない場合はクリーンアップがスキップされる", async () => {
+    const originalNote = createNote({
+      content: createTestContent("元のメモ"),
+      text: "元のメモ",
+    });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([]);
+    vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
+
+    // 未使用タグが存在しない
+    vi.spyOn(context.tagQueryService, "findUnused").mockResolvedValue([]);
+    const deleteManySpy = vi
+      .spyOn(repositories.tagRepository, "deleteMany")
+      .mockResolvedValue();
+
+    await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("更新されたメモ"),
+      text: "更新されたメモ",
+    });
+
+    // クリーンアップは呼ばれない
+    expect(deleteManySpy).not.toHaveBeenCalled();
   });
 });

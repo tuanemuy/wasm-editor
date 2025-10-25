@@ -61,7 +61,7 @@ export function useNote(
       // Set status to "unsaved" immediately to indicate changes pending
       setSaveStatus("unsaved");
 
-      // Debounce the save operation (300ms delay)
+      // Debounce the save operation (1000ms delay)
       saveTimeoutRef.current = setTimeout(async () => {
         // Only proceed if this is still the latest save request
         if (currentSaveId !== saveCounterRef.current) return;
@@ -90,7 +90,7 @@ export function useNote(
             },
           },
         );
-      }, 300);
+      }, 1000);
     },
     [noteId, err],
   );

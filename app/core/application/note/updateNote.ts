@@ -3,6 +3,7 @@
  *
  * Updates an existing note's content.
  * Automatically extracts and syncs tags from the content.
+ * Cleans up unused tags after update.
  */
 
 import type { Note } from "@/core/domain/note/entity";
@@ -35,9 +36,10 @@ export async function updateNote(
     let tagNames: string[] = [];
     try {
       tagNames = await context.tagExtractorPort.extractTags(updatedNote.text);
-    } catch (_error) {
+    } catch (error) {
       // Silently ignore tag extraction errors
-      // Logging strategy is a future consideration
+      // TODO: Add proper logging when logging infrastructure is implemented
+      console.error("Tag extraction failed:", error);
     }
 
     // Get or create tags
@@ -61,9 +63,10 @@ export async function updateNote(
             const newTag = createTag({ name: tagName });
             await repositories.tagRepository.save(newTag);
             return newTag;
-          } catch (_error) {
+          } catch (error) {
             // Skip invalid tag names
-            // Logging strategy is a future consideration
+            // TODO: Add proper logging when logging infrastructure is implemented
+            console.error("Invalid tag name:", tagName, error);
             return null;
           }
         }),
@@ -77,6 +80,20 @@ export async function updateNote(
 
     // Save updated note
     await repositories.noteRepository.save(updatedNote);
+
+    // Cleanup unused tags within the same transaction
+    // This ensures atomicity and prevents race conditions
+    // Uses domain service to encapsulate cleanup logic
+    try {
+      await context.tagCleanupService.cleanupUnused(
+        context.tagQueryService,
+        repositories.tagRepository,
+      );
+    } catch (error) {
+      // Silently ignore cleanup errors to not fail the note update
+      // TODO: Add proper logging when logging infrastructure is implemented
+      console.error("Tag cleanup failed:", error);
+    }
 
     return updatedNote;
   });
