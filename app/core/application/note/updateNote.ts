@@ -13,7 +13,6 @@ import { createTag } from "@/core/domain/tag/entity";
 import type { TagId } from "@/core/domain/tag/valueObject";
 import { createTagName } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
-import { cleanupUnusedTags } from "../tag/cleanupUnusedTags";
 
 export type UpdateNoteInput = {
   id: NoteId;
@@ -84,13 +83,12 @@ export async function updateNote(
 
     // Cleanup unused tags within the same transaction
     // This ensures atomicity and prevents race conditions
+    // Uses domain service to encapsulate cleanup logic
     try {
-      // Find unused tags
-      const unusedTags = await context.tagQueryService.findUnused();
-      if (unusedTags.length > 0) {
-        const unusedTagIds = unusedTags.map((tag) => tag.id);
-        await repositories.tagRepository.deleteMany(unusedTagIds);
-      }
+      await context.tagCleanupService.cleanupUnused(
+        context.tagQueryService,
+        repositories.tagRepository,
+      );
     } catch (error) {
       // Silently ignore cleanup errors to not fail the note update
       // TODO: Add proper logging when logging infrastructure is implemented
