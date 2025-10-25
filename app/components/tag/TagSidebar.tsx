@@ -5,20 +5,13 @@ import {
   SidebarGroupContent,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import type { TagWithUsage } from "@/core/domain/tag/entity";
+import { useSearch } from "@/context/search";
+import { useTags } from "@/hooks/useTags";
 import { TagList } from "./TagList";
 
-export interface TagSidebarProps {
-  tags: TagWithUsage[];
-  selectedTagIds: string[];
-  onTagClick: (tagId: string) => void;
-}
-
-export function TagSidebar({
-  tags,
-  selectedTagIds,
-  onTagClick,
-}: TagSidebarProps) {
+export function TagSidebar() {
+  const { tagIds, toggleTag } = useSearch();
+  const { tags } = useTags();
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader>
@@ -29,8 +22,8 @@ export function TagSidebar({
           <SidebarGroupContent>
             <TagList
               tags={tags}
-              selectedTagIds={selectedTagIds}
-              onTagClick={onTagClick}
+              selectedTagIds={tagIds}
+              onTagClick={toggleTag}
             />
           </SidebarGroupContent>
         </SidebarGroup>

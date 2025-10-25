@@ -1,9 +1,10 @@
 import { EmptyState } from "@/components/common/EmptyState";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Spinner } from "@/components/ui/spinner";
+import { useSearch } from "@/context/search";
 import type { Note } from "@/core/domain/note/entity";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import type { SortField, SortOrder } from "@/lib/sort-utils";
 import { NoteCard } from "./NoteCard";
 import { NoteCardSkeleton } from "./NoteCardSkeleton";
 
@@ -12,11 +13,6 @@ export interface NoteListProps {
   noteTagsMap: Map<string, TagWithUsage[]>;
   loading: boolean;
   hasMore: boolean;
-  hasFilters: boolean;
-  sortField: SortField;
-  sortOrder: SortOrder;
-  page: number;
-  searchQuery?: string;
   isSelectMode?: boolean;
   selectedIds?: string[];
   onToggleSelect?: (id: string) => void;
@@ -28,16 +24,13 @@ export function NoteList({
   noteTagsMap,
   loading,
   hasMore,
-  hasFilters,
-  sortField,
-  sortOrder,
-  page,
-  searchQuery = "",
   isSelectMode = false,
   selectedIds = [],
   onToggleSelect,
   onLoadMore,
 }: NoteListProps) {
+  const { query, sortField, sortOrder, tagIds } = useSearch();
+  const hasFilters = !!query || tagIds.length > 0;
   const targetRef = useInfiniteScroll({
     onLoadMore,
     hasMore,
@@ -47,12 +40,8 @@ export function NoteList({
   return (
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-4 max-w-4xl mx-auto w-full">
-        {loading && page === 1 ? (
-          <>
-            <NoteCardSkeleton />
-            <NoteCardSkeleton />
-            <NoteCardSkeleton />
-          </>
+        {loading ? (
+          <NoteListSkeleton />
         ) : notes.length === 0 ? (
           <EmptyState hasFilters={hasFilters} />
         ) : (
@@ -64,9 +53,6 @@ export function NoteList({
                   key={note.id}
                   note={note}
                   tags={noteTags}
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  searchQuery={searchQuery}
                   isSelectMode={isSelectMode}
                   isSelected={selectedIds.includes(note.id)}
                   onToggleSelect={onToggleSelect}
@@ -75,14 +61,22 @@ export function NoteList({
             })}
             {hasMore && (
               <div ref={targetRef} className="py-4 flex justify-center">
-                <div className="text-sm text-muted-foreground">
-                  {loading ? "読み込み中..." : ""}
-                </div>
+                <Spinner className="size-6" />
               </div>
             )}
           </>
         )}
       </div>
     </ScrollArea>
+  );
+}
+
+export function NoteListSkeleton() {
+  return (
+    <div className="p-4 space-y-4 max-w-4xl mx-auto w-full">
+      <NoteCardSkeleton />
+      <NoteCardSkeleton />
+      <NoteCardSkeleton />
+    </div>
   );
 }
