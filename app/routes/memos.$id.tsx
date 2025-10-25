@@ -63,28 +63,25 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
   }, [deleteNote, navigate]);
 
   return (
-    <>
+    <div className="flex flex-col h-screen bg-background">
+      <MemoHeader
+        content={note.content}
+        saveStatus={saveStatus}
+        exporting={exporting}
+        isEditing={editable}
+        onToggleEdit={toggleEditable}
+        onExport={exportNote}
+        onDelete={deleteNote}
+      />
       <motion.div
         layoutId={`note-${note.id}`}
-        className="flex flex-col h-screen bg-background"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
+        className="flex-1 overflow-hidden"
         transition={{
           type: "spring",
-          stiffness: 200,
+          stiffness: 300,
           damping: 30,
         }}
       >
-        <MemoHeader
-          content={note.content}
-          saveStatus={saveStatus}
-          exporting={exporting}
-          isEditing={editable}
-          onToggleEdit={toggleEditable}
-          onExport={exportNote}
-          onDelete={deleteNote}
-        />
         <TiptapEditor
           content={note.content}
           onChange={save}
@@ -98,6 +95,6 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
         onOpenChange={deleteDialog.close}
         onConfirm={handleDelete}
       />
-    </>
+    </div>
   );
 }
