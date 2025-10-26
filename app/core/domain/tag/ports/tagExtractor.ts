@@ -1,11 +1,11 @@
 /**
- * Tag Domain - Tag Extractor Port
+ * Tag Domain - Tag Extractor
  *
  * Defines the interface for extracting tags from note content.
  * This port abstracts the implementation details of tag parsing,
  * allowing for different implementations (e.g., simple regex, markdown parser).
  */
-export interface TagExtractorPort {
+export interface TagExtractor {
   /**
    * Extract tags from note content
    *

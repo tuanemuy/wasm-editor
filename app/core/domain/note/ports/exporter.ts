@@ -1,5 +1,5 @@
 /**
- * Note Domain - Export Port
+ * Note Domain - Exporter
  *
  * Defines the interface for exporting notes as Markdown files.
  */
@@ -13,7 +13,7 @@ export type ExportedFile = {
   content: string;
 };
 
-export interface ExportPort {
+export interface Exporter {
   /**
    * Export a note as a Markdown file
    *

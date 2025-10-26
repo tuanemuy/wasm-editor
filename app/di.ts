@@ -1,6 +1,6 @@
-import { BrowserExportPort } from "@/core/adapters/browser/exportPort";
+import { BrowserExporter } from "@/core/adapters/browser/exporter";
 import { BrowserSettingsRepository } from "@/core/adapters/browser/settingsRepository";
-import { BrowserTagExtractorPort } from "@/core/adapters/browser/tagExtractorPort";
+import { BrowserTagExtractor } from "@/core/adapters/browser/tagExtractor";
 import { LocalStorageNoteQueryService } from "@/core/adapters/localStorage/noteQueryService";
 import { LocalStorageTagQueryService } from "@/core/adapters/localStorage/tagQueryService";
 import { LocalStorageUnitOfWorkProvider } from "@/core/adapters/localStorage/unitOfWork";
@@ -54,8 +54,8 @@ export function createTursoWasmContainer(db: Database): Container {
   const tagQueryService = new TursoWasmTagQueryService(db);
   const tagCleanupService = new TagCleanupService();
   const tagSyncService = new TagSyncService();
-  const exportPort = new BrowserExportPort();
-  const tagExtractorPort = new BrowserTagExtractorPort();
+  const exporter = new BrowserExporter();
+  const tagExtractor = new BrowserTagExtractor();
   const settingsRepository = new BrowserSettingsRepository();
 
   return {
@@ -64,8 +64,8 @@ export function createTursoWasmContainer(db: Database): Container {
     tagQueryService,
     tagCleanupService,
     tagSyncService,
-    exportPort,
-    tagExtractorPort,
+    exporter,
+    tagExtractor,
     settingsRepository,
   };
 }
@@ -76,8 +76,8 @@ export function createLocalStorageContainer(): Container {
   const tagQueryService = new LocalStorageTagQueryService();
   const tagCleanupService = new TagCleanupService();
   const tagSyncService = new TagSyncService();
-  const exportPort = new BrowserExportPort();
-  const tagExtractorPort = new BrowserTagExtractorPort();
+  const exporter = new BrowserExporter();
+  const tagExtractor = new BrowserTagExtractor();
   const settingsRepository = new BrowserSettingsRepository();
 
   return {
@@ -86,8 +86,8 @@ export function createLocalStorageContainer(): Container {
     tagQueryService,
     tagCleanupService,
     tagSyncService,
-    exportPort,
-    tagExtractorPort,
+    exporter,
+    tagExtractor,
     settingsRepository,
   };
 }

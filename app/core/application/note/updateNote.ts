@@ -35,7 +35,7 @@ export async function updateNote(
 
     // Extract tags from text and sync with repository using domain service
     const tags = await context.tagSyncService.extractAndSync(
-      context.tagExtractorPort,
+      context.tagExtractor,
       repositories.tagRepository,
       updatedNote.text,
     );

@@ -1,7 +1,7 @@
-import type { ExportPort } from "@/core/domain/note/ports/exportPort";
+import type { Exporter } from "@/core/domain/note/ports/exporter";
 import type { NoteQueryService } from "@/core/domain/note/ports/noteQueryService";
 import type { SettingsRepository } from "@/core/domain/settings/ports/settingsRepository";
-import type { TagExtractorPort } from "@/core/domain/tag/ports/tagExtractorPort";
+import type { TagExtractor } from "@/core/domain/tag/ports/tagExtractor";
 import type { TagQueryService } from "@/core/domain/tag/ports/tagQueryService";
 import type {
   TagCleanupService,
@@ -18,7 +18,7 @@ export type Container = {
   tagQueryService: TagQueryService;
   tagCleanupService: TagCleanupService;
   tagSyncService: TagSyncService;
-  exportPort: ExportPort;
-  tagExtractorPort: TagExtractorPort;
+  exporter: Exporter;
+  tagExtractor: TagExtractor;
   settingsRepository: SettingsRepository;
 };
