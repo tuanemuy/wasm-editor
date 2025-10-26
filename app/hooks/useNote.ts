@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cleanupUnusedTags } from "@/core/application/tag/cleanupUnusedTags";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
 import { getNote as getNoteService } from "@/core/application/note/getNote";
@@ -14,6 +15,37 @@ const _getNote = withContainer(getNoteService);
 const updateNote = withContainer(updateNoteService);
 const deleteNote = withContainer(deleteNoteService);
 const exportNoteAsMarkdown = withContainer(exportNoteWithMarkdownService);
+const cleanupUnusedTags = withContainer(cleanupUnusedTags);
+
+/**
+ * Tag Cleanup Scheduler
+ *
+ * Manages delayed and debounced execution of tag cleanup operations in the presentation layer.
+ * Prevents performance issues from excessive cleanup calls.
+ */
+class TagCleanupScheduler {
+  private timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  scheduleCleanup(cleanupFn: () => Promise<void>, delayMs: number = 1000): void {
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+    }
+
+    this.timeoutId = setTimeout(() => {
+      cleanupFn().catch((error) => {
+        console.error("Background tag cleanup failed:", error);
+      });
+      this.timeoutId = null;
+    }, delayMs);
+  }
+
+  cancel(): void {
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+  }
+}
 
 export type SaveStatus = "saved" | "saving" | "unsaved";
 
@@ -46,6 +78,9 @@ export function useNote(
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref to track save counter to prevent race conditions
   const saveCounterRef = useRef(0);
+  // Tag cleanup scheduler for managing cleanup operations
+  // Initialize directly to prevent memory leaks from recreating instances
+  const cleanupSchedulerRef = useRef(new TagCleanupScheduler());
 
   // Update note content with debouncing to prevent race conditions
   const save = useCallback(
@@ -75,10 +110,23 @@ export function useNote(
             text,
           }),
           {
-            onSuccess: () => {
+            onSuccess: (result) => {
               // Only update if this is still the latest save
               if (currentSaveId === saveCounterRef.current) {
                 setSaveStatus("saved");
+
+                // Schedule cleanup if tags were removed
+                // This reduces performance impact by avoiding unnecessary cleanup operations
+                // Using the scheduler ensures:
+                // - Multiple rapid updates are debounced into a single cleanup
+                // - Cleanup can be cancelled if component is unmounted
+                // - No race conditions from concurrent cleanups
+                if (result.tagsWereRemoved) {
+                  cleanupSchedulerRef.current.scheduleCleanup(
+                    () => cleanupUnusedTags(),
+                    1000, // 1000ms delay (same as note save debounce)
+                  );
+                }
               }
             },
             onError: (error) => {
@@ -136,12 +184,13 @@ export function useNote(
     setEditable((prev) => !prev);
   }, []);
 
-  // Cleanup: clear pending timeout on unmount
+  // Cleanup: clear pending timeout and cancel scheduled cleanups on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      cleanupSchedulerRef.current.cancel();
     };
   }, []);
 

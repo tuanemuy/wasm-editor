@@ -9,6 +9,7 @@ import { EmptyTagExtractorPort } from "@/core/adapters/empty/tagExtractorPort";
 import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createTag } from "@/core/domain/tag/entity";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { cleanupUnusedTags } from "./cleanupUnusedTags";
 
@@ -22,6 +23,8 @@ describe("cleanupUnusedTags", () => {
       unitOfWorkProvider,
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),
