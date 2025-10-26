@@ -3,6 +3,9 @@
  */
 
 import type { Content } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
+import { generateHTML } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { defaultNotification } from "@/presenters/notification";
 
@@ -209,4 +212,25 @@ export function formatNoteContent(content: string): string {
     .replace(/\r\n/g, "\n") // Normalize line breaks
     .replace(/\n{3,}/g, "\n\n") // Limit consecutive line breaks
     .trim();
+}
+
+/**
+ * Generate HTML from structured content
+ * Uses the same extensions as the TiptapEditor for consistency
+ */
+export function generateNoteHTML(content: StructuredContent): string {
+  // Type adapter to convert from domain StructuredContent to Tiptap's expected format
+  // This is safe because StructuredContent is structurally compatible with Tiptap's JSON format
+  return generateHTML(content as Parameters<typeof generateHTML>[0], [
+    StarterKit.configure({
+      heading: {
+        levels: [1, 2, 3, 4, 5, 6],
+      },
+    }),
+    Link.configure({
+      HTMLAttributes: {
+        class: "text-primary underline",
+      },
+    }),
+  ]);
 }

@@ -1,5 +1,4 @@
 import { EmptyState } from "@/components/common/EmptyState";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { useSearch } from "@/context/search";
 import type { Note } from "@/core/domain/note/entity";
@@ -13,9 +12,6 @@ export interface NoteListProps {
   noteTagsMap: Map<string, TagWithUsage[]>;
   loading: boolean;
   hasMore: boolean;
-  isSelectMode?: boolean;
-  selectedIds?: string[];
-  onToggleSelect?: (id: string) => void;
   onLoadMore: () => void;
 }
 
@@ -24,9 +20,6 @@ export function NoteList({
   noteTagsMap,
   loading,
   hasMore,
-  isSelectMode = false,
-  selectedIds = [],
-  onToggleSelect,
   onLoadMore,
 }: NoteListProps) {
   const { query, tagIds } = useSearch();
@@ -38,36 +31,25 @@ export function NoteList({
   });
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
-        {loading ? (
-          <NoteListSkeleton />
-        ) : notes.length === 0 ? (
-          <EmptyState hasFilters={hasFilters} />
-        ) : (
-          <>
-            {notes.map((note) => {
-              const noteTags = noteTagsMap.get(note.id) || [];
-              return (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  tags={noteTags}
-                  isSelectMode={isSelectMode}
-                  isSelected={selectedIds.includes(note.id)}
-                  onToggleSelect={onToggleSelect}
-                />
-              );
-            })}
-            {hasMore && (
-              <div ref={targetRef} className="py-4 flex justify-center">
-                <Spinner className="size-6" />
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </ScrollArea>
+    <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
+      {loading ? (
+        <NoteListSkeleton />
+      ) : notes.length === 0 ? (
+        <EmptyState hasFilters={hasFilters} />
+      ) : (
+        <>
+          {notes.map((note) => {
+            const noteTags = noteTagsMap.get(note.id) || [];
+            return <NoteCard key={note.id} note={note} tags={noteTags} />;
+          })}
+          {hasMore && (
+            <div ref={targetRef} className="py-4 flex justify-center">
+              <Spinner className="size-6" />
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

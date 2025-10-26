@@ -1,17 +1,20 @@
 import { SearchIcon } from "lucide-react";
 import { useRef } from "react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-export interface SearchBarProps {
+export type SearchBarProps = Omit<React.ComponentProps<"div">, "onChange"> & {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-}
+};
 
 export function SearchBar({
   value,
   onChange,
   placeholder = "Search notes...",
+  className,
+  ...props
 }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -20,8 +23,8 @@ export function SearchBar({
   };
 
   return (
-    <div className="relative flex-1 max-w-md">
-      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div {...props} className={cn("relative max-w-4xl", className)}>
+      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
       <Input
         ref={inputRef}
         type="search"

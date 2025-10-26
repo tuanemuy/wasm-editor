@@ -1,7 +1,10 @@
 @layer utilities {
   .article {
+    font-size: 16px;
+
     * {
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
+      color: var(--color-foreground);
     }
 
     h1,
@@ -10,9 +13,9 @@
     h4,
     h5,
     h6 {
-      margin-top: 3rem;
+      margin-top: 1.5em;
+      line-height: 1.5;
       font-weight: var(--font-weight-bold);
-      line-height: 1.4;
       text-wrap: initial;
       word-break: auto-phrase;
       letter-spacing: 0em;
@@ -28,41 +31,41 @@
     blockquote,
     dl,
     iframe {
-      margin-top: 1.75rem;
+      margin-top: 1.5rem;
     }
 
     p + p {
-      margin-top: 1.75rem;
+      margin-top: 1.5rem;
     }
 
     h1 {
-      font-size: 2.25em;
-
-      @media only screen and (max-width: 640px) {
-        font-size: 1.75rem;
-      }
-    }
-
-    h2 {
-      font-size: 1.75em;
+      font-size: 2rem;
 
       @media only screen and (max-width: 640px) {
         font-size: 1.5rem;
       }
     }
 
+    h2 {
+      font-size: 1.75rem;
+
+      @media only screen and (max-width: 640px) {
+        font-size: 1.25rem;
+      }
+    }
+
     h3 {
       padding-bottom: 0.25rem;
-      border-bottom: 2px solid var(--colors-border);
-      font-size: 1.25em;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 1.125em;
     }
 
     h4 {
-      font-size: 1.1em;
+      font-size: 1rem;
     }
 
     h5 {
-      font-size: 1em;
+      font-size: 1rem;
     }
 
     a {
@@ -70,11 +73,11 @@
     }
 
     hr {
-      margin: 4rem 0;
+      margin: 3rem 0;
       width: 100%;
       height: 2px;
       border: none;
-      background-color: #f0f0f0;
+      background-color: var(--color-muted);
     }
 
     div:has(table) {
@@ -146,7 +149,7 @@
 
     blockquote {
       padding: var(--spacing-s-100);
-      border-left: 2px solid var(--colors-border);
+      border-left: 2px solid var(--color-border);
     }
 
     img {
@@ -160,5 +163,9 @@
     *:last-child {
       margin-bottom: 0;
     }
+  }
+
+  .article__preview {
+    font-size: 14px;
   }
 }
