@@ -16,9 +16,12 @@ export async function cleanupUnusedTags(context: Context): Promise<TagId[]> {
 
   const unusedTagIds = unusedTags.map((tag) => tag.id);
 
-  // Delete unused tags
+  // Delete unused tags using domain service
   await context.unitOfWorkProvider.run(async (repositories) => {
-    await repositories.tagRepository.deleteMany(unusedTagIds);
+    await context.tagCleanupService.cleanupUnused(
+      context.tagQueryService,
+      repositories.tagRepository,
+    );
   });
 
   return unusedTagIds;

@@ -7,8 +7,12 @@
  * Note: Domain services do NOT manage transactions.
  * Transaction management is the responsibility of Application Services.
  */
+import type { Tag } from "./entity";
+import { createTag } from "./entity";
+import type { TagExtractorPort } from "./ports/tagExtractorPort";
 import type { TagQueryService } from "./ports/tagQueryService";
 import type { TagRepository } from "./ports/tagRepository";
+import { createTagName } from "./valueObject";
 
 /**
  * Tag Cleanup Service
@@ -46,5 +50,83 @@ export class TagCleanupService {
       const unusedTagIds = unusedTags.map((tag) => tag.id);
       await repository.deleteMany(unusedTagIds);
     }
+  }
+}
+
+/**
+ * Tag Sync Service
+ *
+ * Handles extraction of tags from text and synchronization with repository.
+ * Encapsulates the business logic for creating tags from text content.
+ */
+export class TagSyncService {
+  /**
+   * Extract tags from text and get or create them in repository
+   *
+   * @param tagExtractor - Port for extracting tag names from text
+   * @param repository - Tag repository
+   * @param text - Text to extract tags from
+   * @returns Array of tags (existing or newly created)
+   *
+   * @description
+   * This service:
+   * - Extracts tag names from text using the provided extractor
+   * - Validates tag names
+   * - Finds existing tags or creates new ones
+   * - Handles errors gracefully (invalid tags are skipped)
+   * - Must be called within a transaction context
+   *
+   * Design rationale:
+   * - Encapsulates tag extraction and synchronization logic
+   * - Prevents code duplication across application services (updateNote, etc.)
+   * - Does NOT create its own transaction (allows use within existing transactions)
+   * - Gracefully handles extraction and validation errors
+   * - Returns empty array on extraction failure (non-blocking)
+   */
+  async extractAndSync(
+    tagExtractor: TagExtractorPort,
+    repository: TagRepository,
+    text: string,
+  ): Promise<Tag[]> {
+    // Extract tag names from text
+    let tagNames: string[] = [];
+    try {
+      tagNames = await tagExtractor.extractTags(text);
+    } catch (_error) {
+      // Silent failure - return empty tags
+      // Logging strategy is a future consideration
+      return [];
+    }
+
+    // Get or create tags
+    // Skip invalid tag names instead of failing the entire operation
+    const tags = (
+      await Promise.all(
+        tagNames.map(async (tagName) => {
+          try {
+            // Validate tag name
+            const validatedName = createTagName(tagName);
+
+            // Check if tag exists
+            const existingTag = await repository.findByName(validatedName);
+
+            if (existingTag) {
+              return existingTag;
+            }
+
+            // Create new tag
+            const newTag = createTag({ name: tagName });
+            await repository.save(newTag);
+            return newTag;
+          } catch (_error) {
+            // Skip invalid tag names
+            // Logging strategy is a future consideration
+            return null;
+          }
+        }),
+      )
+    ).filter((tag): tag is Tag => tag !== null);
+
+    return tags;
   }
 }
