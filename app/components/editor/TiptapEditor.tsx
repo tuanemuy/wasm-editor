@@ -109,7 +109,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none p-4 min-h-[calc(100vh-200px)]",
+          "article focus:outline-none max-w-none py-8 px-4 min-h-[calc(100vh-200px)]",
       },
     },
     immediatelyRender: false,
