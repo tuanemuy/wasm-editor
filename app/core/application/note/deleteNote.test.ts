@@ -10,6 +10,7 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
 import { deleteNote } from "./deleteNote";
@@ -25,6 +26,8 @@ describe("deleteNote", () => {
       unitOfWorkProvider,
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),

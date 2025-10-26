@@ -11,6 +11,7 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import type { Note } from "@/core/domain/note/entity";
 import { createNote } from "@/core/domain/note/entity";
 import type { PaginationResult } from "@/lib/pagination";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { getNotes } from "./getNotes";
 import { createTestContent } from "./test-helpers";
@@ -25,6 +26,8 @@ describe("getNotes", () => {
       unitOfWorkProvider,
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),

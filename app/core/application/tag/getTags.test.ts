@@ -10,6 +10,7 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
 import { createTag } from "@/core/domain/tag/entity";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { getTags } from "./getTags";
 
@@ -23,6 +24,8 @@ describe("getTags", () => {
       unitOfWorkProvider,
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),

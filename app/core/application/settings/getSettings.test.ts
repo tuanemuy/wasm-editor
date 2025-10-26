@@ -10,6 +10,7 @@ import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { DEFAULT_SETTINGS } from "@/core/domain/settings/entity";
 import { createAutoSaveInterval } from "@/core/domain/settings/valueObject";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { getSettings } from "./getSettings";
 
@@ -21,6 +22,8 @@ describe("getSettings", () => {
       unitOfWorkProvider: new EmptyUnitOfWorkProvider(),
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),

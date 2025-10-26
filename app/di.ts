@@ -30,8 +30,7 @@ const STORAGE_ADAPTER: StorageAdapter = (() => {
   return envAdapter as StorageAdapter;
 })();
 
-// biome-ignore lint/suspicious/noExplicitAny: any
-export function withContainer<T extends any[], K>(
+export function withContainer<T extends unknown[], K>(
   fn: (container: Container, ...args: T) => Promise<K>,
 ): (...args: T) => Promise<K> {
   return async (...args: T) => {

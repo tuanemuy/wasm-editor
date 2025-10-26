@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cleanupUnusedTags } from "@/core/application/tag/cleanupUnusedTags";
 import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
 import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
-import { getNote as getNoteService } from "@/core/application/note/getNote";
 import { updateNote as updateNoteService } from "@/core/application/note/updateNote";
+import { cleanupUnusedTags as cleanupUnusedTagsService } from "@/core/application/tag/cleanupUnusedTags";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { withContainer } from "@/di";
@@ -11,11 +10,10 @@ import { formatError } from "@/presenters/error";
 import type { Notification } from "@/presenters/notification";
 import { request } from "@/presenters/request";
 
-const _getNote = withContainer(getNoteService);
 const updateNote = withContainer(updateNoteService);
 const deleteNote = withContainer(deleteNoteService);
 const exportNoteAsMarkdown = withContainer(exportNoteWithMarkdownService);
-const cleanupUnusedTags = withContainer(cleanupUnusedTags);
+const cleanupUnusedTags = withContainer(cleanupUnusedTagsService);
 
 /**
  * Tag Cleanup Scheduler
@@ -26,7 +24,7 @@ const cleanupUnusedTags = withContainer(cleanupUnusedTags);
 class TagCleanupScheduler {
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  scheduleCleanup(cleanupFn: () => Promise<void>, delayMs: number = 1000): void {
+  scheduleCleanup(cleanupFn: () => Promise<void>, delayMs = 1000): void {
     if (this.timeoutId !== null) {
       clearTimeout(this.timeoutId);
     }
@@ -123,7 +121,9 @@ export function useNote(
                 // - No race conditions from concurrent cleanups
                 if (result.tagsWereRemoved) {
                   cleanupSchedulerRef.current.scheduleCleanup(
-                    () => cleanupUnusedTags(),
+                    async () => {
+                      await cleanupUnusedTags();
+                    },
                     1000, // 1000ms delay (same as note save debounce)
                   );
                 }
