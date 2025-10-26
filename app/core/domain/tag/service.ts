@@ -94,6 +94,17 @@ export class TagSyncService {
     repository: TagRepository,
     text: string,
   ): Promise<Tag[]> {
+    // Validate input text
+    if (typeof text !== "string") {
+      return [];
+    }
+
+    // Handle empty or whitespace-only text
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) {
+      return [];
+    }
+
     // Extract tag names from text
     let tagNames: string[] = [];
     try {
@@ -104,11 +115,15 @@ export class TagSyncService {
       return [];
     }
 
+    // Deduplicate tag names to prevent race conditions
+    // when multiple identical tags are extracted from text
+    const uniqueTagNames = [...new Set(tagNames)];
+
     // Get or create tags
     // Skip invalid tag names instead of failing the entire operation
     const tags = (
       await Promise.all(
-        tagNames.map(async (tagName) => {
+        uniqueTagNames.map(async (tagName) => {
           try {
             // Validate tag name
             const validatedName = createTagName(tagName);

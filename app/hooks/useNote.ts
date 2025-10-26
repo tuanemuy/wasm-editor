@@ -15,7 +15,7 @@ const _getNote = withContainer(getNoteService);
 const updateNote = withContainer(updateNoteService);
 const deleteNote = withContainer(deleteNoteService);
 const exportNoteAsMarkdown = withContainer(exportNoteWithMarkdownService);
-const _cleanupUnusedTags = withContainer(cleanupUnusedTags);
+const cleanupUnusedTags = withContainer(cleanupUnusedTags);
 
 /**
  * Tag Cleanup Scheduler
@@ -79,7 +79,8 @@ export function useNote(
   // Ref to track save counter to prevent race conditions
   const saveCounterRef = useRef(0);
   // Tag cleanup scheduler for managing cleanup operations
-  const cleanupSchedulerRef = useRef<TagCleanupScheduler>(new TagCleanupScheduler());
+  // Initialize directly to prevent memory leaks from recreating instances
+  const cleanupSchedulerRef = useRef(new TagCleanupScheduler());
 
   // Update note content with debouncing to prevent race conditions
   const save = useCallback(
@@ -122,7 +123,7 @@ export function useNote(
                 // - No race conditions from concurrent cleanups
                 if (result.tagsWereRemoved) {
                   cleanupSchedulerRef.current.scheduleCleanup(
-                    () => _cleanupUnusedTags(),
+                    () => cleanupUnusedTags(),
                     1000, // 1000ms delay (same as note save debounce)
                   );
                 }
