@@ -1,53 +1,10 @@
-import type { Content } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { Editor } from "@tiptap/react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
-
-/**
- * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
- * StructuredContent is a domain-level abstraction that's structurally compatible with
- * Tiptap's JSON format, but TypeScript requires explicit conversion.
- */
-export function toTiptapContent(content: StructuredContent): Content {
-  // Runtime validation: ensure content has the expected structure
-  if (!content || typeof content !== "object") {
-    throw new Error("Invalid content structure: must be an object");
-  }
-  if (!("type" in content) || typeof content.type !== "string") {
-    throw new Error(
-      "Invalid content structure: missing or invalid 'type' field",
-    );
-  }
-  if ("content" in content && !Array.isArray(content.content)) {
-    throw new Error("Invalid content structure: 'content' must be an array");
-  }
-  return content as unknown as Content;
-}
-
-/**
- * Type adapter to convert from Tiptap's Content to domain StructuredContent.
- */
-export function fromTiptapContent(content: Content): StructuredContent {
-  // Runtime validation: ensure content has the expected structure
-  const json = content as Record<string, unknown>;
-  if (!json || typeof json !== "object") {
-    throw new Error("Invalid Tiptap content structure: must be an object");
-  }
-  if (!("type" in json) || typeof json.type !== "string") {
-    throw new Error(
-      "Invalid Tiptap content structure: missing or invalid 'type' field",
-    );
-  }
-  if ("content" in json && !Array.isArray(json.content)) {
-    throw new Error(
-      "Invalid Tiptap content structure: 'content' must be an array",
-    );
-  }
-  return json as StructuredContent;
-}
+import { fromTiptapContent, toTiptapContent } from "@/presenters/note";
 
 type UseTiptapEditorOptions = {
   content: StructuredContent;
@@ -58,6 +15,7 @@ type UseTiptapEditorOptions = {
 
 /**
  * Custom hook for managing Tiptap editor instance
+ * @returns The Tiptap editor instance or null if not yet initialized
  */
 export function useTiptapEditor({
   content,

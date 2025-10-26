@@ -8,6 +8,7 @@ type UseEditorEditableOptions = {
 
 /**
  * Custom hook for managing editor editable state
+ * @returns void
  */
 export function useEditorEditable({
   editor,
