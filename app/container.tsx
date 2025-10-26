@@ -7,6 +7,7 @@ import { DrizzleSqliteNoteQueryService } from "@/core/adapters/drizzleSqlite/not
 import { DrizzleSqliteTagQueryService } from "@/core/adapters/drizzleSqlite/tagQueryService";
 import { DrizzleSqliteUnitOfWorkProvider } from "@/core/adapters/drizzleSqlite/unitOfWork";
 import type { Context } from "@/core/application/context";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 
 export type Container = Context;
 
@@ -28,6 +29,8 @@ function createContainer(): Context {
     unitOfWorkProvider: new DrizzleSqliteUnitOfWorkProvider(db),
     noteQueryService: new DrizzleSqliteNoteQueryService(db),
     tagQueryService: new DrizzleSqliteTagQueryService(db),
+    tagCleanupService: new TagCleanupService(),
+    tagSyncService: new TagSyncService(),
     exportPort: new BrowserExportPort(),
     tagExtractorPort: new BrowserTagExtractorPort(),
     settingsRepository: new BrowserSettingsRepository(),

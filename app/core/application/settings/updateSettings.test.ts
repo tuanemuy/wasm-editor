@@ -11,6 +11,7 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { DEFAULT_SETTINGS } from "@/core/domain/settings/entity";
 import { createAutoSaveInterval } from "@/core/domain/settings/valueObject";
+import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { updateSettings } from "./updateSettings";
 
@@ -22,6 +23,8 @@ describe("updateSettings", () => {
       unitOfWorkProvider: new EmptyUnitOfWorkProvider(),
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
+      tagCleanupService: new TagCleanupService(),
+      tagSyncService: new TagSyncService(),
       exportPort: new EmptyExportPort(),
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),

@@ -63,7 +63,8 @@ describe("extractTitle", () => {
   });
 
   it("should truncate text to 50 characters with ellipsis", () => {
-    const longText = "This is a very long text that exceeds fifty characters and should be truncated";
+    const longText =
+      "This is a very long text that exceeds fifty characters and should be truncated";
     const content: StructuredContent = {
       type: "doc",
       content: [
@@ -209,7 +210,7 @@ describe("extractTitle", () => {
 
     const result = extractTitle(content);
     // Should truncate to 50 emoji + "..."
-    expect(result).toBe("🤖".repeat(50) + "...");
+    expect(result).toBe(`${"🤖".repeat(50)}...`);
     // Verify we have exactly 50 emoji characters (not counting the ellipsis)
     const withoutEllipsis = result.slice(0, -3);
     expect(Array.from(withoutEllipsis).length).toBe(50);
