@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { toTiptapContent } from "@/presenters/note";
 
@@ -9,42 +9,8 @@ type UseEditorContentOptions = {
 };
 
 /**
- * Deep equality check for StructuredContent objects
- * More efficient than JSON.stringify for content comparison
- */
-function isContentEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (typeof a !== typeof b) return false;
-  if (typeof a !== "object") return false;
-
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
-
-  const aKeys = Object.keys(aObj);
-  const bKeys = Object.keys(bObj);
-
-  if (aKeys.length !== bKeys.length) return false;
-
-  for (const key of aKeys) {
-    if (!bKeys.includes(key)) return false;
-    if (Array.isArray(aObj[key]) && Array.isArray(bObj[key])) {
-      const aArr = aObj[key] as unknown[];
-      const bArr = bObj[key] as unknown[];
-      if (aArr.length !== bArr.length) return false;
-      for (let i = 0; i < aArr.length; i++) {
-        if (!isContentEqual(aArr[i], bArr[i])) return false;
-      }
-    } else if (!isContentEqual(aObj[key], bObj[key])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * Custom hook for synchronizing editor content with external state
+ * Uses direct prop comparison instead of useEffect for better performance
  * @returns void
  */
 export function useEditorContent({
@@ -54,33 +20,33 @@ export function useEditorContent({
   const isInitialMount = useRef(true);
   const previousContent = useRef<StructuredContent>(content);
 
-  // Memoize content equality check
-  const hasContentChanged = useMemo(() => {
-    if (isInitialMount.current) return false;
-    return !isContentEqual(previousContent.current, content);
-  }, [content]);
-
-  // Update editor content when prop changes (but avoid unnecessary updates)
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-
+  // Direct synchronization without useEffect
+  // This runs during render phase and is more efficient
+  if (editor && !editor.isDestroyed) {
     // Skip update on initial mount
     if (isInitialMount.current) {
       isInitialMount.current = false;
       previousContent.current = content;
-      return;
-    }
-
-    if (hasContentChanged) {
+    } else if (previousContent.current !== content) {
+      // Content reference has changed - update editor
       const { from, to } = editor.state.selection;
       editor.commands.setContent(toTiptapContent(content), {
         emitUpdate: false,
       });
       // Restore cursor position if possible
-      const newFrom = Math.min(from, editor.state.doc.content.size - 1);
-      const newTo = Math.min(to, editor.state.doc.content.size - 1);
+      const docSize = editor.state.doc.content.size;
+      const newFrom = Math.max(0, Math.min(from, docSize));
+      const newTo = Math.max(0, Math.min(to, docSize));
       editor.commands.setTextSelection({ from: newFrom, to: newTo });
       previousContent.current = content;
     }
-  }, [content, editor, hasContentChanged]);
+  }
+
+  // Reset on editor change
+  useEffect(() => {
+    if (editor) {
+      isInitialMount.current = true;
+      previousContent.current = content;
+    }
+  }, [editor, content]);
 }

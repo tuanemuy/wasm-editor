@@ -5,6 +5,7 @@ import { useEditorEditable } from "@/hooks/useEditorEditable";
 import { useLinkHandler } from "@/hooks/useLinkHandler";
 import { useTiptapEditor } from "@/hooks/useTiptapEditor";
 import { EditorToolbar } from "./EditorToolbar";
+import { LinkDialog } from "./LinkDialog";
 
 type TiptapEditorProps = {
   content: StructuredContent;
@@ -34,7 +35,8 @@ export function TiptapEditor({
   useEditorEditable({ editor, editable });
 
   // Handle link operations
-  const { toggleLink } = useLinkHandler({ editor });
+  const { dialogState, openLinkDialog, handleConfirm, handleCancel } =
+    useLinkHandler({ editor });
 
   // Use useEditorState to track selection changes for toolbar state updates
   // This only re-renders when the selection changes, not on every transaction
@@ -52,10 +54,20 @@ export function TiptapEditor({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar - only show in edit mode */}
-      {editable && <EditorToolbar editor={editor} onToggleLink={toggleLink} />}
+      {editable && (
+        <EditorToolbar editor={editor} onToggleLink={openLinkDialog} />
+      )}
 
       {/* Editor content */}
       <EditorContent editor={editor} className="flex-1 overflow-auto" />
+
+      {/* Link dialog */}
+      <LinkDialog
+        isOpen={dialogState.isOpen}
+        initialUrl={dialogState.initialUrl}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }

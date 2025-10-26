@@ -4,54 +4,69 @@
 
 import type { Content } from "@tiptap/core";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
+import { defaultNotification } from "@/presenters/notification";
 
 /**
  * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
  * StructuredContent is a domain-level abstraction that's structurally compatible with
  * Tiptap's JSON format, but TypeScript requires explicit conversion.
  * @param content - The domain StructuredContent to convert
- * @returns Tiptap Content type
- * @throws Error if content structure is invalid
+ * @returns Tiptap Content type or empty document if validation fails
  */
 export function toTiptapContent(content: StructuredContent): Content {
-  // Runtime validation: ensure content has the expected structure
-  if (!content || typeof content !== "object") {
-    throw new Error("Invalid content structure: must be an object");
-  }
-  if (!("type" in content) || typeof content.type !== "string") {
-    throw new Error(
-      "Invalid content structure: missing or invalid 'type' field",
+  try {
+    // Runtime validation: ensure content has the expected structure
+    if (!content || typeof content !== "object") {
+      throw new Error("Invalid content structure: must be an object");
+    }
+    if (!("type" in content) || typeof content.type !== "string") {
+      throw new Error(
+        "Invalid content structure: missing or invalid 'type' field",
+      );
+    }
+    if ("content" in content && !Array.isArray(content.content)) {
+      throw new Error("Invalid content structure: 'content' must be an array");
+    }
+    return content as unknown as Content;
+  } catch (error) {
+    defaultNotification.err(
+      `Failed to load content: ${error instanceof Error ? error.message : String(error)}`,
     );
+    // Return empty document as fallback
+    return { type: "doc", content: [] };
   }
-  if ("content" in content && !Array.isArray(content.content)) {
-    throw new Error("Invalid content structure: 'content' must be an array");
-  }
-  return content as unknown as Content;
 }
 
 /**
  * Type adapter to convert from Tiptap's Content to domain StructuredContent.
  * @param content - The Tiptap Content to convert
- * @returns Domain StructuredContent type
- * @throws Error if content structure is invalid
+ * @returns Domain StructuredContent type or empty document if validation fails
  */
 export function fromTiptapContent(content: Content): StructuredContent {
-  // Runtime validation: ensure content has the expected structure
-  const json = content as Record<string, unknown>;
-  if (!json || typeof json !== "object") {
-    throw new Error("Invalid Tiptap content structure: must be an object");
-  }
-  if (!("type" in json) || typeof json.type !== "string") {
-    throw new Error(
-      "Invalid Tiptap content structure: missing or invalid 'type' field",
+  try {
+    // Runtime validation: ensure content has the expected structure
+    const json = content as Record<string, unknown>;
+    if (!json || typeof json !== "object") {
+      throw new Error("Invalid Tiptap content structure: must be an object");
+    }
+    if (!("type" in json) || typeof json.type !== "string") {
+      throw new Error(
+        "Invalid Tiptap content structure: missing or invalid 'type' field",
+      );
+    }
+    if ("content" in json && !Array.isArray(json.content)) {
+      throw new Error(
+        "Invalid Tiptap content structure: 'content' must be an array",
+      );
+    }
+    return json as StructuredContent;
+  } catch (error) {
+    defaultNotification.err(
+      `Failed to convert content: ${error instanceof Error ? error.message : String(error)}`,
     );
+    // Return empty document as fallback
+    return { type: "doc", content: [] };
   }
-  if ("content" in json && !Array.isArray(json.content)) {
-    throw new Error(
-      "Invalid Tiptap content structure: 'content' must be an array",
-    );
-  }
-  return json as StructuredContent;
 }
 
 // Block elements that should have newlines after them
