@@ -3,6 +3,7 @@
 @import "./themes/candyland.css";
 @import "./typography.css";
 @import "./tweakcn.css";
+@import "./utilities/article.css";
 
 @custom-variant dark (&:is(.dark *));
 
