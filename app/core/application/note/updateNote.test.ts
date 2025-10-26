@@ -2,19 +2,14 @@
  * Update Note Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
+import type { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { createTag } from "@/core/domain/tag/entity";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
+import { createTestContext } from "../test-helpers";
 import { createTestContent } from "./test-helpers";
 import { updateNote } from "./updateNote";
 
@@ -23,17 +18,7 @@ describe("updateNote", () => {
   let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
-    unitOfWorkProvider = new EmptyUnitOfWorkProvider();
-    context = {
-      unitOfWorkProvider,
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-    };
+    ({ context, unitOfWorkProvider } = createTestContext());
   });
 
   it("有効な本文でメモを更新できる", async () => {
@@ -56,7 +41,7 @@ describe("updateNote", () => {
       text: "更新されたメモ",
     });
 
-    expect(result.note.content).toBe("更新されたメモ");
+    expect(result.note.text).toBe("更新されたメモ");
     expect(saveSpy).toHaveBeenCalledWith(result.note);
   });
 
@@ -175,7 +160,7 @@ describe("updateNote", () => {
       text: "a",
     });
 
-    expect(result.note.content).toBe("a");
+    expect(result.note.text).toBe("a");
     expect(saveSpy).toHaveBeenCalledWith(result.note);
   });
 

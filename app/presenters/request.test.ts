@@ -130,15 +130,15 @@ describe("request", () => {
       expect(onError).toHaveBeenCalledWith(undefined);
     });
 
-    it("should not throw errors even if callbacks throw", async () => {
+    it("should swallow errors from onSuccess callback and return result", async () => {
       const onSuccess = vi.fn(() => {
         throw new Error("callback error");
       });
 
-      // This should not throw
-      await expect(
-        request(Promise.resolve("success"), { onSuccess }),
-      ).rejects.toThrow("callback error");
+      // Callback errors are caught and ignored - the promise result is still returned
+      const result = await request(Promise.resolve("success"), { onSuccess });
+      expect(result).toBe("success");
+      expect(onSuccess).toHaveBeenCalled(); // Verify callback was invoked
     });
   });
 

@@ -2,33 +2,18 @@
  * Update Settings Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { DEFAULT_SETTINGS } from "@/core/domain/settings/entity";
 import { createAutoSaveInterval } from "@/core/domain/settings/valueObject";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
+import { createTestContext } from "../test-helpers";
 import { updateSettings } from "./updateSettings";
 
 describe("updateSettings", () => {
   let context: Context;
 
   beforeEach(() => {
-    context = {
-      unitOfWorkProvider: new EmptyUnitOfWorkProvider(),
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context } = createTestContext());
   });
 
   it("デフォルトソート順を更新できる", async () => {

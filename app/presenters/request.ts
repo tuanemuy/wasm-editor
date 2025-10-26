@@ -44,12 +44,24 @@ export async function request<T>(
 ): Promise<T | null> {
   try {
     const result = await promise;
-    callbacks.onSuccess?.(result);
+    try {
+      callbacks.onSuccess?.(result);
+    } catch {
+      // Silently ignore errors from callbacks to prevent disrupting the flow
+    }
     return result;
   } catch (error) {
-    callbacks.onError?.(error);
+    try {
+      callbacks.onError?.(error);
+    } catch {
+      // Silently ignore errors from callbacks to prevent disrupting the flow
+    }
     return null;
   } finally {
-    callbacks.onFinally?.();
+    try {
+      callbacks.onFinally?.();
+    } catch {
+      // Silently ignore errors from callbacks to prevent disrupting the flow
+    }
   }
 }
