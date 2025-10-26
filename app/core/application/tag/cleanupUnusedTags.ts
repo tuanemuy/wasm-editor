@@ -7,22 +7,16 @@ import type { TagId } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
 
 export async function cleanupUnusedTags(context: Context): Promise<TagId[]> {
-  // Find unused tags
-  const unusedTags = await context.tagQueryService.findUnused();
-
-  if (unusedTags.length === 0) {
-    return [];
-  }
-
-  const unusedTagIds = unusedTags.map((tag) => tag.id);
-
   // Delete unused tags using domain service
-  await context.unitOfWorkProvider.run(async (repositories) => {
-    await context.tagCleanupService.cleanupUnused(
-      context.tagQueryService,
-      repositories.tagRepository,
-    );
-  });
+  // The service queries and deletes within the transaction to avoid race conditions
+  const deletedTagIds = await context.unitOfWorkProvider.run(
+    async (repositories) => {
+      return await context.tagCleanupService.cleanupUnused(
+        context.tagQueryService,
+        repositories.tagRepository,
+      );
+    },
+  );
 
-  return unusedTagIds;
+  return deletedTagIds;
 }

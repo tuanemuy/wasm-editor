@@ -12,6 +12,7 @@ import { createTag } from "./entity";
 import type { TagExtractorPort } from "./ports/tagExtractorPort";
 import type { TagQueryService } from "./ports/tagQueryService";
 import type { TagRepository } from "./ports/tagRepository";
+import type { TagId } from "./valueObject";
 import { createTagName } from "./valueObject";
 
 /**
@@ -27,6 +28,7 @@ export class TagCleanupService {
    *
    * @param queryService - Tag query service for finding unused tags
    * @param repository - Tag repository for deleting tags
+   * @returns Array of deleted tag IDs
    *
    * @description
    * Finds all tags that are not associated with any notes and deletes them.
@@ -37,19 +39,23 @@ export class TagCleanupService {
    * - Does NOT create its own transaction (allows use within existing transactions)
    * - Prevents code duplication across application services
    * - Maintains single responsibility principle
+   * - Returns deleted tag IDs to avoid duplicate queries by caller
    *
    * @throws {SystemError} If cleanup operation fails
    */
   async cleanupUnused(
     queryService: TagQueryService,
     repository: TagRepository,
-  ): Promise<void> {
+  ): Promise<TagId[]> {
     const unusedTags = await queryService.findUnused();
 
-    if (unusedTags.length > 0) {
-      const unusedTagIds = unusedTags.map((tag) => tag.id);
-      await repository.deleteMany(unusedTagIds);
+    if (unusedTags.length === 0) {
+      return [];
     }
+
+    const unusedTagIds = unusedTags.map((tag) => tag.id);
+    await repository.deleteMany(unusedTagIds);
+    return unusedTagIds;
   }
 }
 
