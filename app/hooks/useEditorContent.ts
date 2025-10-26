@@ -10,7 +10,6 @@ type UseEditorContentOptions = {
 
 /**
  * Custom hook for synchronizing editor content with external state
- * Detects changes during render, applies mutations in useEffect
  * @returns void
  */
 export function useEditorContent({
@@ -19,28 +18,26 @@ export function useEditorContent({
 }: UseEditorContentOptions): void {
   const isInitialMount = useRef(true);
   const previousContent = useRef<StructuredContent>(content);
-  const shouldUpdate = useRef(false);
 
-  // Detect content changes during render (no mutations)
-  if (editor && !editor.isDestroyed) {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      previousContent.current = content;
-      shouldUpdate.current = false;
-    } else if (previousContent.current !== content) {
-      // Content reference has changed - flag for update
-      shouldUpdate.current = true;
-      previousContent.current = content;
-    }
-  }
-
-  // Apply mutations in useEffect (side effects belong here)
+  // Synchronize content changes
   useEffect(() => {
-    if (!editor || editor.isDestroyed || !shouldUpdate.current) {
+    if (!editor || editor.isDestroyed) {
       return;
     }
 
-    shouldUpdate.current = false;
+    // Skip initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      previousContent.current = content;
+      return;
+    }
+
+    // Check if content has changed (by reference)
+    if (previousContent.current === content) {
+      return;
+    }
+
+    previousContent.current = content;
 
     // Update editor content
     const { from, to } = editor.state.selection;
@@ -53,14 +50,17 @@ export function useEditorContent({
     const newFrom = Math.max(0, Math.min(from, docSize));
     const newTo = Math.max(0, Math.min(to, docSize));
     editor.commands.setTextSelection({ from: newFrom, to: newTo });
-  });
+  }, [editor, content]);
 
-  // Reset on editor change
+  // Reset initial mount flag when editor instance changes
+  // Note: We intentionally only depend on `editor` here, not `content`.
+  // Including `content` would reset isInitialMount on every content change,
+  // defeating the purpose of the initial mount check.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: content is intentionally excluded to prevent reset on every content change
   useEffect(() => {
     if (editor) {
       isInitialMount.current = true;
       previousContent.current = content;
-      shouldUpdate.current = false;
     }
-  }, [editor, content]);
+  }, [editor]);
 }
