@@ -2,17 +2,12 @@
  * Delete Note Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
+import type { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { NotFoundError } from "../error";
+import { createTestContext } from "../test-helpers";
 import { deleteNote } from "./deleteNote";
 import { createTestContent } from "./test-helpers";
 
@@ -21,17 +16,7 @@ describe("deleteNote", () => {
   let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
-    unitOfWorkProvider = new EmptyUnitOfWorkProvider();
-    context = {
-      unitOfWorkProvider,
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context, unitOfWorkProvider } = createTestContext());
   });
 
   it("有効なメモIDでメモを削除できる", async () => {

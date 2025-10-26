@@ -2,30 +2,15 @@
  * Reset Settings Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
+import { createTestContext } from "../test-helpers";
 import { resetSettings } from "./resetSettings";
 
 describe("resetSettings", () => {
   let context: Context;
 
   beforeEach(() => {
-    context = {
-      unitOfWorkProvider: new EmptyUnitOfWorkProvider(),
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context } = createTestContext());
   });
 
   it("設定をデフォルト値にリセットできる", async () => {

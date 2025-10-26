@@ -2,18 +2,13 @@
  * Delete Tags by Note Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
+import type { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import { createTag } from "@/core/domain/tag/entity";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
 import { createTestContent } from "../note/test-helpers";
+import { createTestContext } from "../test-helpers";
 import { deleteTagsByNote } from "./deleteTagsByNote";
 
 describe("deleteTagsByNote", () => {
@@ -21,17 +16,7 @@ describe("deleteTagsByNote", () => {
   let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
-    unitOfWorkProvider = new EmptyUnitOfWorkProvider();
-    context = {
-      unitOfWorkProvider,
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context, unitOfWorkProvider } = createTestContext());
   });
 
   it("有効なメモIDでタグ関連付けを削除できる", async () => {

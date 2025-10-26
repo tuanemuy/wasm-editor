@@ -2,15 +2,10 @@
  * Cleanup Unused Tags Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
+import type { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createTag } from "@/core/domain/tag/entity";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
+import { createTestContext } from "../test-helpers";
 import { cleanupUnusedTags } from "./cleanupUnusedTags";
 
 describe("cleanupUnusedTags", () => {
@@ -18,17 +13,7 @@ describe("cleanupUnusedTags", () => {
   let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
-    unitOfWorkProvider = new EmptyUnitOfWorkProvider();
-    context = {
-      unitOfWorkProvider,
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context, unitOfWorkProvider } = createTestContext());
   });
 
   it("使用回数が0のタグが削除される", async () => {

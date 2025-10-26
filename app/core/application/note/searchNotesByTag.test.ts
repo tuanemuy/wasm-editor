@@ -2,35 +2,18 @@
  * Search Notes by Tag Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExporter } from "@/core/adapters/empty/exporter";
-import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
-import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
-import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
-import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { createNote } from "@/core/domain/note/entity";
-import { TagCleanupService, TagSyncService } from "@/core/domain/tag/service";
 import { createTagId } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
+import { createTestContext } from "../test-helpers";
 import { searchNotesByTag } from "./searchNotesByTag";
 import { createTestContent } from "./test-helpers";
 
 describe("searchNotesByTag", () => {
   let context: Context;
-  let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
-    unitOfWorkProvider = new EmptyUnitOfWorkProvider();
-    context = {
-      unitOfWorkProvider,
-      noteQueryService: new EmptyNoteQueryService(),
-      tagQueryService: new EmptyTagQueryService(),
-      tagCleanupService: new TagCleanupService(),
-      tagSyncService: new TagSyncService(),
-      exporter: new EmptyExporter(),
-      tagExtractor: new EmptyTagExtractor(),
-      settingsRepository: new EmptySettingsRepository(),
-    };
+    ({ context } = createTestContext());
   });
 
   it("有効なタグ名でメモを検索できる", async () => {
