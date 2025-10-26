@@ -28,8 +28,8 @@ function createContainer(): Context {
     unitOfWorkProvider: new DrizzleSqliteUnitOfWorkProvider(db),
     noteQueryService: new DrizzleSqliteNoteQueryService(db),
     tagQueryService: new DrizzleSqliteTagQueryService(db),
-    exportPort: new BrowserExportPort(),
-    tagExtractorPort: new BrowserTagExtractorPort(),
+    exporter: new BrowserExportPort(),
+    tagExtractor: new BrowserTagExtractorPort(),
     settingsRepository: new BrowserSettingsRepository(),
   };
 

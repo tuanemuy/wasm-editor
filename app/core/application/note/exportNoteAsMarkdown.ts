@@ -22,5 +22,5 @@ export async function exportNoteAsMarkdown(
   });
 
   // Export as markdown
-  return await context.exportPort.exportAsMarkdown(note);
+  return await context.exporter.exportAsMarkdown(note);
 }

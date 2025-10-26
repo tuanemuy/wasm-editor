@@ -35,7 +35,7 @@ export async function updateNote(
     // If extraction fails, continue with empty tags
     let tagNames: string[] = [];
     try {
-      tagNames = await context.tagExtractorPort.extractTags(updatedNote.text);
+      tagNames = await context.tagExtractor.extractTags(updatedNote.text);
     } catch (error) {
       // Silently ignore tag extraction errors
       // TODO: Add proper logging when logging infrastructure is implemented

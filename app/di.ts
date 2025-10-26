@@ -54,8 +54,8 @@ export function createTursoWasmContainer(db: Database): Container {
   const noteQueryService = new TursoWasmNoteQueryService(db);
   const tagQueryService = new TursoWasmTagQueryService(db);
   const tagCleanupService = new TagCleanupService();
-  const exportPort = new BrowserExportPort();
-  const tagExtractorPort = new BrowserTagExtractorPort();
+  const exporter = new BrowserExportPort();
+  const tagExtractor = new BrowserTagExtractorPort();
   const settingsRepository = new BrowserSettingsRepository();
 
   return {
@@ -63,8 +63,8 @@ export function createTursoWasmContainer(db: Database): Container {
     noteQueryService,
     tagQueryService,
     tagCleanupService,
-    exportPort,
-    tagExtractorPort,
+    exporter,
+    tagExtractor,
     settingsRepository,
   };
 }
@@ -74,8 +74,8 @@ export function createLocalStorageContainer(): Container {
   const noteQueryService = new LocalStorageNoteQueryService();
   const tagQueryService = new LocalStorageTagQueryService();
   const tagCleanupService = new TagCleanupService();
-  const exportPort = new BrowserExportPort();
-  const tagExtractorPort = new BrowserTagExtractorPort();
+  const exporter = new BrowserExportPort();
+  const tagExtractor = new BrowserTagExtractorPort();
   const settingsRepository = new BrowserSettingsRepository();
 
   return {
@@ -83,8 +83,8 @@ export function createLocalStorageContainer(): Container {
     noteQueryService,
     tagQueryService,
     tagCleanupService,
-    exportPort,
-    tagExtractorPort,
+    exporter,
+    tagExtractor,
     settingsRepository,
   };
 }

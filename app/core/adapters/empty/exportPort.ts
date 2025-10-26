@@ -7,10 +7,10 @@
 import type { Note } from "@/core/domain/note/entity";
 import type {
   ExportedFile,
-  ExportPort,
+  Exporter,
 } from "@/core/domain/note/ports/exportPort";
 
-export class EmptyExportPort implements ExportPort {
+export class EmptyExportPort implements Exporter {
   async exportAsMarkdown(_note: Note): Promise<ExportedFile> {
     throw new Error("Not implemented");
   }

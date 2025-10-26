@@ -1,17 +1,17 @@
 /**
  * Browser Export Port Adapter
  *
- * Implements ExportPort using browser File System Access API.
+ * Implements Exporter using browser File System Access API.
  * Exports notes as Markdown files and ZIP archives.
  */
 import { SystemError, SystemErrorCode } from "@/core/application/error";
 import type { Note } from "@/core/domain/note/entity";
 import type {
   ExportedFile,
-  ExportPort,
+  Exporter,
 } from "@/core/domain/note/ports/exportPort";
 
-export class BrowserExportPort implements ExportPort {
+export class BrowserExportPort implements Exporter {
   /**
    * Extract title from note content (first line or first heading)
    */

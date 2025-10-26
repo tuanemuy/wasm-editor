@@ -21,8 +21,8 @@ describe("getSettings", () => {
       unitOfWorkProvider: new EmptyUnitOfWorkProvider(),
       noteQueryService: new EmptyNoteQueryService(),
       tagQueryService: new EmptyTagQueryService(),
-      exportPort: new EmptyExportPort(),
-      tagExtractorPort: new EmptyTagExtractorPort(),
+      exporter: new EmptyExportPort(),
+      tagExtractor: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),
     };
   });
