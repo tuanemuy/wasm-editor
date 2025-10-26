@@ -13,6 +13,7 @@ import { createTag } from "@/core/domain/tag/entity";
 import type { TagId } from "@/core/domain/tag/valueObject";
 import { createTagName } from "@/core/domain/tag/valueObject";
 import type { Context } from "../context";
+import { cleanupUnusedTags } from "../tag/cleanupUnusedTags";
 
 export type UpdateNoteInput = {
   id: NoteId;
@@ -75,24 +76,29 @@ export async function updateNote(
 
     const tagIds: TagId[] = tags.map((tag) => tag.id);
 
+    // Store old tag IDs for comparison
+    const oldTagIds = note.tagIds;
+
     // Update note's tagIds
     updatedNote = updateTagIds(updatedNote, tagIds);
 
     // Save updated note
     await repositories.noteRepository.save(updatedNote);
 
-    // Cleanup unused tags within the same transaction
-    // This ensures atomicity and prevents race conditions
-    // Uses domain service to encapsulate cleanup logic
-    try {
-      await context.tagCleanupService.cleanupUnused(
-        context.tagQueryService,
-        repositories.tagRepository,
+    // Detect if tags were removed
+    const removedTags = oldTagIds.filter((id) => !tagIds.includes(id));
+
+    // Schedule delayed cleanup only if tags were removed
+    // This reduces performance impact by avoiding unnecessary cleanup operations
+    // Using the scheduler ensures:
+    // - Multiple rapid updates are debounced into a single cleanup
+    // - Cleanup can be cancelled if context is destroyed
+    // - No race conditions from concurrent cleanups
+    if (removedTags.length > 0) {
+      context.tagCleanupScheduler.scheduleCleanup(
+        () => cleanupUnusedTags(context),
+        1000, // 1000ms delay (same as note save debounce)
       );
-    } catch (error) {
-      // Silently ignore cleanup errors to not fail the note update
-      // TODO: Add proper logging when logging infrastructure is implemented
-      console.error("Tag cleanup failed:", error);
     }
 
     return updatedNote;

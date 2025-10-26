@@ -1,7 +1,7 @@
 /**
  * Update Note Use Case Tests
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EmptyExportPort } from "@/core/adapters/empty/exportPort";
 import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
 import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
@@ -11,6 +11,7 @@ import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { BusinessRuleError } from "@/core/domain/error";
 import { createNote } from "@/core/domain/note/entity";
 import { createNoteId } from "@/core/domain/note/valueObject";
+import { TagCleanupScheduler } from "@/core/domain/tag/cleanupScheduler";
 import { createTag } from "@/core/domain/tag/entity";
 import { TagCleanupService } from "@/core/domain/tag/service";
 import type { Context } from "../context";
@@ -23,6 +24,7 @@ describe("updateNote", () => {
   let unitOfWorkProvider: EmptyUnitOfWorkProvider;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     unitOfWorkProvider = new EmptyUnitOfWorkProvider();
     context = {
       unitOfWorkProvider,
@@ -32,7 +34,12 @@ describe("updateNote", () => {
       tagExtractorPort: new EmptyTagExtractorPort(),
       settingsRepository: new EmptySettingsRepository(),
       tagCleanupService: new TagCleanupService(),
+      tagCleanupScheduler: new TagCleanupScheduler(),
     };
+  });
+
+  afterEach(() => {
+    vi.restoreAllTimers();
   });
 
   it("有効な本文でメモを更新できる", async () => {
@@ -356,9 +363,11 @@ describe("updateNote", () => {
   });
 
   it("未使用タグが更新後に自動的にクリーンアップされる", async () => {
+    const tag1 = createTag({ name: "tag1" });
     const originalNote = createNote({
-      content: createTestContent("元のメモ"),
-      text: "元のメモ",
+      content: createTestContent("#tag1 元のメモ"),
+      text: "#tag1 元のメモ",
+      tagIds: [tag1.id],
     });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -385,15 +394,23 @@ describe("updateNote", () => {
       text: "更新されたメモ",
     });
 
+    // クリーンアップはまだ実行されていない（スケジュール済み）
+    expect(deleteManySpy).not.toHaveBeenCalled();
+
+    // タイマーを進める
+    await vi.advanceTimersByTimeAsync(1000);
+
     // クリーンアップが実行される
     expect(deleteManySpy).toHaveBeenCalledTimes(1);
     expect(deleteManySpy).toHaveBeenCalledWith([unusedTag.id]);
   });
 
   it("クリーンアップエラーでもメモ更新は成功する", async () => {
+    const tag1 = createTag({ name: "tag1" });
     const originalNote = createNote({
-      content: createTestContent("元のメモ"),
-      text: "元のメモ",
+      content: createTestContent("#tag1 元のメモ"),
+      text: "#tag1 元のメモ",
+      tagIds: [tag1.id],
     });
     const repositories = unitOfWorkProvider.getRepositories();
 
@@ -419,6 +436,9 @@ describe("updateNote", () => {
     // メモは正常に保存される
     expect(updatedNote.text).toBe("更新されたメモ");
     expect(noteSaveSpy).toHaveBeenCalledTimes(1);
+
+    // タイマーを進めてもエラーは発生しない（内部でキャッチされる）
+    await vi.advanceTimersByTimeAsync(1000);
   });
 
   it("未使用タグがない場合はクリーンアップがスキップされる", async () => {
@@ -446,7 +466,96 @@ describe("updateNote", () => {
       text: "更新されたメモ",
     });
 
-    // クリーンアップは呼ばれない
+    // タイマーを進める
+    await vi.advanceTimersByTimeAsync(1000);
+
+    // クリーンアップは呼ばれない（未使用タグがないため）
     expect(deleteManySpy).not.toHaveBeenCalled();
+  });
+
+  it("タグが削除されない場合はクリーンアップがスケジュールされない", async () => {
+    const tag1 = createTag({ name: "tag1" });
+    const originalNote = createNote({
+      content: createTestContent("#tag1 元のメモ"),
+      text: "#tag1 元のメモ",
+      tagIds: [tag1.id],
+    });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    // 同じタグが抽出される
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+      "tag1",
+    ]);
+    vi.spyOn(repositories.tagRepository, "findByName").mockResolvedValue(tag1);
+    vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
+
+    const findUnusedSpy = vi.spyOn(context.tagQueryService, "findUnused");
+
+    await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("#tag1 更新されたメモ"),
+      text: "#tag1 更新されたメモ",
+    });
+
+    // タイマーを進める
+    await vi.advanceTimersByTimeAsync(1000);
+
+    // クリーンアップはスケジュールされない（タグが削除されていないため）
+    expect(findUnusedSpy).not.toHaveBeenCalled();
+  });
+
+  it("複数回の更新でクリーンアップが1回だけ実行される（デバウンス）", async () => {
+    const tag1 = createTag({ name: "tag1" });
+    const tag2 = createTag({ name: "tag2" });
+    const originalNote = createNote({
+      content: createTestContent("#tag1 #tag2 元のメモ"),
+      text: "#tag1 #tag2 元のメモ",
+      tagIds: [tag1.id, tag2.id],
+    });
+    const repositories = unitOfWorkProvider.getRepositories();
+
+    vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
+      originalNote,
+    );
+    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([]);
+    vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
+
+    const unusedTag = createTag({ name: "unused" });
+    vi.spyOn(context.tagQueryService, "findUnused").mockResolvedValue([
+      unusedTag,
+    ]);
+    const deleteManySpy = vi
+      .spyOn(repositories.tagRepository, "deleteMany")
+      .mockResolvedValue();
+
+    // 1回目の更新
+    await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("更新1"),
+      text: "更新1",
+    });
+
+    // 500ms経過
+    await vi.advanceTimersByTimeAsync(500);
+
+    // 2回目の更新（1回目のクリーンアップがキャンセルされる）
+    await updateNote(context, {
+      id: originalNote.id,
+      content: createTestContent("更新2"),
+      text: "更新2",
+    });
+
+    // 500ms経過（合計1000msだが、2回目から500msなのでまだ実行されない）
+    await vi.advanceTimersByTimeAsync(500);
+    expect(deleteManySpy).not.toHaveBeenCalled();
+
+    // さらに500ms経過（2回目から1000ms）
+    await vi.advanceTimersByTimeAsync(500);
+
+    // クリーンアップが1回だけ実行される
+    expect(deleteManySpy).toHaveBeenCalledTimes(1);
   });
 });
