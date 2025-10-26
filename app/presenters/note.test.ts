@@ -76,7 +76,9 @@ describe("extractTitle", () => {
     };
 
     const result = extractTitle(content);
-    expect(result).toBe("This is a very long text that exceeds fifty char...");
+    expect(result).toBe(
+      "This is a very long text that exceeds fifty charac...",
+    );
     expect(result.length).toBe(53); // 50 + "..."
   });
 

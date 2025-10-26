@@ -56,7 +56,7 @@ describe("updateNote", () => {
       text: "更新されたメモ",
     });
 
-    expect(result.note.content).toBe("更新されたメモ");
+    expect(result.note.text).toBe("更新されたメモ");
     expect(saveSpy).toHaveBeenCalledWith(result.note);
   });
 
@@ -175,7 +175,7 @@ describe("updateNote", () => {
       text: "a",
     });
 
-    expect(result.note.content).toBe("a");
+    expect(result.note.text).toBe("a");
     expect(saveSpy).toHaveBeenCalledWith(result.note);
   });
 
