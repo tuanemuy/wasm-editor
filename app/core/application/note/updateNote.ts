@@ -90,15 +90,15 @@ export async function updateNote(
 
     // Schedule delayed cleanup only if tags were removed
     // This reduces performance impact by avoiding unnecessary cleanup operations
+    // Using the scheduler ensures:
+    // - Multiple rapid updates are debounced into a single cleanup
+    // - Cleanup can be cancelled if context is destroyed
+    // - No race conditions from concurrent cleanups
     if (removedTags.length > 0) {
-      setTimeout(() => {
-        // Run cleanup in background using application service
-        cleanupUnusedTags(context).catch((error) => {
-          // Silently ignore cleanup errors to not affect user experience
-          // TODO: Add proper logging when logging infrastructure is implemented
-          console.error("Background tag cleanup failed:", error);
-        });
-      }, 1000); // 1000ms delay (same as note save debounce)
+      context.tagCleanupScheduler.scheduleCleanup(
+        () => cleanupUnusedTags(context),
+        1000, // 1000ms delay (same as note save debounce)
+      );
     }
 
     return updatedNote;

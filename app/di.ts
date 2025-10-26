@@ -9,6 +9,7 @@ import { TursoWasmNoteQueryService } from "@/core/adapters/tursoWasm/noteQuerySe
 import { TursoWasmTagQueryService } from "@/core/adapters/tursoWasm/tagQueryService";
 import { TursoWasmUnitOfWorkProvider } from "@/core/adapters/tursoWasm/unitOfWork";
 import type { Container } from "@/core/application/container";
+import { TagCleanupScheduler } from "@/core/domain/tag/cleanupScheduler";
 import { TagCleanupService } from "@/core/domain/tag/service";
 
 // Storage adapter type
@@ -54,6 +55,7 @@ export function createTursoWasmContainer(db: Database): Container {
   const noteQueryService = new TursoWasmNoteQueryService(db);
   const tagQueryService = new TursoWasmTagQueryService(db);
   const tagCleanupService = new TagCleanupService();
+  const tagCleanupScheduler = new TagCleanupScheduler();
   const exportPort = new BrowserExportPort();
   const tagExtractorPort = new BrowserTagExtractorPort();
   const settingsRepository = new BrowserSettingsRepository();
@@ -63,6 +65,7 @@ export function createTursoWasmContainer(db: Database): Container {
     noteQueryService,
     tagQueryService,
     tagCleanupService,
+    tagCleanupScheduler,
     exportPort,
     tagExtractorPort,
     settingsRepository,
@@ -74,6 +77,7 @@ export function createLocalStorageContainer(): Container {
   const noteQueryService = new LocalStorageNoteQueryService();
   const tagQueryService = new LocalStorageTagQueryService();
   const tagCleanupService = new TagCleanupService();
+  const tagCleanupScheduler = new TagCleanupScheduler();
   const exportPort = new BrowserExportPort();
   const tagExtractorPort = new BrowserTagExtractorPort();
   const settingsRepository = new BrowserSettingsRepository();
@@ -83,6 +87,7 @@ export function createLocalStorageContainer(): Container {
     noteQueryService,
     tagQueryService,
     tagCleanupService,
+    tagCleanupScheduler,
     exportPort,
     tagExtractorPort,
     settingsRepository,
