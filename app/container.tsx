@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
-import { BrowserExportPort } from "@/core/adapters/browser/exportPort";
+import { BrowserExporter } from "@/core/adapters/browser/exporter";
 import { BrowserSettingsRepository } from "@/core/adapters/browser/settingsRepository";
-import { BrowserTagExtractorPort } from "@/core/adapters/browser/tagExtractorPort";
+import { BrowserTagExtractor } from "@/core/adapters/browser/tagExtractor";
 import { getDatabase } from "@/core/adapters/drizzleSqlite/client";
 import { DrizzleSqliteNoteQueryService } from "@/core/adapters/drizzleSqlite/noteQueryService";
 import { DrizzleSqliteTagQueryService } from "@/core/adapters/drizzleSqlite/tagQueryService";
@@ -31,8 +31,8 @@ function createContainer(): Context {
     tagQueryService: new DrizzleSqliteTagQueryService(db),
     tagCleanupService: new TagCleanupService(),
     tagSyncService: new TagSyncService(),
-    exportPort: new BrowserExportPort(),
-    tagExtractorPort: new BrowserTagExtractorPort(),
+    exporter: new BrowserExporter(),
+    tagExtractor: new BrowserTagExtractor(),
     settingsRepository: new BrowserSettingsRepository(),
   };
 

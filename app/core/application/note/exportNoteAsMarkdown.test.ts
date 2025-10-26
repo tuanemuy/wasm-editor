@@ -81,7 +81,7 @@ describe("exportNoteAsMarkdown", () => {
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
-    vi.spyOn(context.exportPort, "exportAsMarkdown").mockResolvedValue({
+    vi.spyOn(context.exporter, "exportAsMarkdown").mockResolvedValue({
       filename: "マイタイトル.md",
       content: "# マイタイトル\n\n本文",
     });
@@ -99,7 +99,7 @@ describe("exportNoteAsMarkdown", () => {
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
-    vi.spyOn(context.exportPort, "exportAsMarkdown").mockResolvedValue({
+    vi.spyOn(context.exporter, "exportAsMarkdown").mockResolvedValue({
       filename: "note.md",
       content: "テストメモ",
     });
@@ -115,7 +115,7 @@ describe("exportNoteAsMarkdown", () => {
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
-    vi.spyOn(context.exportPort, "exportAsMarkdown").mockResolvedValue({
+    vi.spyOn(context.exporter, "exportAsMarkdown").mockResolvedValue({
       filename: "タイトル.md",
       content: text,
     });
@@ -133,7 +133,7 @@ describe("exportNoteAsMarkdown", () => {
     const repositories = unitOfWorkProvider.getRepositories();
 
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(note);
-    vi.spyOn(context.exportPort, "exportAsMarkdown").mockResolvedValue({
+    vi.spyOn(context.exporter, "exportAsMarkdown").mockResolvedValue({
       filename: `note-${note.createdAt.toISOString()}.md`,
       content: "タイトルなしの本文",
     });

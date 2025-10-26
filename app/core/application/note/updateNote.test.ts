@@ -267,7 +267,7 @@ describe("updateNote", () => {
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
       originalNote,
     );
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+    vi.spyOn(context.tagExtractor, "extractTags").mockResolvedValue([
       "test",
       "sample",
     ]);
@@ -301,7 +301,7 @@ describe("updateNote", () => {
       originalNote,
     );
     // tagExtractorPortがエラーをスローする
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockRejectedValue(
+    vi.spyOn(context.tagExtractor, "extractTags").mockRejectedValue(
       new Error("Tag extraction failed"),
     );
     const noteSaveSpy = vi
@@ -331,7 +331,7 @@ describe("updateNote", () => {
       originalNote,
     );
     // tagExtractorPortは有効・無効両方のタグを返す
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
+    vi.spyOn(context.tagExtractor, "extractTags").mockResolvedValue([
       "valid",
       "invalid with spaces", // 無効な文字を含む
     ]);
@@ -368,7 +368,7 @@ describe("updateNote", () => {
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
       originalNote,
     );
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([]);
+    vi.spyOn(context.tagExtractor, "extractTags").mockResolvedValue([]);
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
 
     const result = await updateNote(context, {
@@ -394,9 +394,7 @@ describe("updateNote", () => {
       originalNote,
     );
     // 同じタグが抽出される
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
-      "tag1",
-    ]);
+    vi.spyOn(context.tagExtractor, "extractTags").mockResolvedValue(["tag1"]);
     vi.spyOn(repositories.tagRepository, "findByName").mockResolvedValue(tag1);
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
 
@@ -420,9 +418,7 @@ describe("updateNote", () => {
     vi.spyOn(repositories.noteRepository, "findById").mockResolvedValue(
       originalNote,
     );
-    vi.spyOn(context.tagExtractorPort, "extractTags").mockResolvedValue([
-      "newtag",
-    ]);
+    vi.spyOn(context.tagExtractor, "extractTags").mockResolvedValue(["newtag"]);
     vi.spyOn(repositories.tagRepository, "findByName").mockResolvedValue(null);
     vi.spyOn(repositories.tagRepository, "save").mockResolvedValue();
     vi.spyOn(repositories.noteRepository, "save").mockResolvedValue();
