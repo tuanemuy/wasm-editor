@@ -5,7 +5,7 @@ import { useSearch } from "@/context/search";
 import type { Note } from "@/core/domain/note/entity";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
 import { formatDate } from "@/presenters/date";
-import { generateNoteHTML } from "@/presenters/note";
+import { generateNoteHTML, highlightHTMLContent } from "@/presenters/note";
 
 export interface NoteCardProps {
   note: Note;
@@ -13,10 +13,11 @@ export interface NoteCardProps {
 }
 
 export function NoteCard({ note, tags }: NoteCardProps) {
-  const { sortField } = useSearch();
+  const { query, sortField } = useSearch();
   const displayDate =
     sortField === "updated_at" ? note.updatedAt : note.createdAt;
   const html = generateNoteHTML(note.content);
+  const highlightedHtml = highlightHTMLContent(html, query);
 
   return (
     <Link to={`/memos/${note.id}`} viewTransition>
@@ -25,7 +26,7 @@ export function NoteCard({ note, tags }: NoteCardProps) {
           <div className="relative">
             <div
               className="article article__preview max-h-[50dvh] overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: html }}
+              dangerouslySetInnerHTML={{ __html: highlightedHtml }}
             />
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card group-hover:from-muted to-transparent transition-colors pointer-events-none" />
           </div>

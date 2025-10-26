@@ -234,3 +234,78 @@ export function generateNoteHTML(content: StructuredContent): string {
     }),
   ]);
 }
+
+/**
+ * Highlight search query in HTML content
+ * Safely highlights text nodes while preserving HTML structure
+ * @param html - The HTML string to process
+ * @param query - The search query to highlight
+ * @returns HTML string with highlighted matches
+ */
+export function highlightHTMLContent(html: string, query: string): string {
+  if (!query.trim()) {
+    return html;
+  }
+
+  try {
+    // Escape special regex characters
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+
+    // Use DOMParser to safely parse and manipulate HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // Recursive function to highlight text nodes
+    function highlightTextNodes(node: Node): void {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent || "";
+        if (regex.test(text)) {
+          // Reset regex index
+          regex.lastIndex = 0;
+
+          // Create a temporary container for the highlighted content
+          const span = document.createElement("span");
+          const parts = text.split(regex);
+
+          for (const part of parts) {
+            if (!part) continue;
+
+            regex.lastIndex = 0;
+            const isMatch = regex.test(part);
+            regex.lastIndex = 0;
+
+            if (isMatch) {
+              const mark = document.createElement("mark");
+              mark.className =
+                "bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded";
+              mark.textContent = part;
+              span.appendChild(mark);
+            } else {
+              span.appendChild(document.createTextNode(part));
+            }
+          }
+
+          // Replace the text node with the highlighted content
+          node.parentNode?.replaceChild(span, node);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Skip script and style elements
+        const element = node as Element;
+        if (element.tagName !== "SCRIPT" && element.tagName !== "STYLE") {
+          // Process child nodes (use array to avoid live NodeList issues)
+          Array.from(node.childNodes).forEach(highlightTextNodes);
+        }
+      }
+    }
+
+    // Start highlighting from the body element
+    highlightTextNodes(doc.body);
+
+    // Return the highlighted HTML
+    return doc.body.innerHTML;
+  } catch {
+    // If processing fails, return the original HTML
+    return html;
+  }
+}
