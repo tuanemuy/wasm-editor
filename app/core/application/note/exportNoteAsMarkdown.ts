@@ -4,7 +4,7 @@
  * Exports a single note as a Markdown file.
  */
 
-import type { ExportedFile } from "@/core/domain/note/ports/exportPort";
+import type { ExportedFile } from "@/core/domain/note/ports/exporter";
 import type { NoteId } from "@/core/domain/note/valueObject";
 import type { Context } from "../context";
 
@@ -22,5 +22,5 @@ export async function exportNoteAsMarkdown(
   });
 
   // Export as markdown
-  return await context.exportPort.exportAsMarkdown(note);
+  return await context.exporter.exportAsMarkdown(note);
 }

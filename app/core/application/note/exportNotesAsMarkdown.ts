@@ -23,5 +23,5 @@ export async function exportNotesAsMarkdown(
   });
 
   // Export as ZIP
-  return await context.exportPort.exportMultipleAsMarkdown(notes);
+  return await context.exporter.exportMultipleAsMarkdown(notes);
 }

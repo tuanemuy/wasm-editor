@@ -1,13 +1,13 @@
 /**
- * Browser Tag Extractor Port Adapter
+ * Browser Tag Extractor Adapter
  *
- * Implements TagExtractorPort using regex pattern matching.
+ * Implements TagExtractor using regex pattern matching.
  * Extracts hashtags from note content.
  */
 import { SystemError, SystemErrorCode } from "@/core/application/error";
-import type { TagExtractorPort } from "@/core/domain/tag/ports/tagExtractorPort";
+import type { TagExtractor } from "@/core/domain/tag/ports/tagExtractor";
 
-export class BrowserTagExtractorPort implements TagExtractorPort {
+export class BrowserTagExtractor implements TagExtractor {
   /**
    * Tag pattern: #([a-zA-Z0-9ぁ-んァ-ヶー一-龯\-_]+)
    *

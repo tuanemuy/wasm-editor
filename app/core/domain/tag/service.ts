@@ -9,7 +9,7 @@
  */
 import type { Tag } from "./entity";
 import { createTag } from "./entity";
-import type { TagExtractorPort } from "./ports/tagExtractorPort";
+import type { TagExtractor } from "./ports/tagExtractor";
 import type { TagQueryService } from "./ports/tagQueryService";
 import type { TagRepository } from "./ports/tagRepository";
 import type { TagId } from "./valueObject";
@@ -91,7 +91,7 @@ export class TagSyncService {
    * - Returns empty array on extraction failure (non-blocking)
    */
   async extractAndSync(
-    tagExtractor: TagExtractorPort,
+    tagExtractor: TagExtractor,
     repository: TagRepository,
     text: string,
   ): Promise<Tag[]> {

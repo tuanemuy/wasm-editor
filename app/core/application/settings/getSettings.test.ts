@@ -2,10 +2,10 @@
  * Get Settings Use Case Tests
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EmptyExportPort } from "@/core/adapters/empty/exportPort";
+import { EmptyExporter } from "@/core/adapters/empty/exporter";
 import { EmptyNoteQueryService } from "@/core/adapters/empty/noteQueryService";
 import { EmptySettingsRepository } from "@/core/adapters/empty/settingsRepository";
-import { EmptyTagExtractorPort } from "@/core/adapters/empty/tagExtractorPort";
+import { EmptyTagExtractor } from "@/core/adapters/empty/tagExtractor";
 import { EmptyTagQueryService } from "@/core/adapters/empty/tagQueryService";
 import { EmptyUnitOfWorkProvider } from "@/core/adapters/empty/unitOfWork";
 import { DEFAULT_SETTINGS } from "@/core/domain/settings/entity";
@@ -24,8 +24,8 @@ describe("getSettings", () => {
       tagQueryService: new EmptyTagQueryService(),
       tagCleanupService: new TagCleanupService(),
       tagSyncService: new TagSyncService(),
-      exportPort: new EmptyExportPort(),
-      tagExtractorPort: new EmptyTagExtractorPort(),
+      exporter: new EmptyExporter(),
+      tagExtractor: new EmptyTagExtractor(),
       settingsRepository: new EmptySettingsRepository(),
     };
   });
