@@ -77,7 +77,7 @@ export class TagSyncService {
    * @description
    * This service:
    * - Extracts tag names from text using the provided extractor
-   * - Validates tag names
+   * - Validates tag names through domain value objects (createTagName)
    * - Finds existing tags or creates new ones
    * - Handles errors gracefully (invalid tags are skipped)
    * - Must be called within a transaction context
@@ -86,6 +86,7 @@ export class TagSyncService {
    * - Encapsulates tag extraction and synchronization logic
    * - Prevents code duplication across application services (updateNote, etc.)
    * - Does NOT create its own transaction (allows use within existing transactions)
+   * - Delegates validation to domain value objects (follows DDD principles)
    * - Gracefully handles extraction and validation errors
    * - Returns empty array on extraction failure (non-blocking)
    */
@@ -94,17 +95,6 @@ export class TagSyncService {
     repository: TagRepository,
     text: string,
   ): Promise<Tag[]> {
-    // Validate input text
-    if (typeof text !== "string") {
-      return [];
-    }
-
-    // Handle empty or whitespace-only text
-    const trimmedText = text.trim();
-    if (trimmedText.length === 0) {
-      return [];
-    }
-
     // Extract tag names from text
     let tagNames: string[] = [];
     try {
