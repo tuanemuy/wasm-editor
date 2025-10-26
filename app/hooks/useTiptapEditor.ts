@@ -43,10 +43,16 @@ export function useTiptapEditor({
     content: toTiptapContent(content),
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
-      onChange(
-        fromTiptapContent(updatedEditor.getJSON()),
-        updatedEditor.getText(),
-      );
+      try {
+        onChange(
+          fromTiptapContent(updatedEditor.getJSON()),
+          updatedEditor.getText(),
+        );
+      } catch (error) {
+        // fromTiptapContent already handles errors internally and returns fallback
+        // This catch is for any unexpected errors
+        console.error("Unexpected error in editor update:", error);
+      }
     },
     editorProps: {
       attributes: {

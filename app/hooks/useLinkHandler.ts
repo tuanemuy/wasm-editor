@@ -23,8 +23,9 @@ export function useLinkHandler({ editor }: UseLinkHandlerOptions) {
   const openLinkDialog = useCallback(() => {
     if (!editor) return;
 
+    const linkAttrs = editor.getAttributes("link");
     const previousUrl =
-      (editor.getAttributes("link").href as string | undefined) ?? "";
+      typeof linkAttrs.href === "string" ? linkAttrs.href : "";
     setDialogState({
       isOpen: true,
       initialUrl: previousUrl,

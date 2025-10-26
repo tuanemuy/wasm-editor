@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,13 +29,15 @@ export function LinkDialog({
 }: LinkDialogProps) {
   const [url, setUrl] = useState(initialUrl);
   const [error, setError] = useState<string | null>(null);
+  const previousIsOpen = useRef(isOpen);
 
-  // Reset state when dialog opens
+  // Reset state only when dialog transitions from closed to open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !previousIsOpen.current) {
       setUrl(initialUrl);
       setError(null);
     }
+    previousIsOpen.current = isOpen;
   }, [isOpen, initialUrl]);
 
   const handleConfirm = () => {
@@ -48,9 +50,10 @@ export function LinkDialog({
     // Validate URL
     try {
       const parsed = new URL(url);
-      // Prevent javascript: URLs for security
-      if (parsed.protocol === "javascript:") {
-        setError("javascript: URLs are not allowed for security reasons");
+      // Prevent dangerous protocols for security
+      const DANGEROUS_PROTOCOLS = ["javascript:", "data:", "vbscript:"];
+      if (DANGEROUS_PROTOCOLS.includes(parsed.protocol)) {
+        setError("This URL protocol is not allowed for security reasons");
         return;
       }
       onConfirm(url);
