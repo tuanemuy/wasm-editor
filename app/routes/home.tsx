@@ -1,15 +1,13 @@
 import { useNavigate } from "react-router";
 import { HomeHeader } from "@/components/layout/HomeHeader";
-import { BulkActionBar } from "@/components/note/BulkActionBar";
 import { CreateNoteFAB } from "@/components/note/CreateNoteFAB";
 import { NoteList } from "@/components/note/NoteList";
 import { TagSidebar } from "@/components/tag/TagSidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SearchProvider } from "@/context/search";
 import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
 import { withContainer } from "@/di";
-import { useBulkExport } from "@/hooks/useBulkExport";
-import { useBulkSelect } from "@/hooks/useBulkSelect";
 import { useCreateNote } from "@/hooks/useCreateNote";
 import { useNotes } from "@/hooks/useNotes";
 import { useNoteTags } from "@/hooks/useNoteTags";
@@ -43,14 +41,6 @@ export async function clientLoader(_: Route.ClientLoaderArgs) {
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
 
-  const {
-    isSelectMode,
-    selectedIds,
-    toggleSelectMode,
-    toggleSelect,
-    exitSelectMode,
-  } = useBulkSelect();
-
   const { notes, loading, hasMore, fetch, loadMore } = useNotes(
     {
       pageSize: PAGE_SIZE,
@@ -65,7 +55,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { noteTagsMap } = useNoteTags(notes.map((note) => note.id));
 
   const { creating, createNote } = useCreateNote();
-  const { exporting, exportNotes } = useBulkExport();
 
   const handleCreateNote = async () => {
     const note = await createNote();
@@ -74,46 +63,25 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     }
   };
 
-  const handleBulkExport = async () => {
-    const selectedNotes = notes.filter((note) => selectedIds.includes(note.id));
-    await exportNotes(selectedNotes);
-    exitSelectMode();
-  };
-
   return (
     <SearchProvider onChangeParams={(params) => fetch(1, params)}>
       <SidebarProvider>
         <TagSidebar />
 
-        <SidebarInset className="flex flex-col">
-          <HomeHeader
-            isSelectMode={isSelectMode}
-            onToggleSelectMode={toggleSelectMode}
-          />
+        <SidebarInset className="flex flex-col bg-background">
+          <HomeHeader className="sticky z-2 top-0" />
 
-          <NoteList
-            notes={notes}
-            noteTagsMap={noteTagsMap}
-            loading={loading}
-            hasMore={hasMore}
-            isSelectMode={isSelectMode}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onLoadMore={loadMore}
-          />
-
-          {isSelectMode && (
-            <BulkActionBar
-              selectedCount={selectedIds.length}
-              exporting={exporting}
-              onExport={handleBulkExport}
-              onCancel={exitSelectMode}
+          <ScrollArea className="flex-1">
+            <NoteList
+              notes={notes}
+              noteTagsMap={noteTagsMap}
+              loading={loading}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
             />
-          )}
+          </ScrollArea>
 
-          {!isSelectMode && (
-            <CreateNoteFAB creating={creating} onClick={handleCreateNote} />
-          )}
+          <CreateNoteFAB creating={creating} onClick={handleCreateNote} />
         </SidebarInset>
       </SidebarProvider>
     </SearchProvider>

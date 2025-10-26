@@ -1,4 +1,4 @@
-import { CheckSquareIcon, SettingsIcon } from "lucide-react";
+import { SettingsIcon } from "lucide-react";
 import { Link } from "react-router";
 import { SearchBar } from "@/components/common/SearchBar";
 import { FilterBadges } from "@/components/note/FilterBadges";
@@ -7,16 +7,11 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSearch } from "@/context/search";
 import { useTags } from "@/hooks/useTags";
+import { cn } from "@/lib/utils";
 
-export interface HomeHeaderProps {
-  isSelectMode?: boolean;
-  onToggleSelectMode?: () => void;
-}
+export type HomeHeaderProps = React.ComponentProps<"header">;
 
-export function HomeHeader({
-  isSelectMode = false,
-  onToggleSelectMode,
-}: HomeHeaderProps) {
+export function HomeHeader({ className, ...props }: HomeHeaderProps) {
   const {
     query,
     changeQuery,
@@ -29,11 +24,11 @@ export function HomeHeader({
   } = useSearch();
   const { tags } = useTags();
   return (
-    <header className="border-b p-4">
-      <div className="flex items-center gap-4">
+    <header {...props} className={cn("p-3 bg-background border-b", className)}>
+      <div className="flex items-center gap-2">
         <SidebarTrigger />
         <div className="flex-1 flex items-center gap-2">
-          <SearchBar value={query} onChange={changeQuery} />
+          <SearchBar value={query} onChange={changeQuery} className="flex-1" />
           <SortPopover
             sortField={sortField}
             sortOrder={sortOrder}
@@ -41,17 +36,6 @@ export function HomeHeader({
             onSortOrderChange={changeSortOrder}
           />
         </div>
-        {onToggleSelectMode && (
-          <Button
-            variant={isSelectMode ? "default" : "outline"}
-            size="sm"
-            onClick={onToggleSelectMode}
-            title="一括選択モード"
-          >
-            <CheckSquareIcon className="h-4 w-4 mr-2" />
-            選択
-          </Button>
-        )}
         <Link to="/settings" viewTransition>
           <Button variant="ghost" size="icon">
             <SettingsIcon className="h-5 w-5" />
