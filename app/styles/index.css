@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "./themes/caffeine.css";
+@import "./themes/teal-orange.css";
 @import "./typography.css";
 @import "./tweakcn.css";
 @import "./utilities/article.css";
+@import "./utilities/glass.css";
 
 @custom-variant dark (&:is(.dark *));
 
