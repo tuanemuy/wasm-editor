@@ -18,9 +18,7 @@ export function formatDate(
     minute: "2-digit",
   };
 
-  return new Intl.DateTimeFormat("en-US", options || defaultOptions).format(
-    date,
-  );
+  return new Intl.DateTimeFormat([], options || defaultOptions).format(date);
 }
 
 /**

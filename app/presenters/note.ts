@@ -3,11 +3,17 @@
  */
 
 import type { Content } from "@tiptap/core";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Link from "@tiptap/extension-link";
 import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
+import { CustomBlock } from "@/lib/tiptap/extensions/customBlock";
+import { Document } from "@/lib/tiptap/extensions/doc";
 import { defaultNotification } from "@/presenters/notification";
+
+const lowlight = createLowlight(common);
 
 /**
  * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
@@ -35,8 +41,16 @@ export function toTiptapContent(content: StructuredContent): Content {
     defaultNotification.err(
       `Failed to load content: ${error instanceof Error ? error.message : String(error)}`,
     );
-    // Return empty document as fallback
-    return { type: "doc", content: [] };
+    // Return document with one empty customBlock as fallback
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "customBlock",
+          content: [{ type: "paragraph" }],
+        },
+      ],
+    };
   }
 }
 
@@ -67,8 +81,16 @@ export function fromTiptapContent(content: Content): StructuredContent {
     defaultNotification.err(
       `Failed to convert content: ${error instanceof Error ? error.message : String(error)}`,
     );
-    // Return empty document as fallback
-    return { type: "doc", content: [] };
+    // Return document with one empty customBlock as fallback
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "customBlock",
+          content: [{ type: "paragraph" }],
+        },
+      ],
+    };
   }
 }
 
@@ -222,15 +244,23 @@ export function generateNoteHTML(content: StructuredContent): string {
   // Type adapter to convert from domain StructuredContent to Tiptap's expected format
   // This is safe because StructuredContent is structurally compatible with Tiptap's JSON format
   return generateHTML(content as Parameters<typeof generateHTML>[0], [
+    Document,
+    CustomBlock,
     StarterKit.configure({
+      document: false,
       heading: {
-        levels: [1, 2, 3, 4, 5, 6],
+        levels: [1, 2, 3, 4, 5],
       },
+      link: false,
+      codeBlock: false,
     }),
     Link.configure({
       HTMLAttributes: {
         class: "text-primary underline",
       },
+    }),
+    CodeBlockLowlight.configure({
+      lowlight,
     }),
   ]);
 }
@@ -277,8 +307,7 @@ export function highlightHTMLContent(html: string, query: string): string {
 
             if (isMatch) {
               const mark = document.createElement("mark");
-              mark.className =
-                "bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded";
+              mark.className = "bg-secondary rounded";
               mark.textContent = part;
               span.appendChild(mark);
             } else {
