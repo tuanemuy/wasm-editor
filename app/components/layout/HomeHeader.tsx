@@ -1,6 +1,5 @@
 import { SettingsIcon } from "lucide-react";
 import { Link } from "react-router";
-import { SearchBar } from "@/components/common/SearchBar";
 import { FilterBadges } from "@/components/note/FilterBadges";
 import { SortPopover } from "@/components/note/SortPopover";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSearch } from "@/context/search";
 import { useTags } from "@/hooks/useTags";
 import { cn } from "@/lib/utils";
+import { SearchBar } from "./SearchBar";
 
 export type HomeHeaderProps = React.ComponentProps<"header">;
 
@@ -24,8 +24,8 @@ export function HomeHeader({ className, ...props }: HomeHeaderProps) {
   } = useSearch();
   const { tags } = useTags();
   return (
-    <header {...props} className={cn("p-3 bg-background border-b", className)}>
-      <div className="flex items-center gap-2">
+    <header {...props} className={cn("pt-3", className)}>
+      <div className="flex items-center gap-2 py-2 px-4 bg-background border rounded-full shadow-md">
         <SidebarTrigger />
         <div className="flex-1 flex items-center gap-2">
           <SearchBar value={query} onChange={changeQuery} className="flex-1" />
