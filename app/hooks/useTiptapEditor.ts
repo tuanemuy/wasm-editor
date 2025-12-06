@@ -1,16 +1,20 @@
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
 import type { Editor } from "@tiptap/react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { fromTiptapContent, toTiptapContent } from "@/presenters/note";
+
+const lowlight = createLowlight(common);
 
 type UseTiptapEditorOptions = {
   content: StructuredContent;
   onChange: (content: StructuredContent, text: string) => void;
   placeholder?: string;
   editable?: boolean;
+  className?: string;
 };
 
 /**
@@ -20,20 +24,24 @@ type UseTiptapEditorOptions = {
 export function useTiptapEditor({
   content,
   onChange,
-  placeholder = "Start writing...",
   editable = true,
+  className,
 }: UseTiptapEditorOptions): Editor | null {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3, 4, 5, 6],
+          levels: [1, 2, 3, 4, 5],
         },
+        link: false,
+        codeBlock: false,
       }),
-      Placeholder.configure({
-        placeholder,
+      CodeBlockLowlight.configure({
+        lowlight,
       }),
       Link.configure({
+        autolink: true,
+        linkOnPaste: true,
         openOnClick: !editable,
         HTMLAttributes: {
           class: "text-primary underline",
@@ -43,21 +51,14 @@ export function useTiptapEditor({
     content: toTiptapContent(content),
     editable,
     onUpdate: ({ editor: updatedEditor }) => {
-      try {
-        onChange(
-          fromTiptapContent(updatedEditor.getJSON()),
-          updatedEditor.getText(),
-        );
-      } catch (error) {
-        // fromTiptapContent already handles errors internally and returns fallback
-        // This catch is for any unexpected errors
-        console.error("Unexpected error in editor update:", error);
-      }
+      onChange(
+        fromTiptapContent(updatedEditor.getJSON()),
+        updatedEditor.getText(),
+      );
     },
     editorProps: {
       attributes: {
-        class:
-          "article focus:outline-none max-w-none py-8 px-4 min-h-[calc(100vh-200px)]",
+        class: className ?? "",
       },
     },
     immediatelyRender: false,
