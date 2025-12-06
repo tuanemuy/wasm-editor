@@ -1,4 +1,4 @@
-import { ArrowDownAZ, ArrowDownWideNarrow } from "lucide-react";
+import { ArrowDown01, ArrowDown10 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -8,36 +8,31 @@ import {
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { useSearch } from "@/context/search";
 import {
   getSortFields,
   type SortField,
   type SortOrder,
 } from "@/lib/sort-utils";
 
-export interface SortPopoverProps {
-  sortField: SortField;
-  sortOrder: SortOrder;
-  onSortFieldChange: (field: SortField) => void;
-  onSortOrderChange: (order: SortOrder) => void;
-}
+export type SortPopoverProps = React.ComponentProps<typeof Popover>;
 
-export function SortPopover({
-  sortField,
-  sortOrder,
-  onSortFieldChange,
-  onSortOrderChange,
-}: SortPopoverProps) {
+export function SortPopover(props: SortPopoverProps) {
   const fields = getSortFields();
 
+  const { sortField, sortOrder, changeSortField, changeSortOrder } =
+    useSearch();
+
   return (
-    <Popover>
+    <Popover {...props}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="Sort options">
-          {sortOrder === "asc" ? (
-            <ArrowDownAZ className="h-4 w-4" />
-          ) : (
-            <ArrowDownWideNarrow className="h-4 w-4" />
-          )}
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Sort options"
+          className="bg-transparent"
+        >
+          {sortOrder === "asc" ? <ArrowDown01 /> : <ArrowDown10 />}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64">
@@ -46,7 +41,7 @@ export function SortPopover({
             <h4 className="font-medium text-sm">Sort by</h4>
             <RadioGroup
               value={sortField}
-              onValueChange={(value) => onSortFieldChange(value as SortField)}
+              onValueChange={(value) => changeSortField(value as SortField)}
             >
               {fields.map((field) => (
                 <div key={field.value} className="flex items-center gap-2">
@@ -65,7 +60,7 @@ export function SortPopover({
             <h4 className="font-medium text-sm">Order</h4>
             <RadioGroup
               value={sortOrder}
-              onValueChange={(value) => onSortOrderChange(value as SortOrder)}
+              onValueChange={(value) => changeSortOrder(value as SortOrder)}
             >
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="asc" id="asc" />

@@ -1,19 +1,21 @@
-import { EmptyState } from "@/components/common/EmptyState";
 import { Spinner } from "@/components/ui/spinner";
 import { useSearch } from "@/context/search";
 import type { Note } from "@/core/domain/note/entity";
+
 import type { TagWithUsage } from "@/core/domain/tag/entity";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { cn } from "@/lib/utils";
+import { EmptyState } from "./EmptyState";
 import { NoteCard } from "./NoteCard";
 import { NoteCardSkeleton } from "./NoteCardSkeleton";
 
-export interface NoteListProps {
+export type NoteListProps = React.ComponentProps<"div"> & {
   notes: Note[];
   noteTagsMap: Map<string, TagWithUsage[]>;
   loading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
-}
+};
 
 export function NoteList({
   notes,
@@ -21,6 +23,8 @@ export function NoteList({
   loading,
   hasMore,
   onLoadMore,
+  className,
+  ...props
 }: NoteListProps) {
   const { query, tagIds } = useSearch();
   const hasFilters = !!query || tagIds.length > 0;
@@ -31,7 +35,7 @@ export function NoteList({
   });
 
   return (
-    <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
+    <div className={cn("w-full flex flex-col gap-3", className)} {...props}>
       {loading ? (
         <NoteListSkeleton />
       ) : notes.length === 0 ? (
@@ -55,7 +59,7 @@ export function NoteList({
 
 export function NoteListSkeleton() {
   return (
-    <div className="p-4 max-w-4xl mx-auto w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-3">
       <NoteCardSkeleton />
       <NoteCardSkeleton />
       <NoteCardSkeleton />

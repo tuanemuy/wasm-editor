@@ -48,7 +48,7 @@ export function SortSelect({
         </SelectContent>
       </Select>
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         onClick={handleOrderToggle}
         aria-label={
@@ -56,9 +56,9 @@ export function SortSelect({
         }
       >
         {sortOrder === "asc" ? (
-          <ArrowUp className="h-4 w-4" />
+          <ArrowUp className="size-4" />
         ) : (
-          <ArrowDown className="h-4 w-4" />
+          <ArrowDown className="size-4" />
         )}
       </Button>
     </div>
