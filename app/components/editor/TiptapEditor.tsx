@@ -1,4 +1,5 @@
 import { EditorContent, useEditorState } from "@tiptap/react";
+import { useEffect } from "react";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 // import { useEditorContent } from "@/hooks/useEditorContent";
 import { useIMEComposition } from "@/hooks/useIMEComposition";
@@ -31,9 +32,11 @@ export function TiptapEditor({
   });
 
   // Call onEditorReady when editor is initialized
-  if (editor && onEditorReady) {
-    onEditorReady(editor);
-  }
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   // Synchronize editor content with external state
   // useEditorContent({ editor, content });
