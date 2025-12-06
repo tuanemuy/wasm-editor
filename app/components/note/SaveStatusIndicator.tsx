@@ -1,5 +1,4 @@
-import { CheckIcon, SaveIcon } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
+import { Check, RefreshCcw } from "lucide-react";
 import type { SaveStatus } from "@/types";
 
 export interface SaveStatusIndicatorProps {
@@ -16,9 +15,9 @@ export function SaveStatusIndicator({ status }: SaveStatusIndicatorProps) {
 
   return (
     <div className="flex items-center text-muted-foreground" title={statusText}>
-      {status === "saved" && <CheckIcon className="h-4 w-4 text-green-600" />}
-      {status === "saving" && <Spinner className="h-4 w-4" />}
-      {status === "unsaved" && <SaveIcon className="h-4 w-4" />}
+      {status === "saved" && <Check className="size-4 text-green-600" />}
+      {status === "saving" && <RefreshCcw className="size-4" />}
+      {status === "unsaved" && <RefreshCcw className="size-4" />}
     </div>
   );
 }

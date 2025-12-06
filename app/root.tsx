@@ -36,8 +36,8 @@ export default function App() {
     <DIContainerProvider databasePath={import.meta.env.VITE_DATABASE_PATH}>
       <SharedLayoutProvider>
         <Outlet />
-        <Toaster />
       </SharedLayoutProvider>
+      <Toaster />
     </DIContainerProvider>
   );
 }

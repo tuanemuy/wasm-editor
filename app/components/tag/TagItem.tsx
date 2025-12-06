@@ -1,5 +1,11 @@
-import { Badge } from "@/components/ui/badge";
+import { Hash } from "lucide-react";
+import {
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
+import { cn } from "@/lib/utils";
 
 export interface TagItemProps {
   tag: TagWithUsage;
@@ -9,19 +15,22 @@ export interface TagItemProps {
 
 export function TagItem({ tag, isSelected, onClick }: TagItemProps) {
   return (
-    <button
-      type="button"
-      onClick={() => onClick(tag.id)}
-      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-        isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <span>#{tag.name}</span>
-        <Badge variant="secondary" className="text-xs">
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        type="button"
+        onClick={() => onClick(tag.id)}
+        className={cn(
+          isSelected ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+        )}
+      >
+        <Hash />
+        {tag.name}
+        <SidebarMenuBadge
+          className={cn(isSelected ? "text-primary-foreground" : "")}
+        >
           {tag.usageCount}
-        </Badge>
-      </div>
-    </button>
+        </SidebarMenuBadge>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

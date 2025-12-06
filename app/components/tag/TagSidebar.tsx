@@ -3,28 +3,35 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
+  SidebarGroupLabel,
+  SidebarMenu,
 } from "@/components/ui/sidebar";
 import { useSearch } from "@/context/search";
-import { useTags } from "@/hooks/useTags";
-import { TagList } from "./TagList";
+import type { TagWithUsage } from "@/core/domain/tag/entity";
+import { TagItem } from "./TagItem";
 
-export function TagSidebar() {
+export type Props = React.ComponentProps<typeof Sidebar> & {
+  tags: TagWithUsage[];
+};
+
+export function TagSidebar({ tags, ...props }: Props) {
   const { tagIds, toggleTag } = useSearch();
-  const { tags } = useTags();
   return (
-    <Sidebar collapsible="offcanvas">
-      <SidebarHeader>
-        <h2 className="text-lg font-semibold px-2">Tags</h2>
-      </SidebarHeader>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Tags</SidebarGroupLabel>
           <SidebarGroupContent>
-            <TagList
-              tags={tags}
-              selectedTagIds={tagIds}
-              onTagClick={toggleTag}
-            />
+            <SidebarMenu>
+              {tags.map((tag) => (
+                <TagItem
+                  key={tag.id}
+                  tag={tag}
+                  isSelected={tagIds.includes(tag.id)}
+                  onClick={toggleTag}
+                />
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

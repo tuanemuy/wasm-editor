@@ -5,6 +5,7 @@ export type { Database };
 let cachedModule: typeof import("@tursodatabase/database-wasm/vite") | null =
   null;
 let cachedDatabase: { path: string; database: Database } | null = null;
+let pendingConnection: Promise<Database> | null = null;
 
 export async function getDatabaseModule() {
   if (!cachedModule) {
@@ -18,19 +19,32 @@ export async function getDatabase(path: string) {
     return cachedDatabase.database;
   }
 
-  if (cachedDatabase && cachedDatabase.path !== path) {
-    cachedDatabase.database.close();
+  // 既に接続中なら、そのPromiseを返す（レースコンディション防止）
+  if (pendingConnection) {
+    return pendingConnection;
   }
 
-  const { connect } = await getDatabaseModule();
+  pendingConnection = (async () => {
+    if (cachedDatabase && cachedDatabase.path !== path) {
+      cachedDatabase.database.close();
+    }
 
-  const database = await connect(path, {
-    timeout: 1000,
-  });
-  await initializeDatabase(database);
+    const { connect } = await getDatabaseModule();
 
-  cachedDatabase = { path, database };
-  return database;
+    const database = await connect(path, {
+      timeout: 1000,
+    });
+    await initializeDatabase(database);
+
+    cachedDatabase = { path, database };
+    return database;
+  })();
+
+  try {
+    return await pendingConnection;
+  } finally {
+    pendingConnection = null;
+  }
 }
 
 /**

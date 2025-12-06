@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useDIContainer } from "@/context/di";
 import { getTagsByNote as getTagsbyNoteService } from "@/core/application/tag/getTagsByNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
@@ -16,7 +15,6 @@ export interface UseNoteTagsResult {
  * Hook for fetching tags for multiple notes in parallel
  */
 export function useNoteTags(noteIds: string[]): UseNoteTagsResult {
-  const context = useDIContainer();
   const [noteTagsMap, setNoteTagsMap] = useState<Map<string, TagWithUsage[]>>(
     new Map(),
   );
@@ -70,7 +68,7 @@ export function useNoteTags(noteIds: string[]): UseNoteTagsResult {
     };
 
     loadTags();
-  }, [context, noteIdsKey, noteIds.length]);
+  }, [noteIdsKey, noteIds.length]);
 
   return {
     noteTagsMap,

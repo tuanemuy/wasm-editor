@@ -52,12 +52,10 @@ export type UseNoteOptions = Notification;
 export interface UseNoteResult {
   deleting: boolean;
   exporting: boolean;
-  editable: boolean;
   saveStatus: SaveStatus;
   save: (content: StructuredContent, text: string) => Promise<void>;
   deleteNote: () => Promise<void>;
   exportNote: () => Promise<void>;
-  toggleEditable: () => void;
 }
 
 /**
@@ -70,7 +68,6 @@ export function useNote(
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [editable, setEditable] = useState(false);
 
   // Ref to track the debounce timeout for save operations
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -180,10 +177,6 @@ export function useNote(
     });
   }, [noteId, exporting, success, err]);
 
-  const toggleEditable = useCallback(() => {
-    setEditable((prev) => !prev);
-  }, []);
-
   // Cleanup: clear pending timeout and cancel scheduled cleanups on unmount
   useEffect(() => {
     return () => {
@@ -198,10 +191,8 @@ export function useNote(
     deleting,
     exporting,
     saveStatus,
-    editable,
     save,
     deleteNote: _deleteNote,
     exportNote,
-    toggleEditable,
   };
 }

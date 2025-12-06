@@ -6,9 +6,5 @@ export interface NoteTitleProps {
 }
 
 export function NoteTitle({ content }: NoteTitleProps) {
-  return (
-    <h1 className="text-xl font-semibold flex-1 truncate">
-      {extractTitle(content)}
-    </h1>
-  );
+  return <h1 className="font-semibold truncate">{extractTitle(content)}</h1>;
 }
