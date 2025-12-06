@@ -1,16 +1,26 @@
-import { useNavigate } from "react-router";
-import { HomeHeader } from "@/components/layout/HomeHeader";
+import { SettingsIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Header } from "@/components/layout/Header";
+import { Inset } from "@/components/layout/Inset";
+import { SearchBar } from "@/components/layout/SearchBar";
 import { CreateNoteFAB } from "@/components/note/CreateNoteFAB";
+import { FilterBadges } from "@/components/note/FilterBadges";
 import { NoteList } from "@/components/note/NoteList";
+import { SortPopover } from "@/components/note/SortPopover";
 import { TagSidebar } from "@/components/tag/TagSidebar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { SearchProvider } from "@/context/search";
 import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
 import { withContainer } from "@/di";
 import { useCreateNote } from "@/hooks/useCreateNote";
 import { useNotes } from "@/hooks/useNotes";
 import { useNoteTags } from "@/hooks/useNoteTags";
+import { useTags } from "@/hooks/useTags";
 import { defaultNotification } from "@/presenters/notification";
 import type { Route } from "./+types/home";
 
@@ -52,6 +62,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     },
   );
 
+  const { tags } = useTags();
   const { noteTagsMap } = useNoteTags(notes.map((note) => note.id));
 
   const { creating, createNote } = useCreateNote();
@@ -65,23 +76,40 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <SearchProvider onChangeParams={(params) => fetch(1, params)}>
-      <SidebarProvider>
-        <TagSidebar />
+      <SidebarProvider defaultOpen={false}>
+        <TagSidebar tags={tags} />
 
-        <SidebarInset className="flex flex-col bg-background">
-          <HomeHeader className="sticky z-2 top-0" />
+        <SidebarInset className="flex flex-col pt-0 bg-background">
+          <Inset>
+            <Header
+              leading={<SidebarTrigger />}
+              trailing={
+                <Link to="/settings" viewTransition>
+                  <Button variant="ghost" size="icon">
+                    <SettingsIcon className="h-5 w-5" />
+                  </Button>
+                </Link>
+              }
+              className="sticky z-2 top-0"
+            >
+              <div className="flex items-center gap-2">
+                <SearchBar className="flex-1" />
+                <SortPopover />
+              </div>
+            </Header>
 
-          <ScrollArea className="flex-1">
+            <FilterBadges tags={tags} className="mt-4" />
+
             <NoteList
               notes={notes}
               noteTagsMap={noteTagsMap}
               loading={loading}
               hasMore={hasMore}
               onLoadMore={loadMore}
+              className="mt-4"
             />
-          </ScrollArea>
-
-          <CreateNoteFAB creating={creating} onClick={handleCreateNote} />
+            <CreateNoteFAB creating={creating} onClick={handleCreateNote} />
+          </Inset>
         </SidebarInset>
       </SidebarProvider>
     </SearchProvider>
