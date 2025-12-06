@@ -12,6 +12,7 @@ export const useDatabase = (path: string) => {
 
   useEffect(() => {
     (async () => {
+      console.log("Initializing database", database);
       if (database) {
         return;
       }
