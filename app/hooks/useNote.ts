@@ -1,19 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { deleteNote as deleteNoteService } from "@/core/application/note/deleteNote";
-import { exportNoteAsMarkdown as exportNoteWithMarkdownService } from "@/core/application/note/exportNoteAsMarkdown";
-import { updateNote as updateNoteService } from "@/core/application/note/updateNote";
-import { cleanupUnusedTags as cleanupUnusedTagsService } from "@/core/application/tag/cleanupUnusedTags";
+import type { Container } from "@/core/application/container";
+import { deleteNote } from "@/core/application/note/deleteNote";
+import { exportNoteAsMarkdown } from "@/core/application/note/exportNoteAsMarkdown";
+import { updateNote } from "@/core/application/note/updateNote";
+import { cleanupUnusedTags } from "@/core/application/tag/cleanupUnusedTags";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { withContainer } from "@/di";
 import { formatError } from "@/presenters/error";
 import type { Notification } from "@/presenters/notification";
 import { request } from "@/presenters/request";
-
-const updateNote = withContainer(updateNoteService);
-const deleteNote = withContainer(deleteNoteService);
-const exportNoteAsMarkdown = withContainer(exportNoteWithMarkdownService);
-const cleanupUnusedTags = withContainer(cleanupUnusedTagsService);
 
 /**
  * Tag Cleanup Scheduler
@@ -62,6 +57,7 @@ export interface UseNoteResult {
  * Hook for fetching and managing a single note
  */
 export function useNote(
+  container: Container,
   noteId: string,
   { success, err }: UseNoteOptions = {},
 ): UseNoteResult {
@@ -99,7 +95,7 @@ export function useNote(
         setSaveStatus("saving");
 
         await request(
-          updateNote({
+          updateNote(container, {
             id: createNoteId(noteId),
             content,
             text,
@@ -119,7 +115,7 @@ export function useNote(
                 if (result.tagsWereRemoved) {
                   cleanupSchedulerRef.current.scheduleCleanup(
                     async () => {
-                      await cleanupUnusedTags();
+                      await cleanupUnusedTags(container);
                     },
                     1000, // 1000ms delay (same as note save debounce)
                   );
@@ -137,7 +133,7 @@ export function useNote(
         );
       }, 1000);
     },
-    [noteId, err],
+    [container, noteId, err],
   );
 
   // Delete note
@@ -145,7 +141,7 @@ export function useNote(
     if (!noteId || deleting) return;
     setDeleting(true);
 
-    await request(deleteNote({ id: createNoteId(noteId) }), {
+    await request(deleteNote(container, { id: createNoteId(noteId) }), {
       onSuccess: () => {
         success?.("Note deleted");
       },
@@ -156,7 +152,7 @@ export function useNote(
         setDeleting(false);
       },
     });
-  }, [noteId, deleting, success, err]);
+  }, [container, noteId, deleting, success, err]);
 
   // Export note
   const exportNote = useCallback(async (): Promise<void> => {
@@ -164,18 +160,21 @@ export function useNote(
 
     setExporting(true);
 
-    await request(exportNoteAsMarkdown({ id: createNoteId(noteId) }), {
-      onSuccess: () => {
-        success?.("Note exported as Markdown");
+    await request(
+      exportNoteAsMarkdown(container, { id: createNoteId(noteId) }),
+      {
+        onSuccess: () => {
+          success?.("Note exported as Markdown");
+        },
+        onError: (error) => {
+          err?.(formatError(error), error);
+        },
+        onFinally: () => {
+          setExporting(false);
+        },
       },
-      onError: (error) => {
-        err?.(formatError(error), error);
-      },
-      onFinally: () => {
-        setExporting(false);
-      },
-    });
-  }, [noteId, exporting, success, err]);
+    );
+  }, [container, noteId, exporting, success, err]);
 
   // Cleanup: clear pending timeout and cancel scheduled cleanups on unmount
   useEffect(() => {

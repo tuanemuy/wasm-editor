@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
+import type { Container } from "@/core/application/container";
+import { combinedSearch } from "@/core/application/note/combinedSearch";
 import type { Note } from "@/core/domain/note/entity";
 import { createTagId } from "@/core/domain/tag/valueObject";
-import { withContainer } from "@/di";
 import { createPagination } from "@/lib/pagination";
 import type { SortField, SortOrder } from "@/lib/sort-utils";
 import {
@@ -10,8 +10,6 @@ import {
   type Notification,
 } from "@/presenters/notification";
 import { request } from "@/presenters/request";
-
-const combinedSearch = withContainer(combinedSearchService);
 
 export type SearchOptions = {
   searchQuery?: string;
@@ -38,6 +36,7 @@ export interface UseNotesResult {
 }
 
 export function useNotes(
+  container: Container,
   { pageSize = 20, err }: UseNotesOptions = defaultNotification,
   initialData?: InitialData,
 ): UseNotesResult {
@@ -56,7 +55,7 @@ export function useNotes(
       setLoading(true);
 
       await request(
-        combinedSearch({
+        combinedSearch(container, {
           query: searchQuery || "",
           tagIds: (tagIds || []).map((id) => createTagId(id)),
           pagination: createPagination(page, pageSize),
@@ -79,7 +78,7 @@ export function useNotes(
 
       setLoading(false);
     },
-    [pageSize, err],
+    [container, pageSize, err],
   );
 
   const loadMore = useCallback(

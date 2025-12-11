@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getSettings as getSettingsService } from "@/core/application/settings/getSettings";
-import { resetSettings as resetSettingsService } from "@/core/application/settings/resetSettings";
-import { updateSettings as updateSettingsService } from "@/core/application/settings/updateSettings";
+import type { Container } from "@/core/application/container";
+import { getSettings } from "@/core/application/settings/getSettings";
+import { resetSettings } from "@/core/application/settings/resetSettings";
+import { updateSettings } from "@/core/application/settings/updateSettings";
 import type { Settings } from "@/core/domain/settings/entity";
-import { withContainer } from "@/di";
-
-const getSettings = withContainer(getSettingsService);
-const resetSettings = withContainer(resetSettingsService);
-const updateSettings = withContainer(updateSettingsService);
 
 export interface UseSettingsResult {
   settings: Settings | null;
@@ -29,7 +25,7 @@ export interface UseSettingsResult {
 /**
  * 設定の読み込み・保存・リセットを管理するフック
  */
-export function useSettings(): UseSettingsResult {
+export function useSettings(container: Container): UseSettingsResult {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,7 +34,7 @@ export function useSettings(): UseSettingsResult {
 
   // Load settings on mount
   useEffect(() => {
-    getSettings()
+    getSettings(container)
       .then((loadedSettings) => {
         setSettings(loadedSettings);
         setLoading(false);
@@ -48,7 +44,7 @@ export function useSettings(): UseSettingsResult {
         toast.error("Failed to load settings");
         setLoading(false);
       });
-  }, []);
+  }, [container]);
 
   // Update settings
   const _updateSettings = useCallback(
@@ -63,7 +59,7 @@ export function useSettings(): UseSettingsResult {
 
       setSaving(true);
       try {
-        const updated = await updateSettings(updates);
+        const updated = await updateSettings(container, updates);
         setSettings(updated);
         toast.success("Settings saved");
       } catch (err) {
@@ -73,7 +69,7 @@ export function useSettings(): UseSettingsResult {
         setSaving(false);
       }
     },
-    [saving],
+    [container, saving],
   );
 
   // Reset settings
@@ -82,7 +78,7 @@ export function useSettings(): UseSettingsResult {
 
     setResetting(true);
     try {
-      const reset = await resetSettings();
+      const reset = await resetSettings(container);
       setSettings(reset);
       toast.success("Settings reset to defaults");
     } catch (err) {
@@ -91,7 +87,7 @@ export function useSettings(): UseSettingsResult {
     } finally {
       setResetting(false);
     }
-  }, [resetting]);
+  }, [container, resetting]);
 
   return {
     settings,
