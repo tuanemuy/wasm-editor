@@ -9,15 +9,14 @@ import { Inset } from "@/components/layout/Inset";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
 import { NoteActions } from "@/components/note/NoteActions";
 import { SaveStatusIndicator } from "@/components/note/SaveStatusIndicator";
-import { getNote as getNoteService } from "@/core/application/note/getNote";
+import { useContainer } from "@/context/di";
+import { getNote } from "@/core/application/note/getNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { withContainer } from "@/di";
+import { getContainer } from "@/di";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
 import { createNotification } from "@/presenters/notification";
 import type { Route } from "./+types/memos.$id";
-
-const getNote = withContainer(getNoteService);
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -27,17 +26,19 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
-  const note = await getNote({ id: createNoteId(id) });
+  const container = await getContainer();
+  const note = await getNote(container, { id: createNoteId(id) });
   return note;
 }
 
 export default function MemoDetail({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
+  const container = useContainer();
   const note = loaderData;
 
   // Use extended useNote hook
   const { deleting, exporting, saveStatus, save, deleteNote, exportNote } =
-    useNote(note.id, createNotification());
+    useNote(container, note.id, createNotification());
 
   const [editor, setEditor] = useState<Editor | null>(null);
 

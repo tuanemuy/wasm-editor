@@ -14,9 +14,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useContainer } from "@/context/di";
 import { SearchProvider } from "@/context/search";
-import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
-import { withContainer } from "@/di";
+import { combinedSearch } from "@/core/application/note/combinedSearch";
+import { getContainer } from "@/di";
 import { useCreateNote } from "@/hooks/useCreateNote";
 import { useNotes } from "@/hooks/useNotes";
 import { useNoteTags } from "@/hooks/useNoteTags";
@@ -28,8 +29,6 @@ const PAGE_SIZE = 20;
 const DEFAULT_SORT_FIELD = "created_at";
 const DEFAULT_SORT_ORDER = "desc";
 
-const combinedSearch = withContainer(combinedSearchService);
-
 export function meta(_: Route.MetaArgs) {
   return [
     { title: "WASM Editor - Home" },
@@ -38,7 +37,8 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function clientLoader(_: Route.ClientLoaderArgs) {
-  const notes = await combinedSearch({
+  const container = await getContainer();
+  const notes = await combinedSearch(container, {
     query: "",
     tagIds: [],
     pagination: { page: 1, limit: PAGE_SIZE },
@@ -50,8 +50,10 @@ export async function clientLoader(_: Route.ClientLoaderArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
+  const container = useContainer();
 
   const { notes, loading, hasMore, fetch, loadMore } = useNotes(
+    container,
     {
       pageSize: PAGE_SIZE,
       ...defaultNotification,
@@ -62,10 +64,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     },
   );
 
-  const { tags } = useTags();
-  const { noteTagsMap } = useNoteTags(notes.map((note) => note.id));
+  const { tags } = useTags(container);
+  const { noteTagsMap } = useNoteTags(
+    container,
+    notes.map((note) => note.id),
+  );
 
-  const { creating, createNote } = useCreateNote();
+  const { creating, createNote } = useCreateNote(container);
 
   const handleCreateNote = async () => {
     const note = await createNote();
