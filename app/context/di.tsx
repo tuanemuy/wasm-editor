@@ -1,67 +1,66 @@
+/**
+ * DI Container React Context
+ *
+ * - ContainerProvider: Provider component for container access
+ * - useContainer(): Hook to access container inside React components
+ */
+
 import { createContext, useContext, useEffect, useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import type { Container } from "@/core/application/container";
-import { createLocalStorageContainer, createTursoWasmContainer } from "@/di";
-import { useDatabase } from "@/hooks/useDatabase";
+import { getContainer, getContainerSync } from "@/di";
 
-const DIContainer = createContext<Container | null>(null);
+const ContainerContext = createContext<Container | null>(null);
 
-// Storage adapter type
-type StorageAdapter = "localStorage" | "tursoWasm";
-
-// Get storage adapter from environment variable
-// Defaults to localStorage for development convenience
-const VALID_ADAPTERS = ["localStorage", "tursoWasm"] as const;
-const envAdapter = import.meta.env.VITE_STORAGE_ADAPTER as string | undefined;
-const STORAGE_ADAPTER: StorageAdapter = (() => {
-  if (!envAdapter) {
-    return "localStorage";
-  }
-  if (!VALID_ADAPTERS.includes(envAdapter as StorageAdapter)) {
-    throw new Error(
-      `Invalid VITE_STORAGE_ADAPTER: "${envAdapter}". Must be one of: ${VALID_ADAPTERS.join(", ")}`,
-    );
-  }
-  return envAdapter as StorageAdapter;
-})();
-
-export function DIContainerProvider(props: {
-  databasePath?: string;
+type ContainerProviderProps = {
   children: React.ReactNode;
-}) {
-  const [container, setContainer] = useState<Container | null>(null);
-  const database = useDatabase(props.databasePath || "");
+  fallback?: React.ReactNode;
+};
+
+export function ContainerProvider({
+  children,
+  fallback = null,
+}: ContainerProviderProps) {
+  const [container, setContainer] = useState<Container | null>(
+    getContainerSync(),
+  );
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (STORAGE_ADAPTER === "localStorage") {
-      // For localStorage, we don't need to wait for database
-      setContainer(createLocalStorageContainer());
-    } else if (STORAGE_ADAPTER === "tursoWasm" && database) {
-      // For tursoWasm, we need to wait for database to load
-      setContainer(createTursoWasmContainer(database));
-    }
-  }, [database]);
+    if (container) return;
+
+    let cancelled = false;
+    getContainer()
+      .then((c) => {
+        if (!cancelled) setContainer(c);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [container]);
+
+  if (error) {
+    throw error;
+  }
 
   if (!container) {
-    return (
-      <div className="flex flex-col gap-2 items-center justify-center w-dvw h-dvh">
-        <Spinner className="size-8" />
-        <p>Loading...</p>
-      </div>
-    );
+    return <>{fallback}</>;
   }
 
   return (
-    <DIContainer.Provider value={container}>
-      {props.children}
-    </DIContainer.Provider>
+    <ContainerContext.Provider value={container}>
+      {children}
+    </ContainerContext.Provider>
   );
 }
 
-export function useDIContainer() {
-  const context = useContext(DIContainer);
-  if (!context) {
-    throw new Error("useDIContainer must be used within DIContainerProvider");
+export function useContainer(): Container {
+  const container = useContext(ContainerContext);
+  if (!container) {
+    throw new Error("useContainer must be used within ContainerProvider");
   }
-  return context;
+  return container;
 }
