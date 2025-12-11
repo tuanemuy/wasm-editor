@@ -23,20 +23,16 @@ export function NoteActions({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" title="More actions">
-          <MoreVerticalIcon className="h-4 w-4" />
+          <MoreVerticalIcon />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onExport} disabled={exporting}>
-          {exporting ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <DownloadIcon className="h-4 w-4" />
-          )}
+          {exporting ? <Spinner /> : <DownloadIcon />}
           Export
         </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2Icon className="h-4 w-4" />
+          <Trash2Icon />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

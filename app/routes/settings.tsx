@@ -6,6 +6,7 @@ import { SettingsActions } from "@/components/settings/SettingsActions";
 import { SortSettingsCard } from "@/components/settings/SortSettingsCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useContainer } from "@/context/di";
 import { useSettings } from "@/hooks/useSettings";
 import type { Route } from "./+types/settings";
 
@@ -105,6 +106,7 @@ function SettingsForm({
 }
 
 export default function SettingsPage() {
+  const container = useContainer();
   const {
     settings,
     loading,
@@ -112,7 +114,7 @@ export default function SettingsPage() {
     resetting,
     updateSettings,
     resetSettings,
-  } = useSettings();
+  } = useSettings(container);
 
   if (loading || !settings) {
     return (

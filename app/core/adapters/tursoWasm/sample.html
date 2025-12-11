@@ -48,7 +48,7 @@
     <script type="module">
       import { connect } from "@tursodatabase/database-wasm/vite";
 
-      let db = await connect("local.db", {
+      const db = await connect("local.db", {
         timeout: 1000, // busy timeout for handling high-concurrency write cases
       });
       // execute multiple SQL statements with exec(...)
@@ -60,7 +60,7 @@
 
       async function addComment() {
         // use prepared statements and bind args to placeholders later
-        const insert = db.prepare(`INSERT INTO guestbook(comment) VALUES (?)`);
+        const insert = db.prepare("INSERT INTO guestbook(comment) VALUES (?)");
 
         const input = document.getElementById("comment");
         const text = input.value.trim();
@@ -78,7 +78,7 @@
 
       async function refresh() {
         const select = db.prepare(
-          `SELECT comment, created_at FROM guestbook ORDER BY created_at DESC LIMIT ?`,
+          "SELECT comment, created_at FROM guestbook ORDER BY created_at DESC LIMIT ?",
         );
         // use all(...) or get(...) methods to get all or one row from the query
         const rows = await select.all([5]);

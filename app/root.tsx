@@ -10,7 +10,8 @@ import {
 import type { Route } from "./+types/root";
 import "./styles/index.css";
 import { Toaster } from "@/components/ui/sonner";
-import { DIContainerProvider } from "./context/di";
+import { Spinner } from "@/components/ui/spinner";
+import { ContainerProvider } from "@/context/di";
 import { SharedLayoutProvider } from "./context/sharedLayout";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -31,14 +32,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="flex flex-col gap-2 items-center justify-center w-dvw h-dvh">
+      <Spinner className="size-8" />
+      <p>Loading...</p>
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <DIContainerProvider databasePath={import.meta.env.VITE_DATABASE_PATH}>
+    <ContainerProvider fallback={<LoadingFallback />}>
       <SharedLayoutProvider>
         <Outlet />
-        <Toaster />
       </SharedLayoutProvider>
-    </DIContainerProvider>
+      <Toaster />
+    </ContainerProvider>
   );
 }
 

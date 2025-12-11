@@ -1,26 +1,33 @@
-import { useNavigate } from "react-router";
-import { HomeHeader } from "@/components/layout/HomeHeader";
-import { BulkActionBar } from "@/components/note/BulkActionBar";
+import { SettingsIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Header } from "@/components/layout/Header";
+import { Inset } from "@/components/layout/Inset";
+import { SearchBar } from "@/components/layout/SearchBar";
 import { CreateNoteFAB } from "@/components/note/CreateNoteFAB";
+import { FilterBadges } from "@/components/note/FilterBadges";
 import { NoteList } from "@/components/note/NoteList";
+import { SortPopover } from "@/components/note/SortPopover";
 import { TagSidebar } from "@/components/tag/TagSidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { useContainer } from "@/context/di";
 import { SearchProvider } from "@/context/search";
-import { combinedSearch as combinedSearchService } from "@/core/application/note/combinedSearch";
-import { withContainer } from "@/di";
-import { useBulkExport } from "@/hooks/useBulkExport";
-import { useBulkSelect } from "@/hooks/useBulkSelect";
+import { combinedSearch } from "@/core/application/note/combinedSearch";
+import { getContainer } from "@/di";
 import { useCreateNote } from "@/hooks/useCreateNote";
 import { useNotes } from "@/hooks/useNotes";
 import { useNoteTags } from "@/hooks/useNoteTags";
+import { useTags } from "@/hooks/useTags";
 import { defaultNotification } from "@/presenters/notification";
 import type { Route } from "./+types/home";
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT_FIELD = "created_at";
 const DEFAULT_SORT_ORDER = "desc";
-
-const combinedSearch = withContainer(combinedSearchService);
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -30,7 +37,8 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function clientLoader(_: Route.ClientLoaderArgs) {
-  const notes = await combinedSearch({
+  const container = await getContainer();
+  const notes = await combinedSearch(container, {
     query: "",
     tagIds: [],
     pagination: { page: 1, limit: PAGE_SIZE },
@@ -42,16 +50,10 @@ export async function clientLoader(_: Route.ClientLoaderArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-
-  const {
-    isSelectMode,
-    selectedIds,
-    toggleSelectMode,
-    toggleSelect,
-    exitSelectMode,
-  } = useBulkSelect();
+  const container = useContainer();
 
   const { notes, loading, hasMore, fetch, loadMore } = useNotes(
+    container,
     {
       pageSize: PAGE_SIZE,
       ...defaultNotification,
@@ -62,10 +64,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     },
   );
 
-  const { noteTagsMap } = useNoteTags(notes.map((note) => note.id));
+  const { tags } = useTags(container);
+  const { noteTagsMap } = useNoteTags(
+    container,
+    notes.map((note) => note.id),
+  );
 
-  const { creating, createNote } = useCreateNote();
-  const { exporting, exportNotes } = useBulkExport();
+  const { creating, createNote } = useCreateNote(container);
 
   const handleCreateNote = async () => {
     const note = await createNote();
@@ -74,46 +79,42 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     }
   };
 
-  const handleBulkExport = async () => {
-    const selectedNotes = notes.filter((note) => selectedIds.includes(note.id));
-    await exportNotes(selectedNotes);
-    exitSelectMode();
-  };
-
   return (
     <SearchProvider onChangeParams={(params) => fetch(1, params)}>
-      <SidebarProvider>
-        <TagSidebar />
+      <SidebarProvider defaultOpen={false}>
+        <TagSidebar tags={tags} />
 
-        <SidebarInset className="flex flex-col">
-          <HomeHeader
-            isSelectMode={isSelectMode}
-            onToggleSelectMode={toggleSelectMode}
-          />
+        <SidebarInset className="flex flex-col pt-0 bg-background">
+          <Inset>
+            <Header
+              leading={<SidebarTrigger />}
+              trailing={
+                <Link to="/settings" viewTransition>
+                  <Button variant="ghost" size="icon">
+                    <SettingsIcon className="h-5 w-5" />
+                  </Button>
+                </Link>
+              }
+              className="sticky z-2 top-0"
+            >
+              <div className="flex items-center gap-2">
+                <SearchBar className="flex-1" />
+                <SortPopover />
+              </div>
+            </Header>
 
-          <NoteList
-            notes={notes}
-            noteTagsMap={noteTagsMap}
-            loading={loading}
-            hasMore={hasMore}
-            isSelectMode={isSelectMode}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onLoadMore={loadMore}
-          />
+            <FilterBadges tags={tags} className="mt-4" />
 
-          {isSelectMode && (
-            <BulkActionBar
-              selectedCount={selectedIds.length}
-              exporting={exporting}
-              onExport={handleBulkExport}
-              onCancel={exitSelectMode}
+            <NoteList
+              notes={notes}
+              noteTagsMap={noteTagsMap}
+              loading={loading}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              className="mt-4"
             />
-          )}
-
-          {!isSelectMode && (
             <CreateNoteFAB creating={creating} onClick={handleCreateNote} />
-          )}
+          </Inset>
         </SidebarInset>
       </SidebarProvider>
     </SearchProvider>

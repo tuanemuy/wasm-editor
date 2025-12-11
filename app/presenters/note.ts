@@ -3,8 +3,17 @@
  */
 
 import type { Content } from "@tiptap/core";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import Link from "@tiptap/extension-link";
+import { generateHTML } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
 import type { StructuredContent } from "@/core/domain/note/valueObject";
+import { CustomBlock } from "@/lib/tiptap/extensions/customBlock";
+import { Document } from "@/lib/tiptap/extensions/doc";
 import { defaultNotification } from "@/presenters/notification";
+
+const lowlight = createLowlight(common);
 
 /**
  * Type adapter to convert between domain StructuredContent and Tiptap's Content type.
@@ -32,8 +41,16 @@ export function toTiptapContent(content: StructuredContent): Content {
     defaultNotification.err(
       `Failed to load content: ${error instanceof Error ? error.message : String(error)}`,
     );
-    // Return empty document as fallback
-    return { type: "doc", content: [] };
+    // Return document with one empty customBlock as fallback
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "customBlock",
+          content: [{ type: "paragraph" }],
+        },
+      ],
+    };
   }
 }
 
@@ -64,8 +81,16 @@ export function fromTiptapContent(content: Content): StructuredContent {
     defaultNotification.err(
       `Failed to convert content: ${error instanceof Error ? error.message : String(error)}`,
     );
-    // Return empty document as fallback
-    return { type: "doc", content: [] };
+    // Return document with one empty customBlock as fallback
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "customBlock",
+          content: [{ type: "paragraph" }],
+        },
+      ],
+    };
   }
 }
 
@@ -209,4 +234,107 @@ export function formatNoteContent(content: string): string {
     .replace(/\r\n/g, "\n") // Normalize line breaks
     .replace(/\n{3,}/g, "\n\n") // Limit consecutive line breaks
     .trim();
+}
+
+/**
+ * Generate HTML from structured content
+ * Uses the same extensions as the TiptapEditor for consistency
+ */
+export function generateNoteHTML(content: StructuredContent): string {
+  // Type adapter to convert from domain StructuredContent to Tiptap's expected format
+  // This is safe because StructuredContent is structurally compatible with Tiptap's JSON format
+  return generateHTML(content as Parameters<typeof generateHTML>[0], [
+    Document,
+    CustomBlock,
+    StarterKit.configure({
+      document: false,
+      heading: {
+        levels: [1, 2, 3, 4, 5],
+      },
+      link: false,
+      codeBlock: false,
+    }),
+    Link.configure({
+      HTMLAttributes: {
+        class: "text-primary underline",
+      },
+    }),
+    CodeBlockLowlight.configure({
+      lowlight,
+    }),
+  ]);
+}
+
+/**
+ * Highlight search query in HTML content
+ * Safely highlights text nodes while preserving HTML structure
+ * @param html - The HTML string to process
+ * @param query - The search query to highlight
+ * @returns HTML string with highlighted matches
+ */
+export function highlightHTMLContent(html: string, query: string): string {
+  if (!query.trim()) {
+    return html;
+  }
+
+  try {
+    // Escape special regex characters
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+
+    // Use DOMParser to safely parse and manipulate HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // Recursive function to highlight text nodes
+    function highlightTextNodes(node: Node): void {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent || "";
+        if (regex.test(text)) {
+          // Reset regex index
+          regex.lastIndex = 0;
+
+          // Create a temporary container for the highlighted content
+          const span = document.createElement("span");
+          const parts = text.split(regex);
+
+          for (const part of parts) {
+            if (!part) continue;
+
+            regex.lastIndex = 0;
+            const isMatch = regex.test(part);
+            regex.lastIndex = 0;
+
+            if (isMatch) {
+              const mark = document.createElement("mark");
+              mark.className = "bg-secondary rounded";
+              mark.textContent = part;
+              span.appendChild(mark);
+            } else {
+              span.appendChild(document.createTextNode(part));
+            }
+          }
+
+          // Replace the text node with the highlighted content
+          node.parentNode?.replaceChild(span, node);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Skip script and style elements
+        const element = node as Element;
+        if (element.tagName !== "SCRIPT" && element.tagName !== "STYLE") {
+          // Process child nodes (use array to avoid live NodeList issues)
+          Array.from(node.childNodes).forEach(highlightTextNodes);
+        }
+      }
+    }
+
+    // Start highlighting from the body element
+    highlightTextNodes(doc.body);
+
+    // Return the highlighted HTML
+    return doc.body.innerHTML;
+  } catch {
+    // If processing fails, return the original HTML
+    return html;
+  }
 }

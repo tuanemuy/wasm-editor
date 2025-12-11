@@ -1,10 +1,11 @@
 import type { Editor } from "@tiptap/react";
-import { FormatButtons } from "./FormatButtons";
+import { BlockquoteButton } from "./BlockquoteButton";
+import { CodeBlockButton } from "./CodeBlockButton";
 import { HeadingButtons } from "./HeadingButtons";
 import { HistoryButtons } from "./HistoryButtons";
-import { LinkButton } from "./LinkButton";
-import { ListButtons } from "./ListButtons";
-import { ToolbarGroup } from "./ToolbarGroup";
+import { ListButton } from "./ListButton";
+import { ListIndentButtons } from "./ListIndentButtons";
+import { ParagraphButton } from "./ParagraphButton";
 
 type EditorToolbarProps = {
   editor: Editor;
@@ -14,28 +15,16 @@ type EditorToolbarProps = {
 /**
  * The main toolbar component for the editor
  */
-export function EditorToolbar({ editor, onToggleLink }: EditorToolbarProps) {
+export function EditorToolbar({ editor }: EditorToolbarProps) {
   return (
-    <div className="border-b p-2 flex items-center gap-1 overflow-x-auto">
-      <ToolbarGroup>
-        <HistoryButtons editor={editor} />
-      </ToolbarGroup>
-
-      <ToolbarGroup>
-        <HeadingButtons editor={editor} />
-      </ToolbarGroup>
-
-      <ToolbarGroup>
-        <FormatButtons editor={editor} />
-      </ToolbarGroup>
-
-      <ToolbarGroup>
-        <ListButtons editor={editor} />
-      </ToolbarGroup>
-
-      <ToolbarGroup showSeparator={false}>
-        <LinkButton editor={editor} onToggleLink={onToggleLink} />
-      </ToolbarGroup>
+    <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <HistoryButtons editor={editor} />
+      <ParagraphButton editor={editor} />
+      <HeadingButtons editor={editor} />
+      <ListButton editor={editor} />
+      <ListIndentButtons editor={editor} />
+      <CodeBlockButton editor={editor} />
+      <BlockquoteButton editor={editor} />
     </div>
   );
 }

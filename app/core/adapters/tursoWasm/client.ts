@@ -5,6 +5,80 @@ export type { Database };
 let cachedModule: typeof import("@tursodatabase/database-wasm/vite") | null =
   null;
 let cachedDatabase: { path: string; database: Database } | null = null;
+let pendingConnection: Promise<Database> | null = null;
+
+// HMR: Close existing connection before hot reload
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (cachedDatabase) {
+      try {
+        cachedDatabase.database.close();
+      } catch {
+        // Ignore close errors
+      }
+      cachedDatabase = null;
+    }
+    pendingConnection = null;
+  });
+}
+
+/**
+ * 強制的にデータベースをリセットする
+ * OPFSのファイルを削除して、キャッシュをクリアする
+ */
+export async function forceResetDatabase(path: string): Promise<void> {
+  // キャッシュをクリア
+  if (cachedDatabase) {
+    try {
+      cachedDatabase.database.close();
+    } catch {
+      // Ignore close errors
+    }
+    cachedDatabase = null;
+  }
+  pendingConnection = null;
+
+  // OPFSのファイルを削除
+  try {
+    const root = await navigator.storage.getDirectory();
+    const parts = path.split("/").filter((p) => p.length > 0);
+
+    if (parts.length === 0) return;
+
+    // ディレクトリを辿って親ディレクトリを取得
+    let currentDir = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      try {
+        currentDir = await currentDir.getDirectoryHandle(parts[i]);
+      } catch {
+        // ディレクトリが存在しない場合は何もしない
+        return;
+      }
+    }
+
+    // ファイルを削除
+    const fileName = parts[parts.length - 1];
+    try {
+      await currentDir.removeEntry(fileName);
+    } catch {
+      // ファイルが存在しない場合は無視
+    }
+
+    // -wal と -shm ファイルも削除
+    try {
+      await currentDir.removeEntry(`${fileName}-wal`);
+    } catch {
+      // 存在しなければ無視
+    }
+    try {
+      await currentDir.removeEntry(`${fileName}-shm`);
+    } catch {
+      // 存在しなければ無視
+    }
+  } catch (error) {
+    console.warn("Failed to delete OPFS files:", error);
+  }
+}
 
 export async function getDatabaseModule() {
   if (!cachedModule) {
@@ -18,19 +92,32 @@ export async function getDatabase(path: string) {
     return cachedDatabase.database;
   }
 
-  if (cachedDatabase && cachedDatabase.path !== path) {
-    cachedDatabase.database.close();
+  // 既に接続中なら、そのPromiseを返す（レースコンディション防止）
+  if (pendingConnection) {
+    return pendingConnection;
   }
 
-  const { connect } = await getDatabaseModule();
+  pendingConnection = (async () => {
+    if (cachedDatabase && cachedDatabase.path !== path) {
+      cachedDatabase.database.close();
+    }
 
-  const database = await connect(path, {
-    timeout: 1000,
-  });
-  await initializeDatabase(database);
+    const { connect } = await getDatabaseModule();
 
-  cachedDatabase = { path, database };
-  return database;
+    const database = await connect(path, {
+      timeout: 1000,
+    });
+    await initializeDatabase(database);
+
+    cachedDatabase = { path, database };
+    return database;
+  })();
+
+  try {
+    return await pendingConnection;
+  } finally {
+    pendingConnection = null;
+  }
 }
 
 /**

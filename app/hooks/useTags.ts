@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useDIContainer } from "@/context/di";
-import { getTags as getTagsService } from "@/core/application/tag/getTags";
+import type { Container } from "@/core/application/container";
+import { getTags } from "@/core/application/tag/getTags";
 import type { TagWithUsage } from "@/core/domain/tag/entity";
-import { withContainer } from "@/di";
-
-const getTags = withContainer(getTagsService);
 
 export interface UseTagsResult {
   tags: TagWithUsage[];
@@ -17,8 +14,7 @@ export interface UseTagsResult {
 /**
  * Hook for fetching and managing tags list
  */
-export function useTags(): UseTagsResult {
-  const context = useDIContainer();
+export function useTags(container: Container): UseTagsResult {
   const [tags, setTags] = useState<TagWithUsage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -29,7 +25,7 @@ export function useTags(): UseTagsResult {
     setLoading(true);
     setError(null);
 
-    getTags()
+    getTags(container)
       .then((loadedTags) => {
         setTags(loadedTags);
       })
@@ -41,7 +37,7 @@ export function useTags(): UseTagsResult {
       .finally(() => {
         setLoading(false);
       });
-  }, [context, reloadTrigger]);
+  }, [container, reloadTrigger]);
 
   const reload = () => {
     setReloadTrigger((prev) => prev + 1);

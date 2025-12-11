@@ -1,19 +1,22 @@
-import { EyeIcon, PencilIcon } from "lucide-react";
-import { Suspense, use, useCallback } from "react";
+import type { Editor } from "@tiptap/react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
+import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
-import { MemoHeader } from "@/components/layout/MemoHeader";
+import { BackButton } from "@/components/layout/BackButton";
+import { Header } from "@/components/layout/Header";
+import { Inset } from "@/components/layout/Inset";
 import { DeleteConfirmDialog } from "@/components/note/DeleteConfirmDialog";
-import { Button } from "@/components/ui/button";
-import { getNote as getNoteService } from "@/core/application/note/getNote";
+import { NoteActions } from "@/components/note/NoteActions";
+import { SaveStatusIndicator } from "@/components/note/SaveStatusIndicator";
+import { useContainer } from "@/context/di";
+import { getNote } from "@/core/application/note/getNote";
 import { createNoteId } from "@/core/domain/note/valueObject";
-import { withContainer } from "@/di";
+import { getContainer } from "@/di";
 import { useDialog } from "@/hooks/useDialog";
 import { useNote } from "@/hooks/useNote";
 import { createNotification } from "@/presenters/notification";
 import type { Route } from "./+types/memos.$id";
-
-const getNote = withContainer(getNoteService);
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -23,35 +26,21 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function clientLoader({ params: { id } }: Route.ClientLoaderArgs) {
-  const note = await getNote({ id: createNoteId(id) });
+  const container = await getContainer();
+  const note = await getNote(container, { id: createNoteId(id) });
   return note;
 }
 
-export default function MemoDetail({ params: { id } }: Route.ComponentProps) {
-  const fetchNote = getNote({ id: createNoteId(id) });
-
-  return (
-    <Suspense>
-      <_MemoDetail fetchNote={fetchNote} />
-    </Suspense>
-  );
-}
-
-export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
+export default function MemoDetail({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const note = use(props.fetchNote);
+  const container = useContainer();
+  const note = loaderData;
 
   // Use extended useNote hook
-  const {
-    deleting,
-    exporting,
-    editable,
-    saveStatus,
-    save,
-    deleteNote,
-    exportNote,
-    toggleEditable,
-  } = useNote(note.id, createNotification());
+  const { deleting, exporting, saveStatus, save, deleteNote, exportNote } =
+    useNote(container, note.id, createNotification());
+
+  const [editor, setEditor] = useState<Editor | null>(null);
 
   // Dialog state
   const deleteDialog = useDialog(false);
@@ -63,43 +52,37 @@ export function _MemoDetail(props: { fetchNote: ReturnType<typeof getNote> }) {
   }, [deleteNote, navigate]);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <MemoHeader
-        content={note.content}
-        saveStatus={saveStatus}
-        exporting={exporting}
-        onExport={exportNote}
-        onDelete={deleteDialog.open}
-      />
-      <div className="flex-1 overflow-hidden p-4 relative">
-        <div className="h-full bg-card rounded-xl border shadow-sm">
-          <TiptapEditor
-            content={note.content}
-            onChange={save}
-            placeholder="Start writing your note..."
-            editable={editable}
-          />
-        </div>
-        {/* FAB button to toggle edit/view mode */}
-        <Button
-          size="lg"
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg"
-          onClick={toggleEditable}
-          title={editable ? "閲覧モードに切り替え" : "編集モードに切り替え"}
+    <main className="bg-background">
+      <Inset>
+        <Header
+          leading={<BackButton />}
+          trailing={
+            <div className="flex items-center gap-1">
+              <SaveStatusIndicator status={saveStatus} />
+              <NoteActions
+                exporting={exporting}
+                onExport={exportNote}
+                onDelete={deleteDialog.open}
+              />
+            </div>
+          }
+          className="sticky z-2 top-0"
         >
-          {editable ? (
-            <EyeIcon className="h-5 w-5" />
-          ) : (
-            <PencilIcon className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-      <DeleteConfirmDialog
-        open={deleteDialog.isOpen}
-        deleting={deleting}
-        onOpenChange={deleteDialog.setOpen}
-        onConfirm={handleDelete}
-      />
-    </div>
+          {editor && <EditorToolbar editor={editor} onToggleLink={() => {}} />}
+        </Header>
+        <TiptapEditor
+          content={note.content}
+          onChange={save}
+          placeholder="Start writing your note..."
+          onEditorReady={setEditor}
+        />
+        <DeleteConfirmDialog
+          open={deleteDialog.isOpen}
+          deleting={deleting}
+          onOpenChange={deleteDialog.setOpen}
+          onConfirm={handleDelete}
+        />
+      </Inset>
+    </main>
   );
 }
